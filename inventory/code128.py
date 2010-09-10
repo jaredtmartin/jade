@@ -254,8 +254,8 @@ class Code128:
       
       # Create a missing font file
       import settings
-      decodeFontFile(courB08_pil ,settings.APP_LOCATION+"courB08.pil")
-      decodeFontFile(courB08_pbm ,settings.APP_LOCATION+"courB08.pbm")
+      decodeFontFile(courB08_pil ,settings.APP_LOCATION+"/courB08.pil")
+      decodeFontFile(courB08_pbm ,settings.APP_LOCATION+"/courB08.pbm")
       
       # Get the bar code list
       bits = self.makeCode(value)
