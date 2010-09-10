@@ -1150,9 +1150,9 @@ def add_purchase_entries(sender, **kwargs):
         )   
         if l.tax!=0:
             l.create_related_entry(
-                account = l._client.tax_group.sales_tax_account,
+                account = l._vendor.tax_group.purchases_tax_account,
                 tipo = 'Tax',
-                value = -l._tax)
+                value = l._tax)
 #    if l.cost!=l._initial_cost and l.item:
 #        item = l.entry("Inventory").item
 #        # remove our old data from the equation
