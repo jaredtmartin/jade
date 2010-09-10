@@ -282,7 +282,7 @@ class Code128:
             draw.rectangle(((bit+position,0),(bit+position,height-10)),fill=0)
             
       # Save the result image
-      im.save(folder+value+"."+lower(extension), upper(extension))
+      im.save(settings.APP_LOCATION+'/'+folder+value+"."+lower(extension), upper(extension))
 
 
 def decodeFontFile(data, file):
