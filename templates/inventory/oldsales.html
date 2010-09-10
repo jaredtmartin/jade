@@ -1,0 +1,187 @@
+
+{% extends "inventory/index.html" %}
+{% load i18n %}
+{% load tags %}
+{% block js %}
+    <script type="text/javascript" src="/media/js/jade.js"></script> 
+{% endblock %}
+{% block heading %}{% trans 'Sales' %}{% endblock%}
+{% block pre-table %}
+    <div class="section">
+        <div id="new_sale_form" style="display:none;">
+            <div class="three-column">
+                {% trans 'Doc Number' %}: <input id="doc_number" type="text"><a href="#">{% trans 'Next' %}</a><br>
+            </div>
+            <div class="three-column">
+                {% trans 'Client' %}: <input id="client" type="text">
+            </div>
+            <div class="three-column">
+                {% trans 'Item' %}: <input id="item" type="text">
+            </div>
+            <a onclick="addSale(); return false;" href="#">{% trans 'Create Sale' %}</a>
+        </div>
+    </div>
+{% endblock%}
+{% block table_header %}
+    <script type="text/javascript">
+        function editSale(object_id) {
+            $('#sale-'+object_id+' .field').each(function(i){
+                var input = '<td><input id="'+ $(this).attr('id') +'" class="'+ $(this).attr('class') +'" value="'+$(this).attr('value')+'" name="'+ $(this).attr('name') +'" type="text"></td>'
+                $(this).before(input).hide();
+            });
+            $('#sale-'+object_id+' .link').each(function(i){
+                var input = '<input id="'+ $(this).attr('id') +'" class="'+ $(this).attr('class') +'" value="'+$(this).attr('value')+'" name="'+ $(this).attr('name') +'" type="text">'
+                $(this).before(input).hide();
+            })
+            $('#id_sale-'+object_id+'-date').datepicker();
+            $('#id_sale-'+object_id+'-item').autocomplete('/inventory/item_list/', {matchSubset:0, autoFill:1,});
+            $('#id_sale-'+object_id+'-client').autocomplete('/inventory/client_list/', {matchSubset:0, autoFill:1,});
+            $('#id_sale-'+object_id+'-garantee_months').attr('onblur', 'getGaranteePrice('+object_id+')');
+            
+            $('#sale-'+object_id+' .show').hide();
+            $('#sale-'+object_id+' .edit').show();
+        }
+        function saveSale(object_id) {
+            hide_entries(object_id);
+            jQuery("#transaction-"+object_id+"-entries-table").remove();
+            jQuery("#last_id").val(object_id);
+            $.ajax({
+                url: '/inventory/sale/'+object_id+'/' ,
+                type:'POST',
+                data:{ 
+                    doc_number:     jQuery('#id_sale-'+object_id+'-doc_number').val(),
+                    date:           jQuery('#id_sale-'+object_id+'-date').val(),
+                    client:         jQuery('#id_sale-'+object_id+'-client').val(),
+                    item:           jQuery('#id_sale-'+object_id+'-item').val(),
+                    quantity:       jQuery('#id_sale-'+object_id+'-quantity').val(),
+                    serial:         jQuery('#id_sale-'+object_id+'-serial').val(),
+                    cost:           jQuery('#id_sale-'+object_id+'-cost').val(),
+                    unit_tax:       jQuery('#id_sale-'+object_id+'-unit_tax').val(),
+                    unit_discount:  jQuery('#id_sale-'+object_id+'-unit_discount').val(),
+                    unit_price:     jQuery('#id_sale-'+object_id+'-unit_price').val(),
+                    garantee_months:         jQuery('#id_sale-'+object_id+'-garantee_months').val(),
+                    garantee_unit_price:         jQuery('#id_sale-'+object_id+'-garantee_unit_price').val(),
+                },
+                success: update_sale
+            });
+        }
+        function update_sale(data){
+            update('sale',data);
+            if ($('.error').length==0){
+                $('#sale-'+object_id+' .show').show();
+                $('#sale-'+object_id+' .edit').hide();
+            }
+        }
+        function cancelSale(object_id) {
+            $('#sale-'+object_id+' .field').each(function(i){
+                if (!$(this).attr('style')){
+                    $(this).parent().remove();
+                }
+            })
+            $('#sale-'+object_id+' .link').each(function(i){
+                if (!$(this).attr('style')){
+                    $(this).remove();
+                }
+            })
+            $('#sale-'+object_id+' .field,#sale-'+object_id+' .link').show();
+            $('#sale-'+object_id+' .show').show();
+            $('#sale-'+object_id+' .edit').hide();
+        }
+        function addSale(object_id) {
+            $.ajax({
+                url: '/inventory/sale/new/',
+                type:'POST',
+                data:{
+                    doc_number:     jQuery('#doc_number').val(),
+                    client:     jQuery('#client').val(),
+                    item:     jQuery('#item').val(),
+                },
+                success: update_sale
+            });
+        }
+        function deleteSale(object_id) {
+            jQuery("#last_id").val(object_id);
+            $.ajax({
+                url: '/inventory/sale/'+object_id+'/delete/' ,
+                type:'POST',
+                data:{ 
+                    doc_number:     jQuery('#doc_number').val()
+                },
+                success: removeSale
+            });
+        }
+        function removeSale(object_id) {
+            object_id=jQuery("#last_id").val();
+            jQuery('#sale-'+object_id).remove();
+        }
+        function get_entries(object_id){
+            jQuery("#last_id").val(object_id);
+            jQuery.get( '/inventory/transaction_entry_list/'+object_id, {}, insert_entries);
+            
+        }
+        function insert_entries(data){
+            object_id=jQuery("#last_id").val();
+            jQuery('#sale-'+object_id).after(data);
+            jQuery('#hide_entries_link_'+object_id).show();
+            jQuery('#show_entries_link_'+object_id).hide();
+        }
+        function show_entries(object_id){
+            if (jQuery('#transaction-'+object_id+'-entries-table').length == 0){
+                get_entries(object_id);
+            } else {
+                jQuery('#transaction-'+object_id+'-entries-table').show();
+            }
+            jQuery('#hide_entries_link_'+object_id).show();
+            jQuery('#show_entries_link_'+object_id).hide();
+        }
+        function hide_entries(object_id){
+            jQuery('#transaction-'+object_id+'-entries-table').hide();
+            jQuery('#hide_entries_link_'+object_id).hide();
+            jQuery('#show_entries_link_'+object_id).show();
+        }
+        function getGaranteePrice(object_id) {
+            jQuery("#last_id").val(object_id);
+            $.ajax({
+                url: '/inventory/garantee_price/',
+                type:'GET',
+                data:{ 
+                    item:     jQuery('#id_sale-'+object_id+'-item').val(),
+                    months:     jQuery('#id_sale-'+object_id+'-garantee_months').val(),
+                },
+                success: updateGaranteePrice
+            });
+        }
+        function update(prefix, data){
+            $('.message').remove();
+            object_id=jQuery("#last_id").val();
+            $('#ajax-data').replaceWith('<div id="ajax-data" style="display: none;"></div>');
+            var d = $('#ajax-data').append(data);
+            $('.message', d).appendTo($('#messages')).hide().slideDown('slow');
+            results=$('.'+prefix, d);
+            results.each(function(i){
+                if ($('#'+this.id+":visible").length>0){
+                    $('#'+this.id+":visible:first").replaceWith(this);
+                } else {
+                    $('#'+prefix+'s').prepend(this);
+                }
+            });
+        }
+        function updateGaranteePrice(data){
+            object_id=jQuery("#last_id").val();
+            $('.message').remove();
+            $('#ajax-data').replaceWith('<div id="ajax-data" style="display: none;"></div>');
+            var d = $('#ajax-data').append(data)
+            $('.message', d).appendTo($('#messages')).hide().slideDown('slow');
+            price=$('#price', d).html();
+            jQuery('#id_sale-'+object_id+'-garantee_unit_price').val(price)
+        }
+    </script>
+    <input type="hidden" id="last_id" value="">
+<th>Doc Number</th><th>Date</th><th>Client</th><th>Item</th><th>Quantity</th><th>Serial</th>{% if perms.inventory.view_cost %}<th>Cost</th>{% endif %}<th>Tax</th><th>Discount</th><th>Price</th><th>Warranty</th><th>Duration</th><th>Charge</th><th></th>
+{% endblock%}
+{% block line %}
+    {% include "inventory/sale.html" %}
+{% endblock%}
+
+
+

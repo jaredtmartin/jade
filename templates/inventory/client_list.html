@@ -1,0 +1,13 @@
+
+{% extends "inventory/account_list.html" %}
+{% load i18n %}
+{% block heading %}{% trans 'Clients' %}{% endblock%}
+{% block search_url %}/inventory/clients/{% endblock %}
+{% block actions %}
+    {% if perms.inventory.change_sale %}
+        <div class="actiontab" ><a href="/inventory/client/" class="action">{% trans 'New' %}</a><br></div>
+    {% endif %}
+    {% if perms.inventory.view_vendor %}
+        <div class="actiontab" ><a href="/inventory/vendors/" class="action">{% trans 'Vendors' %}</a><br></div>
+    {% endif %}
+{% endblock%}

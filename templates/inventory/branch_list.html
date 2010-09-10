@@ -1,0 +1,8 @@
+{% extends "inventory/account_list.html" %}
+{% load i18n %}
+
+{% block heading %}{% trans 'Branches' %}{% endblock%}
+{% block search_url %}/inventory/branches/{% endblock %}
+{% block pre-table %}
+    <a href="/inventory/branch/" class="action">{% trans 'New Branch' %}</a><br>
+{% endblock%}

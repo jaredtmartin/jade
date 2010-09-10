@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% load tags %}
+
+{% block top %}
+    <h1>{% block heading %}{% endblock %}</h1>
+    {% block search_label %}{% trans 'Document Number' %}{% endblock %}:<input id="search_field" type="text" value="{{q}}" >{% if search_by_date %} {% trans 'From' %}:<input id="start-search" type="text" value="{{start|default:''}}" > {% trans 'Until' %}:<input id="end-search" type="text" value="{{end|default:''}}" >{% endif %}<a onclick="window.location = '{% block search_url %}{% endblock %}?q='+$('#search_field').val()+'&start='+$('#start-search').val()+'&end='+$('#end-search').val(); return false;" href="#"> <img src="/media/img/find.png"/></a></form>
+{% endblock %}
+{% block content %}
+    <script type="text/javascript">
+        $(document).ready(function(){
+            $('#start-search').datepicker();
+            $('#end-search').datepicker();
+            jQuery('#search_field').keydown(function(e){
+                if (e.keyCode == 13) {
+                    window.location = '?q='+$('#search_field').val(); return false;
+                }
+            });
+        });
+    </script>
+    {% block pre-table %}{% endblock %}
+    <div class="section">
+        {% pages page q %}
+        <table id="line-table">
+            <thead><tr>{% block table_header %}{% endblock%}</tr></thead>
+            <tbody id="{{prefix}}s">
+                {% for object in page.object_list %}
+                    {% block line %}{% endblock%}
+                {% endfor %}
+            </tbody>
+            <tfoot><tr>{% block table_footer %}{% endblock%}</tr></tfoot>
+        </table>
+        {% pages page q %}
+        <div id="data" style="display: none;"></div>
+    </div>
+{% endblock%}
+

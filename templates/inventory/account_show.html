@@ -1,0 +1,101 @@
+
+{% extends "inventory/show.html" %}
+{% load i18n %}
+{% load tags %}
+{% block js %}
+    <script type="text/javascript" src="/media/js/jade.js"></script> 
+{% endblock %}
+
+{% block actions %}
+    {% if tipo == 'client' %}
+        {% if perms.inventory.change_client %}
+            <div class="actiontab" ><a href="/inventory/client/" class="action">{% trans 'New' %}</a></div>
+            {% if object %}
+                <div class="actiontab" ><a href='/inventory/account/{{object.pk}}/delete/?redirect_url=/inventory/clients/'>{% trans 'Delete' %}</a></div>
+                <div class="actiontab" ><a href='/inventory/account/{{object.pk}}/statement.pdf'>{% trans 'Statement' %}</a></div>
+            {% endif %}
+        {% endif %}
+    {% endif %}
+    {% if tipo == 'vendor' %}
+        {% if perms.inventory.change_vendor %}
+            <div class="actiontab" ><a href="/inventory/vendor/" class="action">{% trans 'New' %}</a></div>
+            {% if object %}<div class="actiontab" ><a href='/inventory/account/{{object.pk}}/delete/?redirect_url=/inventory/vendors/'>{% trans 'Delete' %}</a></div>{% endif %}
+        {% endif %}
+    {% endif %}
+    {% if tipo == 'account' %}
+        {% if perms.inventory.change_account %}
+            <div class="actiontab" ><a href="/inventory/account/" class="action">{% trans 'New' %}</a></div>
+            {% if object %}<div class="actiontab" ><a href='/inventory/account/{{object.pk}}/delete/?redirect_url=/inventory/accounts/'>{% trans 'Delete' %}</a></div>{% endif %}
+        {% endif %}
+    {% endif %}
+{% endblock%}
+{% block table_header %}<th>{% trans 'Date' %}</th><th>{% trans 'Doc Number' %}</th><th>{% trans 'Type' %}</th><th>{% trans 'Account' %}</th><th>{% trans 'Item' %}</th><th>{% trans 'Quantity' %}</th><th>{% trans 'Serial' %}</th><th>{% trans 'Value' %}</th>{% endblock%}
+{% block details %}
+    <script type="text/javascript">
+        function save_account(object_id, url){
+            jQuery("#last_id").val(object_id);
+            $.ajax({
+                url: url,
+                type:'POST',
+                data:{ 
+                    name:           jQuery('#id_account-'+object_id+'-name').val(),
+                    multiplier:           jQuery('#id_account-'+object_id+'-multiplier').val(),
+                    tax_group:           jQuery('#id_account-'+object_id+'-tax_group').val(),
+                    price_group:           jQuery('#id_account-'+object_id+'-price_group').val(),
+                    tax_number:           jQuery('#id_account-'+object_id+'-tax_number').val(),
+                    registration:           jQuery('#id_account-'+object_id+'-registration').val(),
+                    description:           jQuery('#id_account-'+object_id+'-description').val(),
+                    home_phone:           jQuery('#id_account-'+object_id+'-home_phone').val(),
+                    cell_phone:           jQuery('#id_account-'+object_id+'-cell_phone').val(),
+                    work_phone:           jQuery('#id_account-'+object_id+'-work_phone').val(),
+                    fax:           jQuery('#id_account-'+object_id+'-fax').val(),
+                    email:           jQuery('#id_account-'+object_id+'-email').val(),
+                    address:           jQuery('#id_account-'+object_id+'-address').val(),
+                    state_name:           jQuery('#id_account-'+object_id+'-state_name').val(),
+                    country:           jQuery('#id_account-'+object_id+'-country').val(),
+                    user:           jQuery('#id_account-'+object_id+'-user').val(),
+                    number:           jQuery('#id_account-'+object_id+'-number').val(),
+                },
+                success: update_account
+            });
+        }
+        function update_account(data){
+            update('account',data);
+        }
+    </script>
+    <div id="accounts">
+        {% include 'inventory/account.html' %}
+        
+<!--<a href="#" onclick="save_account(); return false;">{% trans 'Save' %}</a>-->
+    </div>
+    
+    <hr class="clear-contentunit" />
+    {% if tipo != 'account' %}
+        {% if object.due %}
+            <h3>{% trans 'Unpaid Documents' %}</h3>
+            <table id="due-table">
+                <thead><tr><th>{% trans 'Document' %}</th><th>{% trans 'Date' %}</th><th>{% trans 'Value Pending' %}</th></tr></thead>
+                <tbody>
+                    {% for trans in object.due %}
+                        <tr><td><a href="{{trans.subclass.url}}">{{trans.doc_number}}<a> </td><td>{{trans.date|date:"d/m/Y"}}</td><td>${{trans.total|floatformat:2}}</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% endif %}
+        <hr class="clear-contentunit" />
+        {% if object.overdue %}
+            <h3>{% trans 'Overdue Unpaid Documents' %}</h3>
+            <table id="overdue-table">
+                <thead><tr><th>{% trans 'Document' %}</th><th>{% trans 'Date' %}</th><th>{% trans 'Value Pending' %}</th></tr></thead>
+                <tbody>
+                    {% for trans in object.overdue %}
+                        <tr><td><a href="{{trans.subclass.url}}">{{trans.doc_number}}<a> </td><td>{{trans.date|date:"d/m/Y"}}</td><td>${{trans.total|floatformat:2}}</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% endif %}
+    {% endif %}
+{% endblock %}
+{% block line %}<tr><td>{{ entry.date|date:"d/m/Y" }}</td><td>{% link entry.transaction %}</td><td>{{ entry.transaction.tipo }}</td><td>{% link entry.account %}</td><td>{% link entry.item %}</td><td>{{entry.quantity|mult:object.multiplier|floatformat:-2}}</td><td>{% serial_link entry %}</td><td>${{entry.value|mult:object.multiplier|floatformat:2}}</td></tr>{% endblock%}
+
+

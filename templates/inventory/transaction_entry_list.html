@@ -1,0 +1,22 @@
+{% load i18n %}
+{% load tags %}
+<tr class="transaction-entries-table" id="transaction-{{ transaction_id }}-entries-table"><td><b>{% trans 'Entries:' %}</b></td><td colspan="11">
+    <table>
+        <thead><tr><th>{% trans 'Type' %}</th><th>{% trans 'Account' %}</th><th>{% trans 'Value' %}</th><th>{% trans 'Date' %}</th><th>{% trans 'Item' %}</th><th>{% trans 'Quantity' %}</th><th>{% trans 'Serial' %}</th></tr></thead>
+        <tbody id="entry">
+            {% for object in page.object_list %}
+                <tr>
+                    <td>{{ object.get_tipo_display }}</td>
+                    <td>{% link object.account %}</td>
+                    <td>{{object.value}}</td>
+                    <td>{{ object.date }}</td>
+                    <td>{% if object.item %}<a href="{{object.item.url}}">{{object.item}}</a>{% endif %}</td>
+                    <td>{{object.quantity|floatformat:-2}}{% if object.cost_complete %}*{% endif %}</td>
+                    <td>{% if object.serial %}<a href="/inventory/serial/{{object.serial}}/">{{object.serial}}</a>{% endif %}</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</td></tr>
+
+

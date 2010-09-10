@@ -1,0 +1,18 @@
+{% load i18n %}
+{% load tags %}
+<ul>
+    {% errors error_list %}
+    {% if info_list %}
+        {% for info in info_list %}
+            <li class="info message">{{ info }}</li>
+        {% endfor %}
+    {% endif %}
+</ul>
+<table>
+    {% for object in objects %}
+        {{object.tipo}}
+        {{object.template}}
+        {% include object.template %}
+    {% endfor %}
+</table>
+

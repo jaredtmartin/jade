@@ -1,0 +1,66 @@
+<html>
+    <head>
+        <title></title>
+        <meta http-equiv="Content-Type" content="text/html;charset=ISO-8859-1" >
+        <meta http-equiv="Content-Script-Type" content="text/javascript" >
+        <meta http-equiv="Content-Style-Type" content="text/css" >
+        <style type="text/css">
+            h1 {
+                height: 60px;
+                min-width: 960px;
+                background: #e4f2fd;
+                border-bottom: 1px solid #c6d9e9;
+                font-family:Georgia,Times,"Times New Roman",serif;
+                font-weight:normal;
+                color:#555555;
+                font-size:36px;
+                line-height:1em;
+                min-width:500px;
+                padding-top:34px;
+                text-align:center;
+                text-shadow:0 1px 0 #E4F2FD;
+            }
+            th{text-align:left;}
+            .row1{  
+                -moz-background-clip:border;
+                -moz-background-inline-policy:continuous;
+                -moz-background-origin:padding;
+                background:#EDF3FE none repeat scroll 0 0;
+            }
+            .row2{
+                -moz-background-clip:border;
+                -moz-background-inline-policy:continuous;
+                -moz-background-origin:padding;
+                background:white none repeat scroll 0 0;
+            }
+            body{line-height:16px;}
+            td.numero {text-align:left;}
+            td.texto {text-align:left;}
+            table {border:solid;height:200px;}
+            @page {
+                size:letter;
+                {% if watermark_filename %}
+                    background-image: url({{watermark_filename}});
+                {% endif %}
+                top: 1cm;
+                left: 1cm;
+                right: 1.7cm;
+            }
+        </style>
+    </head>
+    <body>
+        <h1>Lista de Precios</h1>
+        <table id="tableContent">
+            <thead>
+                <tr><th>Nombre</th><th>Description</th><th>Precio</th></tr>
+            </thead>
+            <tbody>
+                {% for object in items %}
+                    <tr class="{% cycle "row1" "row2" %}"><td class="texto">{{object.name}}</td><td class="texto">{{object.description}}</td><td class="numero">${{object.price|default:0|floatformat:2}}</td></tr>
+                    
+                {%endfor%}
+            </tbody>
+            
+        </table>
+    </body>
+</html>

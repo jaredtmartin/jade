@@ -1,0 +1,30 @@
+{% extends "inventory/transaction_base.html" %}
+{% load i18n %}
+
+{% block other_fields_edit %}
+    <td/>
+    {% include "inventory/inventory_base.html" %}
+    <td><input id="id_transaction-{{ object.pk }}-cost" class="field money lookup" value="{{object.subclass.cost|floatformat:2}}" type="text"></td>
+    <td/><td/><td/>
+{% endblock %}
+{% block other_actions_edit %}
+{% endblock %}
+{% block edit_save_link %}<a class="edit save" id="id_transaction-{{object.pk}}-save" title="{% trans 'Save Changes' %}" href="#" onclick="saveTransaction({{object.pk}}, '/production/{{object.tipo|lower}}/{{object.pk}}/');$('.quantity:first').select(); return false;"><img src="/media/img/save.png"/></a>{% endblock %}
+
+
+
+{% block other_fields_show %}
+    <td/>
+    {% include "inventory/inventory_base.html" %}
+    <td id="id_transaction-{{object.pk}}-cost" value="{{object.subclass.cost|floatformat:2}}"  class="cost field money">    ${{object.subclass.cost|floatformat:2}}</td>
+    <td/><td/><td/>
+{% endblock %}
+
+{% block show_save_link %}<a class="edit save" style="display:none;" id="id_transaction-{{object.pk}}-save" title="{% trans 'Save Changes' %}" href="#" onclick="saveTransaction({{object.pk}}, '/production/{{object.tipo|lower}}/{{object.pk}}/');$('.quantity:first').select(); return false;"><img src="/media/img/save.png"/></a>{% endblock %}
+{% block other_actions_show %}
+    {% if object.subclass.delivered %}
+        <a class="show" id="id_transaction-{{object.pk}}-undeliver" title="{% trans 'Mark as NOT Delivered' %}" href="#" onclick="markTransaction('/inventory/transaction/{{object.pk}}/undeliver/'); return false;"><img src="/media/img/delivered.png"/></a>
+    {% else %}
+        <a class="show" id="id_transaction-{{object.pk}}-deliver" title="{% trans 'Mark as Delivered' %}" href="#" onclick="markTransaction('/inventory/transaction/{{object.pk}}/deliver/'); return false;"><img src="/media/img/undelivered.png"/></a>
+    {% endif %}
+{% endblock %}

@@ -1,0 +1,9 @@
+{% load i18n %}
+{% load tags %}
+<tr id="garanteeoffer-{{ object.pk }}" class="garanteeoffer">
+    <td><input type="text" id="id_garanteeoffer-{{ object.pk }}-months" value="{{ object.months }}" name="garanteeoffer-{{ object.pk }}-months"></td>
+    <td><input type="text" id="id_garanteeoffer-{{ object.pk }}-price" value="{{ object.price }}" name="garanteeoffer-{{ object.pk }}-price"></td>
+    <td><a href="#" onclick="save_garanteeoffer({{object.id}}); return false;">{% trans 'Save' %}</a></td>
+    <td><a href="#" onclick="delete_garanteeoffer({{object.id}}); return false;">{% trans 'Delete' %}</a></td>
+</tr>
+

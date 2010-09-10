@@ -1,0 +1,56 @@
+{% extends "inventory/transactions.html" %}
+{% load i18n %}
+{% block heading %}{% trans 'Processes' %} {% endblock%}
+{% block actions %}
+    <div class="actiontab" ><a href="/production/job/list/?{% if q %}q={{q}}&{% endif %}{% if start %}start={{start}}&{% endif %}{% if end %}end={{end}}{% endif %}" class="action">{% trans 'Jobs' %}</a></div>
+    <div class="actiontab" ><a onclick="$('#design-form').dialog('open');return false;" href="#" class="action">{% trans 'Design' %}</a></div>
+    <div class="actiontab" ><a onclick="$('#plan-form').dialog('open');return false;" href="#" class="action">{% trans 'Plan' %}</a></div>
+{% endblock%}
+{% block pre-table %}
+    <div id="design-form" title="{% trans 'Create process' %}">
+	    <form>
+		    {% trans 'Doc Number' %}: <input id="doc_number" value="{{q}}" type="text"> <a href="#" onclick="$(this).prev().val('');return false;"><img id="next_doc_number" src="/media/img/clear.png"/></a>
+		    {% trans 'Item' %}: <input id="item" value="{{page.object_list.1.item}}" type="text"> <a onclick="newTransaction('/production/process/new/'); return false;" href="#"><img src="/media/img/add.png"/></a>
+	    </form>
+    </div>
+    <div id="plan-form" title="{% trans 'Create job' %}">
+	    <form>
+		    {% trans 'Number of times to multiply process' %}: <input id="quantity" value="1" type="text">
+	    </form>
+    </div>
+    <script type="text/javascript">
+        $(document).ready(function(){
+            $('#order-form-url').val('x');
+            $('#design-form #item').autocomplete('/inventory/item_list/', {matchSubset:0, autoFill:1,});
+            $("#design-form").dialog({
+			    autoOpen: false,
+			    height: 300,
+			    width: 350,
+			    modal: false,
+			    buttons: {
+				    Close: function() {
+					    $(this).dialog('close');
+				    },
+			        'Create': function() {
+			            newTransaction('/production/process/new/');
+			        }
+			    },
+		    });
+            $("#plan-form").dialog({
+			    autoOpen: false,
+			    height: 300,
+			    width: 350,
+			    modal: true,
+			    buttons: {
+				    Close: function() {
+					    $(this).dialog('close');
+				    },
+			        'Create': function() {
+			            newTransaction('/production/job/new/?q={{q}}&quantity='+$('#quantity').val());
+			            $(this).dialog('close');
+			        }
+			    },
+		    });
+        });
+    </script>
+{% endblock%}

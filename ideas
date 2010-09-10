@@ -1,0 +1,233 @@
+###########################################################################################################
+# Costs ideas:
+###########################################################################################################
+Each entry for Inventory with a value must be cost.
+Negative values normally would have link to source cost (The entry the item was brought into stock with.)
+Positive entries would also have a Boolean to mark if its cost has been all used up.
+When a negative is deleted or reduced the mark on the source should be removed.
+When a new postive is made, we should check for any negatives without a link.
+If a negative has two sources, it will be split into two entries, one for each source.
+When adding a negative, we need to mark the postives if they are complete.
+If I store the link in the entry, then a N would be deleted when the P is deleted - Not Good. It has to be in a separate table
+
+
+#To get all cost related entries for an item:
+Entry.objects.filter(item=item, account=inventory).order_by('date')
+#To search for next positives to consume:
+Entry.objects.filter(item=item, account=inventory, quantity__gt=0, cost_complete=False).order_by('date')
+#To search for un-linked negatives:
+Entry.objects.filter(item=item, account=inventory, quantity__lt=0, source_cost=None).order_by('date')
+
+Functions to create:
+get a host:
+
+entries could have a take function that will search for a host(positive) and latch itself on(set it's source_cost).
+Will there be errors if there's more than one Inventory entry? like for getting quantities or such? Perhaps we can use the Expense entry instead and negate them.
+
+###########################################################################################################
+each negative points to a single postive
+but will the negative entries be deleted if I delete its positive?
+
+
+
+
+Enforce Serials can be optional
+Payments can be applied to orders later (Abono a cuenta)
+Returns are separate transactions
+
+Sale Has:
+    doc_number
+    entries->
+        Client+*
+        Revenue-
+        Tax-
+        Discount-
+        Inventory*
+        Expense+
+
+revenue=-price
+revenue -10
+discount+2
+charge  +9
+tax     -1
+price=-(revenue+discount+tax) (-10+2-1=-9)
+
+
+
+r=9+2-1
+9-2+1
+
+price=-r+d+t
+
+
+R       +   D   +   T   =   P
+(-10)   + (+2) + (-1) =   (-9)
+R       =   P   -   D   -   T
+(-10)   = (-9)  - (+2)  + (-1)
+()
+
+-p=d+t-r
+    -P      =   +R  +D  +T
+    -R      =   -R
+    -P   -R =   +D  +T
+    +P      =   +P
+    -R      =   +D  +T  +P
+revenue = 
+When values are positive:
+revenue=tax-price-discount
+
+
+
+
+
+ENTRY_TYPES = (
+        # Sale only entries                                  Account Type:      entry_category
+        ('Client', 'Cargar Precio para el Cliente'),        -> Client           inventory_debit_entry, accounting_debit_entry 
+        ('Revenue', 'Ingresos'), # Credit                   -> Revenue          accounting_credit
+        ('Tax', 'Impuestos'), # Credit                      -> Tax
+        ('Discount', 'Discuentos'), # Credit                -> Discount
+        ('InventoryOut', 'Inventario Saliendo'), # Debit    -> Inventory        accounting_debit
+        ('Expense', 'Gastos'), # Debit                      -> Expense
+        
+        # Purchase only entries
+        ('Vendor', 'Deber'), # Credit                       -> Vendor
+        ('InventoryIn', 'Inventario Entrando'), # Debit     -> Inventory
+        
+        # Count only entries    
+        ('Count', 'Cuenta Fisica'), # Debit                 -> Inventory
+        ('Count', 'Cuenta Fisica'), # Debit                 -> Expense
+        
+        # Payment entries
+        ('Debit', 'Pago de Cliente'), # Debit               -> Client
+        ('Credit', 'Recibo de Pago de Cliente'), # Credit   -> Cash
+
+
+
+A Order Has:
+    inventory_entry
+    accounting_entry
+    SaleCharge+('Charge', 'Cargar Precio para el Cliente'),-> Client account
+    SaleRevenue-('Revenue', 'Ingresos'),                    -> Revenue Account
+    SaleTax-('Tax', 'Impuestos'),                       -> Tax Account
+    SaleDiscount-('Discount', 'Discuentos'),                 -> Discounts account
+    
+A Purchase Has:
+    PurchaseInventory+*'InventoryIn'
+    PurchaseVendor-'Owe'
+    
+A Purchase Line Has:
+    LineInventory*        -> Inventory account 
+    LineDelivery*          -> Vendor account 
+A Count Has:
+    Count+* -> Expense account
+    Expense
+
+A SaleLine has:
+    LineInventory-* ('Inventory', 'Costo Total de Inventario'), -> Inventory account (Does value and item)
+    LineExpense+  ('Expense', 'Gastos'),                      -> Expense account
+    LineDelivery* ('Item Delivered', 'Recibido'),             -> Client account
+    
+A Payment has:
+    PaymentDebit('Payment', 'Pago de Cliente'),             -> Client account
+    PaymentCredit('Cash', 'Recibo de Pago de Cliente'),      -> Vendor account
+    
+    
+I need to specify client and have it create a sale for the client
+I need to specify a vendor and have it create a purchase from the vendor
+I need to specify a product and have it create a line for that product
+
+
+revenue -10
+discount+2
+charge  +9
+tax     -1
+
+Order has:
+    client
+    vendor
+Line has:
+    quantity(Decimal)
+    product(Item)
+    inventory(Entry)
+    expense(Entry)
+    delivery(Entry)
+    
+Payment has:
+    value(Decimal)
+    payment(Entry)
+    cash(Entry)
+    
+    
+    
+    ::::::Counts::::
+Transaction:
+    doc_number = Count Number
+    comments = Description
+    tipo = 'Count'
+
+Entry:
+    Accounting:
+        value = total cost of difference
+        account = Inventory
+        date = date posted (date created if its not posted yet)
+    Inventory:
+        quantity = total difference of quantity
+        item = Product being counted
+        serial = Serial Number being counted if any
+    Costs:
+        cost_left = models.DecimalField(max_digits=5, decimal_places=2, default='0.00')
+        quantity_left = models.DecimalField(max_digits=5, decimal_places=2, default='0.00')
+    Status
+        delivered = True when posted
+        active = models.BooleanField(default=1)
+
+        tipo = CountIncrease / CountDecrease
+
+select inventory_transaction.id, inventory_transaction.tipo, value, inventory_entry.id, inventory_entry.tipo 
+
+from inventory_transaction 
+left join (select transaction_id, value from inventory_entry where tipo='Revenue')
+left join inventory_entry on transaction_id=inventory_transaction.id;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Get prices:
+select transaction_id, value from inventory_entry where tipo='Revenue'
+
+
+Combine with transactions:
+
+select doc_number, inventory_transaction.id, inventory_transaction.tipo, price.value
+from inventory_transaction 
+left join (select transaction_id, value from inventory_entry where tipo='Revenue') as price on transaction_id=inventory_transaction.id
+
+Grouped:
+
+select doc_number, inventory_transaction.id id, inventory_transaction.tipo, sum(price.value) price
+from inventory_transaction 
+left join (select transaction_id, value from inventory_entry where tipo='Revenue') as price on transaction_id=inventory_transaction.id
+group by doc_number
+
+
+
+
+q="""select doc_number, inventory_transaction.id id, inventory_transaction.tipo, sum(price.value) price
+from inventory_transaction 
+left join (select transaction_id, value from inventory_entry where tipo='Revenue') as price on transaction_id=inventory_transaction.id
+group by doc_number"""
+
+
+
+
+

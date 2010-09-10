@@ -1,0 +1,19 @@
+
+{% extends "inventory/transaction_base.html" %}
+{% load i18n %}
+{% block other_fields_edit %}
+    <td><input id="id_transaction-{{ object.pk }}-account" title="{% trans 'Name of client' %}" class="field account lookup client" value="{{object.subclass.source|default:''}}" type="text"></td>
+    <td/><td/><td/><td/><td/><td/>
+    <td><input id="id_transaction-{{ object.pk }}-value" title="{% trans 'Amount paid' %}" class="field money" value="{{object.subclass.value|floatformat:2}}" type="text"></td>
+{% endblock %}
+{% block other_actions_edit %}
+    {% ifequal object.tipo 'ClientPayment' %}<a style="display:none;" class="show" id="id_transaction-{{object.pk}}-return" title="Refund Payment" href="#" onclick="newTransaction('/inventory/clientrefund/{{object.pk}}/new/'); return false;"><img src="/media/img/return.png"/></a>{% endifequal %}
+{% endblock %}
+{% block other_fields_show %}
+    <td><a id="id_transaction-{{ object.pk }}-account" title="{% trans 'Name of client' %}"      value="{{object.subclass.source|default:''}}"                     class="field client account lookup" href="{{object.subclass.source.url}}">{{object.subclass.source|default:''}}</a></td>
+    <td/><td/><td/><td/><td/><td/>
+    <td id="id_transaction-{{object.pk}}-value"   title="{% trans 'Amount paid' %}"           value="{{object.subclass.value|floatformat:2}}"                  class="field money">    ${{object.subclass.value|floatformat:2}}</td>
+{% endblock %}
+{% block other_actions_show %}
+    {% ifequal object.tipo 'ClientPayment' %}<a class="show" id="id_transaction-{{object.pk}}-return" title="{% trans 'Refund Payment' %}" href="#" onclick="newTransaction('/inventory/clientrefund/{{object.pk}}/new/'); return false;"><img src="/media/img/return.png"/></a>{% endifequal %}
+{% endblock %}

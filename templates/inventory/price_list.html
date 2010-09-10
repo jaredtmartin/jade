@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% load tags %}
+{% block actions %}
+    <a href="/inventory/item/" class="action">{% trans 'New Item' %}</a><br>
+{% endblock%}
+{% block content %}
+    <h1>{% block heading %}{% endblock %}</h1>
+    <input type="hidden" id="last_id" value="">
+    <input id="search_field" type="text" value="{{q}}"><a onclick="window.location = '{% block search_url %}{% endblock %}?q='+$('#search_field').val(); return false;" href="#">{% trans 'Search' %}</a></form>
+    {% pages page %}
+    {% include "inventory/prices.html" %}
+    {% pages page %}
+    <div id="data" style="display: none;"></div>
+{% endblock%}

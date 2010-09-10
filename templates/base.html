@@ -1,0 +1,30 @@
+{% extends "bare.html" %}
+{% load i18n %}
+{% load tags %}
+{% block left %}
+    {% block actions %}{% endblock %}
+    {% for tab in user.get_profile.tabs %}
+        {% include 'tab.html' %}
+    {% endfor %}
+
+{% endblock %}
+{% block messages %}
+    <ul>
+        {% if error_list %}
+            {% errors error_list %}
+        {% endif %}
+        {% if info_list %}
+            {% for info in info_list %}
+                <li class="info message">{{ info }}</li>
+            {% endfor %}
+        {% endif %}
+    </ul>
+{% endblock %}
+{% block user-corner %}
+    {% trans 'User' %}: {{ user.username }}<br>
+    {% trans 'Price Group' %}: {{user.get_profile.price_group}}<br>
+    <a href="/logout">{% trans 'Logout' %}</a><br>
+{% endblock %}
+{% block right %}
+    {% block actdions %}{% endblock%}
+{% endblock %}

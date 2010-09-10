@@ -1,0 +1,57 @@
+
+{% load i18n %}
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//{% trans 'EN' %}">
+<html>
+    <head>
+        <title>{% block title %}{% endblock %}</title>
+        <link type="text/css" rel="stylesheet" media="screen" href="/media/css/jquery-ui.css"/>
+        <link type="text/css" rel="stylesheet" media="screen" href="/media/css/autocomplete.css"/>
+        <link type="text/css" rel="stylesheet" media="screen" href="/media/admin/css/base.css"/>
+        <link type="text/css" rel="stylesheet" media="screen" href="/media/admin/css/forms.css"/>
+        <link type="text/css" rel="stylesheet" media="screen" href="/media/admin/css/widgets.css"/>
+        <link rel="shortcut icon" href="/media/img/favicon.ico" type="image/x-icon" />
+        <link type="text/css" rel="stylesheet" media="screen" href="/media/css/jade.css"/>
+        <script type="text/javascript" src="/media/js/jquery.js"></script> 
+        <script type="text/javascript" src="/media/js/jquery.form.js"></script>
+        <script type="text/javascript" src="/media/js/jquery-ui.js"></script> 
+<!--        <script type="text/javascript" src="/media/js/jquery-ui-i18n.js"></script>-->
+        <script type="text/javascript" src="/media/js/jquery.autocomplete.js"></script> 
+        {% block js %}{% endblock %}
+    </head>
+    <body>
+<!--        <script type="text/javascript">-->
+<!--            $(document).ready(function(){-->
+<!--                $.datepicker.regional['es'];-->
+<!--            });-->
+<!--        </script>-->
+<!--        <div id="corner"></div>-->
+        <div id="top">
+            <div id="header">
+            {% block top %}{% endblock %}
+            </div>
+            <div id="user-corner">
+                <a href="/inventory/set-language/?lang=en" title={% trans 'English' %}><img src="/media/img/en.png" alt={% trans 'English' %} /></a>
+                <a href="/inventory/set-language/?lang=es" title={% trans 'Spanish' %}><img src="/media/img/es.png" alt={% trans 'Spanish' %} /></a>
+                <a href="/inventory/set-language/?lang=de" title={% trans 'German' %}><img src="/media/img/de.png" alt={% trans 'German' %} /></a>
+                <a href="/inventory/set-language/?lang=fr" title={% trans 'French' %}><img src="/media/img/fr.png" alt={% trans 'French' %} /></a>
+                <br>
+                {% block user-corner %}              
+                {% endblock %}
+            </div>
+        <div id="messages">{% block messages %}{% endblock %}</div>
+        <div class="clear-contentunit"></div>
+        </div>
+        <div id="left">
+            {% block left %}
+            {% endblock %}
+        </div>
+        <div id="content">{% block content %}{% endblock %}</div>
+        
+        <div id="ajax-data" style="display: none;"></div>
+<!--        <div id="right">{% block right %}{% endblock %}</div>-->
+<div class="clear-contentunit"></div>
+        <div id="bottom">
+            {% block bottom %}{% endblock %}
+        </div>
+    </body>
+</html>

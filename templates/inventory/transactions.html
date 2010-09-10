@@ -1,0 +1,71 @@
+{% extends "inventory/index.html" %}
+{% load i18n %}
+
+{% load tags %}
+{% block js %}
+    <script type="text/javascript" src="/media/js/jade.js"></script> 
+{% endblock %}
+{% block actions %}
+    {% block moreactions %}
+        <div class="actiontab" ><a href="/inventory/sales/?{% if q %}q={{q}}&{% endif %}{% if start %}start={{start}}&{% endif %}{% if end %}end={{end}}{% endif %}" class="action">{% trans 'Sales' %}</a></div>
+        <div class="actiontab" ><a href="/inventory/purchases/?{% if q %}q={{q}}&{% endif %}{% if start %}start={{start}}&{% endif %}{% if end %}end={{end}}{% endif %}" class="action">{% trans 'Purchases' %}</a></div>
+        <div class="actiontab" ><a href="/inventory/counts/?{% if q %}q={{q}}&{% endif %}{% if start %}start={{start}}&{% endif %}{% if end %}end={{end}}{% endif %}" class="action">{% trans 'Counts' %}</a></div>
+        <div class="actiontab" ><a href="/inventory/transfers/?{% if q %}q={{q}}&{% endif %}{% if start %}start={{start}}&{% endif %}{% if end %}end={{end}}{% endif %}" class="action">{% trans 'Transfers' %}</a></div>
+    {% endblock%}
+    <div class="actiontab" ><a href="/inventory/transactions/movements.pdf?{% if q %}q={{q}}&{% endif %}{% if start %}start={{start}}&{% endif %}{% if end %}end={{end}}{% endif %}" class="action">{% trans 'Inventory' %}</a></div>
+{% endblock%}
+
+{% block heading %}{% trans 'Transactions' %} {% endblock%}
+{% block pre-table %}
+
+    
+    {% if show_totals %}
+        <div id="totals">
+            <h2>Totals:</h2>
+            {% if charge %}
+                <div id="charge" class="five-column">{% trans 'Charge' %}: ${{charge|floatformat:2}}</div>
+            {% endif %}
+            {% if tax %}
+                <div id="tax" class="five-column">{% trans 'Tax' %}: ${{tax|floatformat:2}}</div>
+            {% endif %}
+            {% if discount %}
+                <div id="discount" class="five-column">{% trans 'Discount' %}: ${{discount|floatformat:2}}</div>
+            {% endif %}
+            {% if price %}
+                <div id="price" class="five-column">{% trans 'Revenue' %}: ${{price|floatformat:2}}</div>
+            {% endif %}
+            {% if cost %}
+                <div id="cost" class="five-column">{% trans 'Cost' %}: ${{cost|floatformat:2}}</div>
+            {% endif %}
+            <div class="clear-contentunit"></div>
+        </div>
+    {% endif %}
+    
+{% endblock%}
+{% block table_header %}
+    <th>{% trans 'Number' %}</th>
+    <th>{% trans 'Type' %}</th>
+    <th>{% trans 'Date' %}</th>
+    <th>{% trans 'Account' %}</th>
+    <th>{% trans 'Item' %}</th>
+    <th>{% trans 'Quantity' %}</th>
+    <th>{% trans 'Serial' %}</th>
+    {% if perms.inventory.view_cost %}
+        <th  class="cost sale-details">{% trans 'Cost' %}</th>
+    {% endif %}
+    <th  class="tax sale-details">{% trans 'Tax' %}</th>
+    <th  class="discount sale-details">{% trans 'Discount' %}</th>
+    <th  class="price sale-details">{% trans 'Price' %}</th>
+<!--    <th  class="garantee-details">Garantee</th>-->
+<!--    <th  class="garantee-details">Duration</th>-->
+    <th>{% trans 'Actions' %}</th>
+    <input type="hidden" id="last_id" value="">
+{% endblock%}
+{% block line %}
+    {% with object.subclass.tipo as tipo %}
+        {% include object.subclass.template %}
+    {% endwith %}
+{% endblock%}
+
+
+

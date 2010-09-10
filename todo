@@ -1,0 +1,60 @@
+Required for version 2.01:
+    -Sales
+    -Purchases
+    -Counts
+    -Payments
+    -Prices
+    Price List
+    Receipts
+    -TaxGroups with receipts for each
+    Corte de Caja
+    -Add and edit Prices
+    -Delete all of the above
+    -Users and rights
+    -Serial numbers
+    -Returns of Sales
+    -Returns of Purchases
+    
+For later versions:
+    manual
+    combos
+    discounts
+    transfers
+    production
+    services
+    internal consumption
+    retention
+    
+fix physical counts with serial numbers
+garantee_list
+inventory list
+use account names instead of tipos, change all non client and vendor accounts to type "General"
+create an "internal consumption client" so that each time a sale is created to that user on savin the systems marks its tipo as a Internal Consumption and not a sale.
+add replenish min/max
+where will we list counts?
+How am I gonna do counts with serial numbers?
+    when you post a count that has serial numbers, get a list of all of the counts with that doc_number and item
+    adjust appropriatly
+download sqldump    (?)
+estado de cuenta
+inventory movement report   (?)
+cotizacion
+internationalize error and success messages  (?)
+Plus sign always adds a sale, not purchases and counts
+5 - get garantee price automatically
+need to add one day to the end date search so you can go: from 4 to 4 and get all from day 4 (?)
+2 - test as limited user
+3 - corte de caja
+7 - check default costs on counts and purchases
+9 - all fields should have explanatory text (title)
+9 - create base design
+learn how to upload images with ajax
+9 - item page should list serials that *might* be in our inventory
+never ending pages?
+==========================================================================================================
+||++++++++++++++++++++++++++++++++++++++++++++++++ DONE ++++++++++++++++++++++++++++++++++++++++++++++++||
+==========================================================================================================
+** Whenever we save an order we have to return the lines to the browser and note down all the ids generated for the new lines
+why cant i put a number > 1000 for the quantity?
+figure out how well deal with sites: Every site has its own instalation. Wont worry about doing transfers till its needed
+specifing another db is easy.

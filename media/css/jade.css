@@ -1,0 +1,62 @@
+.ui-datepicker {background-color:rgb(215,215,215);}
+.ui-datepicker thead {background-color:#008597;}
+input, textarea, select {-moz-border-radius:4px;}
+input.money, input.quantity { width:55px;}
+input.months{ width:55px;}
+input.doc_number{width:55px;}
+input.date{width:70px;}
+input.serial{width:75px;}
+input.lookup{width:100px;}
+
+tfoot td {font-weight:bold;}
+input {padding:0;}
+textarea{float:left;width:770px;}
+.item_image_area{float:right;width:200px;padding-right:50px;}
+td {padding:3px;}
+img.barcode{}
+.form_link{font-weight:normal;font-size:12px;}
+.active-form-link{font-weight:bold;font-size:12px;}
+.three-column{float:left;width:33%;}
+.four-column{float:left;width:24%;}
+.five-column{float:left;width:19%;}
+.two-column{float:left;width:48%;}
+.paginator {border-top:1px solid #DDDDDD; font-size:11px; line-height:22px; margin:0; padding-bottom:10px; padding-top:10px; }
+.paginator a:link, .paginator a:visited {-moz-background-clip:border; -moz-background-inline-policy:continuous; -moz-background-origin:padding; background:white none repeat scroll 0 0; border:1px solid #CCCCCC; padding:2px 6px; text-decoration:none; }
+.paginator a.showall {border:medium none !important; padding:0 !important; }
+.paginator a.showall:hover {-moz-background-clip:border !important; -moz-background-inline-policy:continuous !important; -moz-background-origin:padding !important; background:transparent none repeat scroll 0 0 !important; color:#003366 !important; }
+.paginator .end {border-width:2px !important; margin-right:6px; }
+.paginator .this-page {font-size:13px; font-weight:bold; padding:2px 6px; vertical-align:top; }
+.paginator a:hover {-moz-background-clip:border; -moz-background-inline-policy:continuous; -moz-background-origin:padding; background:#5B80B2 none repeat scroll 0 0; border-color:#003366; color:white; }
+h1 {font-size:30px;}
+h2 {color:#666666; font-size:14px; margin:0 0 0.2em; padding:0 6px 0 0;}
+table{width:100%;}
+/*td{-moz-border-radius:4px;color:white; background:#96c0bd; overflow:hidden; margin:1px;}*/
+/*td>a:link,td>a:visited{color:#666666}*/
+/*td>a:hover{color:black}*/
+/*#corner{flaoat:left; height:154px; width:159px;background-image:url(/media/img/corner.png);background-repeat:no-repeat;}*/
+#top{height:154px; background-image:url(/media/img/top.png);background-repeat:repeat-y;}
+#header{color:#666666;float:left;background:none;width:760px;padding:30px 0px 0px 160px;}
+#header a:link, #header a:visited {font-size:10px;color:#666666;}
+#user-corner{float:right; padding:30px 100px 0px 0px;}
+/*#bottom{height:50px; width:1200px;background-image:url(/media/img/bottom.png);}*/
+#left {float:left;width:100px;}
+.actiontab{width:90px; float:right;height:35px;padding-left:5px; background-image:url(/media/img/action.png);background-repeat:no-repeat;}
+.actiontab>a{color:white; font-size:14px;line-height:30px;}
+.tab {width:90px; float:right;height:55px;padding-left:5px; background-image:url(/media/img/tab.png);background-repeat:no-repeat;}
+.tab>a{color:white; font-size:14px;line-height:48px;}
+body{background-image:url(/media/img/middle.png);background-repeat:repeat-y;background-color:#b19b6a;width:1200px;}
+/*#right{float:left;width:100px;}*/
+#content {float:left;width:1040px;}
+#messages {padding-left:170px;padding-top:10px;clear:both;}
+.error{color:#fe3512;}
+.overdue{background-color:#fe3512;color:white;}
+.info{color:#3f8d7d;}
+/*.errorlist{list-style-type:none;}*/
+/*.errorlist li{color:red;}*/
+.clear-contentunit {clear:both; width:100%}
+
+/*table {clear:both; width:730px; margin:2.0em 0 0.2em 0px; table-layout: fixed; border-collapse:collapse; empty-cells:show; background-color:rgb(233,232,244);}*/
+/*table th.top {padding:0 7px 0 7px; empty-cells:show; background-color:rgb(175,175,175); text-align:left; color:rgb(255,255,255); font-weight:bold; font-size:110%;}*/
+/*table th {padding:2px 20px 2px 7px; border-left:solid 2px rgb(255,255,255); border-right:solid 2px rgb(255,255,255); border-top:solid 2px rgb(255,255,255); border-bottom:solid 2px rgb(255,255,255); background-color:rgb(225,225,225); text-align:left; color:rgb(80,80,80); font-weight:bold; font-size:110%;}*/
+/*table td {padding:2px 7px 2px 7px; border-left:solid 2px rgb(255,255,255); border-right:solid 2px rgb(255,255,255); border-top:solid 2px rgb(255,255,255); border-bottom:solid 2px rgb(255,255,255); background-color:rgb(225,225,225); text-align:left; font-weight:normal; color:rgb(80,80,80); font-size:110%;}*/
+

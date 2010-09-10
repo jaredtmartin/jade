@@ -1,0 +1,10 @@
+{% extends "inventory/index.html" %}
+{% load i18n %}
+
+{% load tags %}
+{% block table_header %}
+    <th>{% trans 'Date' %}</th><th>{% trans 'Doc Number' %}</th><th>{% trans 'Type' %}</th><th>{% trans 'Account' %}</th><th>{% trans 'Value' %}</th><th>{% trans 'Item' %}</th><th>{% trans 'Quantity' %}</th><th>{% trans 'Serial' %}</th><th>{% trans 'Active' %}</th><th>{% trans 'Delivered' %}</th>
+{% endblock%}
+{% block line %}
+    {% include "inventory/entry.html" %}
+{% endblock%}

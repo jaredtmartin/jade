@@ -1,0 +1,165 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% load tags %}
+{% block actions %}
+    {% if perms.inventory.change_sale %}
+        <div class="actiontab" ><a href="/inventory/item/" class="action">{% trans 'New' %}</a></div>
+        {% if object %}<div class="actiontab" ><a href='/inventory/item/{{object.pk}}/delete'>{% trans 'Delete' %}</a></div>{% endif %}
+    {% endif %}
+{% endblock%}
+{% block js %}
+    <script type="text/javascript" src="/media/js/jade.js"></script> 
+    <script type="text/javascript" src="/media/js/ajaxfileupload.js"></script>  
+    <script type="text/javascript" src="/media/js/jquery.lightbox-0.5.min.js"></script>
+    <link rel="stylesheet" type="text/css" href="/media/css/jquery.lightbox-0.5.css" media="screen" />
+{% endblock %}
+{% block pre-table %}
+    <a href="/inventory/item/" class="action"><b>{% trans 'New Item' %} </b><img src="/media/img/add.png"/></a>
+{% endblock%}
+{% block top %}
+    <h1>
+        {% block heading %}
+            {% if object %}
+                {{object.tipo}}: {{object.name}} #{{object.pk}}
+            {% else %}
+                {% trans 'New Item' %}
+            {% endif %}
+        {% endblock %}
+    </h1>
+{% endblock %}
+{% block content %}
+    <script type="text/javascript">
+        function save_item(object_id){
+            jQuery("#last_id").val(object_id);
+            $.ajax({
+                url: '/inventory/item/'+object_id+'/',
+                type:'POST',
+                data:{
+                    bar_code:       jQuery('#id_item-'+object_id+'-bar_code').val(),
+                    cost:   jQuery('#id_item-'+object_id+'-cost').val(),
+                    description:    jQuery('#id_item-'+object_id+'-description').val(),
+                    location:       jQuery('#id_item-'+object_id+'-location').val(),
+                    description:    jQuery('#id_item-'+object_id+'-description').val(),
+                    maximum:        jQuery('#id_item-'+object_id+'-maximum').val(),
+                    minimum:        jQuery('#id_item-'+object_id+'-minimum').val(),
+                    name:           jQuery('#id_item-'+object_id+'-name').val(),
+                    unit:           jQuery('#id_item-'+object_id+'-unit').val(),
+                    image:           jQuery('#id_item-'+object_id+'-image').val(),
+                },
+                success: update_item
+            });
+        }
+        function ajaxFileUpload()
+    {
+        //starting setting some animation when the ajax starts and completes
+        $("#loading")
+        .ajaxStart(function(){
+            $(this).show();
+        })
+        .ajaxComplete(function(){
+            $(this).hide();
+        });
+       
+        /*
+            prepareing ajax file upload
+            url: the url of script file handling the uploaded files
+                        fileElementId: the file type of input element id and it will be the index of  $_FILES Array()
+            dataType: it support json, xml
+            secureuri:use secure protocol
+            success: call back function when the ajax complete
+            error: callback function when the ajax failed
+           
+                */
+        pk=$('#my_pk').val();
+        $.ajaxFileUpload
+        (
+            {
+                url:'/inventory/item/'+pk+'/image_upload/',
+                secureuri:false,
+                fileElementId:'id_image',
+                dataType: 'img',
+                success: function (data, status){
+                    $('#item_image').replaceWith(data);
+                },
+                error: function (data, status, e){
+                    alert(e);
+                }
+            }
+        )
+       
+        return false;
+
+    }  
+        function save_price(object_id){
+            jQuery("#last_id").val(object_id);
+            $.ajax({
+                url: '/inventory/price/'+object_id+'/' ,
+                type:'POST',
+                data:{ 
+                    relative:jQuery('#id_price-'+object_id+'-relative').val(),
+                    fixed:jQuery('#id_price-'+object_id+'-fixed').val(),
+                },
+                success: update_price
+            });
+        }
+        function save_garanteeoffer(object_id){
+            jQuery("#last_id").val(object_id);
+            $.ajax({
+                url: '/inventory/garanteeoffer/'+object_id+'/' ,
+                type:'POST',
+                data:{ 
+                    item:jQuery('#item_id').val(),
+                    months:jQuery('#id_garanteeoffer-'+object_id+'-months').val(),
+                    price:jQuery('#id_garanteeoffer-'+object_id+'-price').val(),
+                },
+                success: update_garanteeoffer
+            });
+        }
+        function delete_garanteeoffer(object_id){
+            jQuery("#last_id").val(object_id);
+            jQuery.get( '/inventory/garanteeoffer/'+object_id+'/delete/', {}, update_garanteeoffer);
+            jQuery("#garanteeoffer-"+object_id).remove();
+        }
+        function new_garanteeoffer(object_id){
+            jQuery("#last_id").val(object_id);
+            jQuery.ajax({
+                url: '/inventory/garanteeoffer/new/',
+                type:'POST',
+                data:{ 
+                    item:object_id,
+                    price:0,
+                    months:0,
+                },
+                success: update_garanteeoffer
+            });
+        }
+        function update_item(data){
+            update('item',data);
+        }
+        function update_garanteeoffer(data){
+            update('garanteeoffer',data);
+        }
+        function update_price(data){
+            update('price',data);
+        }
+        $(document).ready(function(){  
+            $('#item_image').lightBox({fixedNavigation:true});
+        });     
+
+    </script>
+    <input type="hidden" id="last_id" value="">
+    <input type="hidden" id="item_id" value="{{object.pk}}">
+    
+    
+    <h2>{% trans 'Details' %}</h2>
+    <div id="items">
+        {% include "inventory/item.html" %}
+    </div>
+    {% if entry_page %}
+        <h2>{% trans 'Entries' %}</h2>
+        {% pages entry_page %}
+        {% include "inventory/entries.html" %}
+        {% pages entry_page %}
+    {% endif %}
+{% endblock %}

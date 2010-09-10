@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% load tags %}
+{% block top %}
+    <h1>
+        {% block heading %}
+            {% if object %}
+                {{object.tipo}}: {{object.name}} #{{object.pk}}
+            {% else %}
+                {% trans 'New' %} {{prefix}}
+            {% endif %}
+        {% endblock %}
+    </h1>
+{% endblock %}
+
+{% block content %}
+    {% block details %}{% endblock %}
+    {% block above_entries %}{% endblock %}
+    {% if entry_page %}
+        <h3>{% trans 'Recent Transactions' %}</h3>
+        {% pages entry_page %}
+        <table>
+            <thead><tr>{% block table_header %}{% endblock%}</tr></thead>
+            <tbody>
+                {% for entry in entry_page.object_list %}
+                    {% block line %}{% endblock%}
+                {% endfor %}
+            </tbody>
+            <tfoot><tr>{% block table_footer %}{% endblock %}</tr></tfoot>
+        </table>
+        {% pages entry_page %}
+    {% endif %}
+    {% block after_entries %}{% endblock %}
+{% endblock %}

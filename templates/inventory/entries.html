@@ -1,0 +1,32 @@
+{% load i18n %}
+{% load tags %}
+<table>
+    <thead><tr><th>{% trans 'Date' %}</th><th>{% trans 'Doc Number' %}</th><th>{% trans 'Type' %}</th><th>{% trans 'Account' %}</th><th>{% trans 'Value' %}</th><th>{% trans 'Item' %}</th><th>{% trans 'Quantity' %}</th><th>{% trans 'Serial' %}</th><th/></tr></thead>
+    <tbody>
+        {% for entry in entry_page.object_list %}
+            <tr>
+                <td>{{ entry.date|date:"m/d/Y" }}</td>
+                <td>{% link entry.transaction %}</td>
+                <td>{{ entry.transaction.tipo }}</td>
+                <td>{% link entry.account %}</td>
+                <td>${{entry.value|floatformat:2}}</td>
+                <td>{{entry.item}}</td>
+                <td>{{entry.quantity|floatformat:-2}}</td>
+                <td>{% if entry.serial %}<a href="/inventory/serial/{{entry.serial}}/">{{entry.serial}}</a>{% endif %}</td>
+                <td>
+                    {% if entry.transaction.subclass.active %}
+                        <img title="{% trans 'Click on document number to deactivate this entry' %}" src="/media/img/on.png"/>
+                    {% else %}
+                        <img title="{% trans 'Click on document number to activate this entry' %}" src="/media/img/off.png"/>
+                    {% endif %}
+                    {% if entry.transaction.subclass.delivered %}
+                        <img title="{% trans 'Click on document number to mark this entry undelivered' %}" src="/media/img/delivered.png"/>
+                    {% else %}
+                        <img title="{% trans 'Click on document number to mark this entry delivered' %}" src="/media/img/undelivered.png"/>
+                    {% endif %}
+                </td>
+            </tr>
+            
+        {% endfor %}
+    </tbody>
+</table>

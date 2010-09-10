@@ -1,0 +1,31 @@
+{% extends "inventory/transaction_base.html" %}
+{% load i18n %}
+{% load tags %}
+
+{% block other_fields_edit %}
+    <td><input id="id_transaction-{{ object.pk }}-account" title="{% trans 'Name of Branch' %}"  class="field account lookup branch" value="{{object.subclass.branch|default:''}}" type="text"></td>
+    
+    {% include "inventory/inventory_base.html" %}
+    <td><input id="id_transaction-{{ object.pk }}-cost" title="{% trans 'Total cost' %}" class="cost field money" value="{{object.subclass.cost|floatformat:2}}" type="text"></td>
+    <td/><td/><td/>
+{% endblock %}
+{% block other_actions_edit %}
+    <a style="display:none;" class="show" id="id_transaction-{{object.pk}}-return" title="Return Purchase" href="#" onclick="newTransaction('/inventory/purchasereturn/{{object.pk}}/new/'); return false;"><img src="/media/img/return.png"/></a>    
+{% endblock %}
+
+
+{% block other_fields_show %}
+    <td id="id_transaction-{{ object.pk }}-account" title="{% trans 'Name of branch' %}"  value="{{object.subclass.branch|default:''}}" class="field account lookup branch"><a href="{{object.subclass.branch.url}}">{{object.subclass.branch|default:''}}</a></td>
+    {% include "inventory/inventory_base.html" %}
+    <td id="id_transaction-{{object.pk}}-cost" title="{% trans 'Total cost' %}" value="{{object.subclass.cost|floatformat:2}}"  class="cost field money">    ${{object.subclass.cost|floatformat:2}}</td>
+    <td/>
+    <td/><td/>
+{% endblock %}
+{% block other_actions_show %}
+    <a class="show" id="id_transaction-{{object.pk}}-return" title="{% trans 'Return Transfer' %}" href="#" onclick="newTransaction('/inventory/purchasereturn/{{object.pk}}/new/'); return false;"><img src="/media/img/return.png"/></a>
+    {% if object.subclass.delivered %}
+        <a class="show" id="id_transaction-{{object.pk}}-undeliver" title="{% trans 'Mark as NOT Delivered' %}" href="#" onclick="markTransaction('/inventory/transaction/{{object.pk}}/undeliver/'); return false;"><img src="/media/img/delivered.png"/></a>
+    {% else %}
+        <a class="show" id="id_transaction-{{object.pk}}-deliver" title="{% trans 'Mark as Delivered' %}" href="#" onclick="markTransaction('/inventory/transaction/{{object.pk}}/deliver/'); return false;"><img src="/media/img/undelivered.png"/></a>
+    {% endif %}    
+{% endblock %}

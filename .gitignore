@@ -1,0 +1,4 @@
+media/uploaded_images/*
+*.pyc
+*~
+media/barcodes/*

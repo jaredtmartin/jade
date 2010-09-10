@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% load tags %}
+{% block right %}
+    <a onclick="$('#item_form').submit();return false;" href="#" class="action">{% trans 'Save' %}</a><br>
+    <a href="/inventory/items/" class="action">{% trans 'List' %}</a><br>
+{% endblock%}
+{% block content %}
+    <form id="item_form" method="post" action="/inventory/item/{{object.pk}}{% if object.pk %}/{% endif %}">
+        <table>
+            {{form.as_p}}
+        </table>
+    </form>
+{% endblock%}
+

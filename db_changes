@@ -1,0 +1,54 @@
+#40 ============================================================
+alter table inventory_account add column number varchar(32) not null;
+#41 ============================================================
+
+alter table inventory_account drop column tax_group_id;
+alter table inventory_account drop column price_group_id;
+alter table inventory_contact add column tax_group_id int(11) not null;
+alter table inventory_contact add column price_group_id int(11) not null;
+alter table inventory_tax_group add column revenue_account_id int(11) not null;
+alter table inventory_tax_group add column sales_tax_account_id int(11) not null;
+alter table inventory_tax_group add column purchase_tax_account_id int(11) not null;
+alter table inventory_tax_group add column discounts_account_id int(11) not null;
+alter table inventory_tax_group add column returns_account_id int(11) not null;
+
+insert into inventory_account (number, name, multiplier) values 
+('01', 'Activos',1), 
+('0103', 'Clientes',1),
+('02', 'Pasivos',-1), 
+('0201', 'Proveedores',-1), 
+('03', 'Patrocinio',-1), 
+('0401', 'Ingresos de Consumidor Final',-1), 
+('040101', 'Ventas a Consumidor Final',-1), 
+('040102', 'Descuentos de Consumidor Final',-1), 
+('040103', 'Devoluciones de Consumidor Final',-1), 
+('0402', 'Ingresos de Credito Fiscal',-1), 
+('040201', 'Ventas a Credito Fiscal',-1), 
+('040202', 'Descuentos de Credito Fiscal',-1), 
+('040203', 'Devoluciones de Credito Fiscal',-1), 
+('02020101', 'Impuestos de Ventas de Consumidor Final',-1), 
+('02020102', 'Impuestos de Ventas de Credito Fiscal',-1), 
+('020201', 'Impuestos de Ventas',-1), 
+('0501', 'Cuentas Fisicas',1), 
+('020202', 'Impuestos de Compras',-1),
+('02020201', 'Impuestos de Compras de Consumidor Final',-1), 
+('02020202', 'Impuestos de Compras de Credito Fiscal',-1);
+
+update inventory_account set number='010301' where name='Anonymous';
+update inventory_account set number='020101' where name='Not Specified';
+update inventory_account set number='0101' where name='Efectivo';
+update inventory_account set number='0502' where name='Produccion';
+update inventory_account set number='0102' where name='Inventario';
+update inventory_account set number='0102' where name='Clientes';
+update inventory_account set number='0202' where name='Impuestos';
+update inventory_account set number='04' where name='Ingresos';
+update inventory_account set number='0102' where name='Inventario';
+delete from inventory_account where name='Devoluciones';
+delete from inventory_account where name='Descuentos';
+update inventory_account set number='05' where name='Gastos';
+update inventory_account set tipo='Account' where tipo!='Client' and tipo!='Vendor';
+#42 ===============================================================
+alter table inventory_item drop column cost;
+#43 ===============================================================
+#44 ===============================================================
+

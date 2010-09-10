@@ -1,0 +1,32 @@
+{% extends "inventory/transactions.html" %}
+{% load i18n %}
+{% block heading %}{% trans 'Production' %} {% endblock%}
+{% block actions %}      
+    {% if perms.production.view_process %}
+        <div class="actiontab" ><a href="/production/process/list/?{% if q %}q={{q}}&{% endif %}{% if start %}start={{start}}&{% endif %}{% if end %}end={{end}}{% endif %}" class="action">{% trans 'Processes' %}</a></div>
+    {% endif %}
+    <div class="actiontab" ><a href="/production/job/list/?{% if q %}q={{q}}&{% endif %}{% if start %}start={{start}}&{% endif %}{% if end %}end={{end}}{% endif %}" class="action">{% trans 'Jobs' %}</a></div>
+{% endblock%}
+{% block pre-table %}
+    <div id="form-links" class="section">
+        <h3 id="form-links-heading">{% trans 'Forms for Production' %}:
+            <a id="design-form-link" class="form_link" onclick="showDesignForm();return false;" href="#">{% trans 'Design Processes' %}</a>        
+            <a id="plan-form-link"class="form_link" onclick="showPlanForm();return false;" href="#">{% trans 'Plan Production' %}</a>
+        </h3>
+        <div id="order-form" style="display:none;">
+            <div id="order-form-doc-number" class="three-column">
+                {% trans 'Doc Number' %}: <input id="doc_number" value="{{q}}" type="text"> <a href="#" onclick="$(this).prev().val('');return false;"><img id="next_doc_number" src="/media/img/clear.png"/></a>
+            </div>
+            <div id="order-form-item" style="display:none;" class="three-column">
+                {% trans 'Item' %}: <input id="item" value="{{page.object_list.1.item}}" type="text"> <a onclick="newTransaction('/production/process/new/'); return false;" href="#"><img src="/media/img/add.png"/></a>
+            </div>
+            <div id="order-form-quantity" style="display:none;" class="three-column">
+                {% trans 'Quantity' %}: <input id="quantity" value="1" type="text"> <a onclick="newTransaction('/production/job/new/?q={{q}}&quantity='+$('#quantity').val()); return false;" href="#"><img src="/media/img/post.png"></a>
+            </div>
+            <input id="order-form-url" type="hidden" value="">
+            <input id="order-form-tipo" type="hidden" value="">
+        </div>
+        <hr class="clear-contentunit" />
+    </div>
+{% endblock%}
+
