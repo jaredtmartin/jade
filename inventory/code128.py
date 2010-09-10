@@ -253,8 +253,8 @@ class Code128:
       from string import lower, upper
       
       # Create a missing font file
-      decodeFontFile(courB08_pil ,"courB08.pil")
-      decodeFontFile(courB08_pbm ,"courB08.pbm")
+      decodeFontFile(courB08_pil ,folder+"courB08.pil")
+      decodeFontFile(courB08_pbm ,folder+"courB08.pbm")
       
       # Get the bar code list
       bits = self.makeCode(value)
