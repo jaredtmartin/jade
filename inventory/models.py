@@ -104,6 +104,7 @@ class Item(models.Model):
     tipo = models.CharField(_('type'), max_length=16, choices=ITEM_TYPES, default='Product')
     objects=ItemManager()
     class Meta:
+        ordering = ('name',)
         permissions = (
             ("view_cost", "Can view costs"),
             ("view_item", "Can view items"),

@@ -6,11 +6,12 @@ alter table inventory_account drop column tax_group_id;
 alter table inventory_account drop column price_group_id;
 alter table inventory_contact add column tax_group_id int(11) not null;
 alter table inventory_contact add column price_group_id int(11) not null;
-alter table inventory_tax_group add column revenue_account_id int(11) not null;
-alter table inventory_tax_group add column sales_tax_account_id int(11) not null;
-alter table inventory_tax_group add column purchase_tax_account_id int(11) not null;
-alter table inventory_tax_group add column discounts_account_id int(11) not null;
-alter table inventory_tax_group add column returns_account_id int(11) not null;
+alter table inventory_taxgroup add column revenue_account_id int(11) not null;
+alter table inventory_taxgroup add column sales_tax_account_id int(11) not null;
+alter table inventory_taxgroup add column purchases_tax_account_id int(11) not null;
+alter table inventory_taxgroup add column discounts_account_id int(11) not null;
+alter table inventory_taxgroup add column returns_account_id int(11) not null;
+
 
 insert into inventory_account (number, name, multiplier) values 
 ('01', 'Activos',1), 
