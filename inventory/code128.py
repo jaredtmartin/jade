@@ -265,7 +265,7 @@ class Code128:
       im = Image.new("1",(len(bits)+position,height))
       
       # Load font
-      font = ImageFont.load("courB08.pil")
+      font = ImageFont.load(settings.APP_LOCATION+"courB08.pil")
       
       # Create drawer
       draw = ImageDraw.Draw(im)
