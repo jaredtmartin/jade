@@ -130,7 +130,7 @@ class Item(models.Model):
         else: group=client.get_profile().price_group
         if not group: return 0
         try:
-            price=Price.objects.get(item=self, group=client)
+            price=Price.objects.get(item=self, group=group)
         except Price.DoesNotExist:
             price=Price.objects.create(item=self,group=group, site=Site.objects.get_current())
         return Decimal(str(round(self.cost*price.relative + price.fixed,2)))
@@ -389,10 +389,6 @@ class Account(models.Model):
 def add_contact(sender, **kwargs):
     if kwargs['created'] and kwargs['instance'].tipo in ('Client', 'Vendor'):
         l=kwargs['instance']
-#        print "l.id=" + str(l.id)
-        print "making contact"
-        print "l._address = " + str(l._address)
-        print "l._registration = " + str(l._registration)
         Contact.objects.create(
             account=l, 
             credit_days=settings.DEFAULT_CREDIT_DAYS,
@@ -500,6 +496,44 @@ class Branch(Account):
         permissions = (
             ("view_branch", "Can view branches"),
         )
+
+class SiteDetail(models.Model):
+    site = models.OneToOneField(Site)
+    default_tax_group = models.ForeignKey(TaxGroup)
+def add_sitedetail(sender, **kwargs):
+    if kwargs['created']:
+        SiteDetail.objects.create(site=kwargs['instance'], default_tax_group=Site.objects.get_current().sitedetail.default_tax_group)
+post_save.connect(add_sitedetail, sender=Site, dispatch_uid="jade.inventory.models")
+
+
+
+INVENTORY_ACCOUNT = Account.objects.get_or_create(name=settings.INVENTORY_ACCOUNT_NAME)[0]
+PURCHASE_TAX_ACCOUNT = Account.objects.get_or_create(name=settings.PURCHASE_TAX_ACCOUNT_NAME)[0]
+DEFAULT_UNIT = Unit.objects.get_or_create(name=settings.DEFAULT_UNIT_NAME)[0]
+EXPENSE_ACCOUNT = Account.objects.get_or_create(name=settings.EXPENSE_ACCOUNT_NAME)[0]
+if settings.PRODUCTION_ACCOUNT_NAME:
+    PRODUCTION_ACCOUNT = Account.objects.get_or_create(name=settings.PRODUCTION_ACCOUNT_NAME)[0]
+CASH_ACCOUNT = Account.objects.get_or_create(name=settings.CASH_ACCOUNT_NAME)[0]
+PAYMENTS_RECEIVED_ACCOUNT = Account.objects.get_or_create(name=settings.PAYMENTS_RECEIVED_ACCOUNT_NAME)[0]
+PAYMENTS_MADE_ACCOUNT = Account.objects.get_or_create(name=settings.PAYMENTS_MADE_ACCOUNT_NAME)[0]
+
+
+DEFAULT_REVENUE_ACCOUNT = Account.objects.get_or_create(name=settings.DEFAULT_REVENUE_ACCOUNT_NAME)[0]
+DEFAULT_SALES_TAX_ACCOUNT = Account.objects.get_or_create(name=settings.DEFAULT_SALES_TAX_ACCOUNT_NAME)[0]
+DEFAULT_PURCHASE_TAX_ACCOUNT = Account.objects.get_or_create(name=settings.DEFAULT_PURCHASE_TAX_ACCOUNT_NAME)[0]
+DEFAULT_DISCOUNTS_ACCOUNT = Account.objects.get_or_create(name=settings.DEFAULT_DISCOUNTS_ACCOUNT_NAME)[0]
+DEFAULT_RETURNS_ACCOUNT = Account.objects.get_or_create(name=settings.DEFAULT_RETURNS_ACCOUNT_NAME)[0]
+
+DEFAULT_PRICE_GROUP = PriceGroup.objects.get_or_create(name=settings.DEFAULT_PRICE_GROUP_NAME)[0]
+DEFAULT_TAX_GROUP = TaxGroup.objects.get_or_create(
+    name=settings.DEFAULT_TAX_GROUP_NAME,
+    revenue_account=DEFAULT_REVENUE_ACCOUNT,
+    sales_tax_account=DEFAULT_SALES_TAX_ACCOUNT,
+    purchases_tax_account=DEFAULT_PURCHASE_TAX_ACCOUNT,
+    discounts_account=DEFAULT_DISCOUNTS_ACCOUNT,
+    returns_account=DEFAULT_RETURNS_ACCOUNT, 
+    price_includes_tax=settings.DEFAULT_TAX_INCLUDED)[0]
+SiteDetail.objects.get_or_create(site=Site.objects.get_current(), default_tax_group=DEFAULT_TAX_GROUP)
 class Contact(models.Model):
     tax_group_name = models.CharField(max_length=32, default=Site.objects.get_current().sitedetail.default_tax_group.name)
     price_group = models.ForeignKey(PriceGroup, blank=True, null=True)
@@ -521,25 +555,23 @@ class Contact(models.Model):
     def _get_tax_group(self):
         try: return TaxGroup.objects.get(name=self.tax_group_name)
         except: Site.objects.get_current().sitedetail.default_tax_group
-    tax_group=property(_get_tax_group)
-    
+    tax_group=property(_get_tax_group)    
     def __unicode__(self):
         return self.account.name
 try:
-#    DEFAULT_SALES_TAX_ACCOUNT=Account.objects.get(name=settings.DEFAULT_SALES_TAX_ACCOUNT_NAME)
-    INVENTORY_ACCOUNT = Account.objects.get(name=settings.INVENTORY_ACCOUNT_NAME)
-    EXPENSE_ACCOUNT = Account.objects.get(name=settings.EXPENSE_ACCOUNT_NAME)
-    CASH_ACCOUNT = Account.objects.get(name=settings.CASH_ACCOUNT_NAME)
-#    DEFAULT_REVENUE_ACCOUNT = Account.objects.get(name=settings.DEFAULT_REVENUE_ACCOUNT_NAME)
-#    DEFAULT_RETURNS_ACCOUNT = Account.objects.get(name=settings.DEFAULT_RETURNS_ACCOUNT_NAME)
-#    DEFAULT_DISCOUNTS_ACCOUNT = Account.objects.get(name=settings.DEFAULT_DISCOUNTS_ACCOUNT_NAME)
-    PAYMENTS_RECEIVED_ACCOUNT = Account.objects.get(name=settings.PAYMENTS_RECEIVED_ACCOUNT_NAME)
-    PAYMENTS_MADE_ACCOUNT = Account.objects.get(name=settings.PAYMENTS_MADE_ACCOUNT_NAME)
-    DEFAULT_CLIENT = Account.objects.get(name=settings.DEFAULT_CLIENT_NAME)
-    DEFAULT_VENDOR = Account.objects.get(name=settings.DEFAULT_VENDOR_NAME)
+    DEFAULT_CLIENT = Client.objects.get(name=settings.DEFAULT_CLIENT_NAME)
 except:
-    print " ####################### Not Creating Constants ####################### "##################################################
-# Transaction##################################################
+    DEFAULT_CLIENT = Client.objects.create(name=settings.DEFAULT_CLIENT_NAME)
+    DEFAULT_CLIENT.price_group=DEFAULT_PRICE_GROUP
+    DEFAULT_CLIENT.tax_group=DEFAULT_TAX_GROUP
+    DEFAULT_CLIENT.save()
+try:
+    DEFAULT_VENDOR = Vendor.objects.get(name=settings.DEFAULT_VENDOR_NAME)
+except:
+    DEFAULT_VENDOR = Vendor.objects.create(name=settings.DEFAULT_VENDOR_NAME)
+    DEFAULT_VENDOR.price_group=DEFAULT_PRICE_GROUP
+    DEFAULT_VENDOR.tax_group=DEFAULT_TAX_GROUP
+    DEFAULT_VENDOR.save()
 
 TRANSACTION_TYPES=(
         ('Sale', 'Sale'),
@@ -1788,13 +1820,6 @@ def add_user_profile(sender, **kwargs):
             UserProfile.objects.create(user=l, price_group=pg)
         except:pass
 post_save.connect(add_user_profile, sender=User, dispatch_uid="jade.inventory.moddels")
-class SiteDetail(models.Model):
-    site = models.OneToOneField(Site)
-    default_tax_group = models.ForeignKey(TaxGroup)
-def add_sitedetail(sender, **kwargs):
-    if kwargs['created']:
-        SiteDetail.objects.create(account=kwargs['instance'], default_tax_group=Site.objects.get_current().sitedetail.default_tax_group)
-post_save.connect(add_sitedetail, sender=Site, dispatch_uid="jade.inventory.models")
 class BranchDetail(models.Model):
     account = models.OneToOneField(Account)
     db_name = models.CharField(max_length=32)
