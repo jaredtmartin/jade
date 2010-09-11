@@ -122,12 +122,14 @@ class Item(models.Model):
         return Entry.objects.filter(item=self, account=INVENTORY_ACCOUNT, active=True).aggregate(total=models.Sum('value'))['total'] or Decimal('0.00')
     total_cost=property(_get_total_cost)
     def price(self, client):
-        if type(client)==PriceGroup:
+        if type(client)==PriceGroup: group=client
+        elif type(client) in (Account, Client, Vendor, Branch):group=client.price_group
+        else: group=client.get_profile().price_group
+        if not group: return 0
+        try:
             price=Price.objects.get(item=self, group=client)
-        elif type(client) in (Account, Client, Vendor, Branch):
-            price=Price.objects.get(item=self, group=client.price_group)
-        else:
-            price=Price.objects.get(item=self, group=client.get_profile().price_group)
+        except Price.DoesNotExist:
+            price=Price.objects.create(item=self,group=group)
         return Decimal(str(round(self.cost*price.relative + price.fixed,2)))
     def discount(self, client):
         price=Price.objects.get(item=self, group=client.price_group)
