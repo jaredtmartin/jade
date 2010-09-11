@@ -1,9 +1,14 @@
 {% extends "bare.html" %}
 {% load i18n %}
-{% block content %}
-
-<p>{% trans "Thanks for spending some quality time with the Web site today." %}</p>
-
-<p><a href="/login">{% trans 'Log in again' %}</a></p>
-
+{% block messages %}
+    <ul><li class="info message">{% trans 'You have been logged out successfully.' %}</li></ul>
 {% endblock %}
+{% block content %}
+    <div class="login-box">
+        <span class="title">Jade</span> <span class="subtitle">{% trans 'Inventory and Accounting System' %}</span>
+        <hr class="login-hr">
+        .<br><br>
+        {% trans 'Click' %} <a href="/login">{% trans 'here' %}</a> {% trans 'to log in again.' %}.
+    </div>
+{% endblock %}
+

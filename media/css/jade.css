@@ -35,7 +35,7 @@ table{width:100%;}
 /*td>a:hover{color:black}*/
 /*#corner{flaoat:left; height:154px; width:159px;background-image:url(/media/img/corner.png);background-repeat:no-repeat;}*/
 #top{height:154px; background-image:url(/media/img/top.png);background-repeat:repeat-y;}
-#header{color:#666666;float:left;background:none;width:760px;padding:30px 0px 0px 160px;}
+#header{color:#666666;float:left;background:none;width:760px;padding:30px 0px 0px 160px;height:60px;}
 #header a:link, #header a:visited {font-size:10px;color:#666666;}
 #user-corner{float:right; padding:30px 100px 0px 0px;}
 /*#bottom{height:50px; width:1200px;background-image:url(/media/img/bottom.png);}*/
@@ -54,6 +54,13 @@ body{background-image:url(/media/img/middle.png);background-repeat:repeat-y;back
 /*.errorlist{list-style-type:none;}*/
 /*.errorlist li{color:red;}*/
 .clear-contentunit {clear:both; width:100%}
+.login-box{padding:10px 25px;margin-left:350px;width:450px;height:250px;}
+.login-box>.title{font-size:40px;}
+.login-box>.subtitle{font-size:14px;font-weight:bold;color:#666666}
+.login-box>label{font-weight:bold !important;font-size:15px;}
+.login-box>input{font-size:15px;}
+.login-box>h1{font-size:40px;color:#3f8d7d;text-align:center;}
+.login-hr{background-color:#3f8d7d;height:2px;margin-bottom:50px;}
 
 /*table {clear:both; width:730px; margin:2.0em 0 0.2em 0px; table-layout: fixed; border-collapse:collapse; empty-cells:show; background-color:rgb(233,232,244);}*/
 /*table th.top {padding:0 7px 0 7px; empty-cells:show; background-color:rgb(175,175,175); text-align:left; color:rgb(255,255,255); font-weight:bold; font-size:110%;}*/
