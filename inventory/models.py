@@ -12,6 +12,9 @@ import re
 from thumbs import ImageWithThumbsField
 import jade
 import subprocess
+from django.contrib.sites.models import Site
+from django.contrib.sites.managers import CurrentSiteManager
+
 
 """
 
@@ -166,11 +169,13 @@ post_save.connect(create_prices_for_price_group, sender=PriceGroup, dispatch_uid
 class Price(models.Model):
     group = models.ForeignKey(PriceGroup)
     item = models.ForeignKey(Item)
+    site = models.ForeignKey(Site)
     fixed_discount = models.DecimalField(_('fixed discount'), max_digits=8, decimal_places=2, default=0)
     relative_discount = models.DecimalField(_('relative discount'), max_digits=8, decimal_places=2, default=0)
     fixed = models.DecimalField(_('fixed'), max_digits=8, decimal_places=2, default=settings.DEFAULT_FIXED_PRICE)
     relative = models.DecimalField(_('relative'), max_digits=8, decimal_places=2, default=settings.DEFAULT_RELATIVE_PRICE)
     
+    objects = CurrentSiteManager()
     def get_tipo_display(self):
         return _("Price")
         
@@ -204,6 +209,10 @@ class Account(models.Model):
     number = models.CharField(_('number'), max_length=32)
     multiplier = models.IntegerField(_('multiplier'), default=1, choices=MULTIPLIER_TYPES)
     tipo = models.CharField(_('type'), max_length=16, choices=ACCOUNT_TYPES)
+    site = models.ForeignKey(Site)
+    objects = CurrentSiteManager()
+
+
     class Meta:
         ordering = ('number',)
     def __init__(self, *args, **kwargs):
@@ -553,6 +562,7 @@ class Transaction(models.Model):
     _date = models.DateTimeField(default=datetime.now())
     doc_number = models.CharField(max_length=32, default='', blank=True)
     comments = models.CharField(max_length=200, blank=True, default='')
+    sites = models.ManyToManyField(Site)
     tipo = models.CharField(max_length=16, choices=TRANSACTION_TYPES)
  ################ ################ ################  Date   ################ ################ ################
     def _get_date(self):
@@ -666,6 +676,7 @@ class Entry(models.Model):
     transaction = models.ForeignKey(Transaction)
     value = models.DecimalField(max_digits=8, decimal_places=2, default='0.00')
     account = models.ForeignKey(Account)
+    sites = models.ManyToManyField(Site)
     delivered = models.BooleanField(default=True)
     quantity = models.DecimalField(max_digits=8, decimal_places=2, default='0.00')
     item = models.ForeignKey(Item, blank=True, null=True)
@@ -1337,6 +1348,9 @@ class GaranteeOffer(models.Model):
     months = models.IntegerField(default=0, blank=True)
     price = models.DecimalField(max_digits=8, decimal_places=2, default=Decimal('0.00'), blank=True)
     item = models.ForeignKey(Item)
+    site = models.ForeignKey(Site)
+    objects = CurrentSiteManager()
+
     def __init__(self, *args, **kwargs):
         self.template='inventory/garantee_offer.html'
         super(GaranteeOffer, self).__init__(*args, **kwargs)

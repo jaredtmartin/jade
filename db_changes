@@ -53,3 +53,7 @@ alter table inventory_item drop column cost;
 #43 ===============================================================
 #44 ===============================================================
 
+alter table inventory_account add column site_id int(11) not null;
+alter table inventory_garanteeoffer add column site_id int(11) not null;
+alter table inventory_price add column site_id int(11) not null;
+alter table inventory_account add column site_id int(11) not null;
