@@ -420,6 +420,8 @@ class TaxGroup(models.Model):
     discounts_account = models.ForeignKey(Account, related_name = 'discounts_account_id')
     returns_account = models.ForeignKey(Account, related_name = 'returns_account_id')
     price_includes_tax = models.BooleanField(blank=True, default=True)
+    site = models.ForeignKey(Site, default=Site.objects.get_current().pk)
+    objects = CurrentSiteManager()
     
     def __unicode__(self):
         return self.name
@@ -499,8 +501,7 @@ class Branch(Account):
             ("view_branch", "Can view branches"),
         )
 class Contact(models.Model):
-    tax_group = models.ForeignKey(TaxGroup, blank=True, null=True)
-    tax_group_name = models.CharField(max_length=32)
+    tax_group_name = models.CharField(max_length=32, default=Site.objects.get_current().sitedetail.default_tax_group.name)
     price_group = models.ForeignKey(PriceGroup, blank=True, null=True)
     address = models.CharField(max_length=32, blank=True, default="")
     state_name = models.CharField(max_length=32, blank=True, default="")
@@ -516,6 +517,12 @@ class Contact(models.Model):
     user = models.ForeignKey(User, blank=True, null=True)
     account = models.OneToOneField(Account)
     credit_days=models.IntegerField(default=settings.DEFAULT_CREDIT_DAYS)
+    
+    def _get_tax_group(self):
+        try: return TaxGroup.objects.get(name=self.tax_group_name)
+        except: Site.objects.get_current().sitedetail.default_tax_group
+    tax_group=property(_get_tax_group)
+    
     def __unicode__(self):
         return self.account.name
 try:

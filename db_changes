@@ -54,6 +54,12 @@ alter table inventory_item drop column cost;
 #44 ===============================================================
 
 alter table inventory_account add column site_id int(11) not null;
+update inventory_account set site_id=1 where tipo!='Account';
 alter table inventory_garanteeoffer add column site_id int(11) not null;
+update inventory_garanteeoffer set site_id=1;
 alter table inventory_price add column site_id int(11) not null;
-alter table inventory_account add column site_id int(11) not null;
+update inventory_price set site_id=1;
+alter table inventory_taxgroup add column site_id int(11) not null;
+update inventory_taxgroup set site_id=1;
+alter table inventory_contact add column tax_group_name varchar(32) not null;
+update inventory_contact inner join inventory_taxgroup on inventory_taxgroup.id=tax_group_id set tax_group_name=inventory_taxgroup.name;
