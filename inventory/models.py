@@ -169,7 +169,7 @@ post_save.connect(create_prices_for_price_group, sender=PriceGroup, dispatch_uid
 class Price(models.Model):
     group = models.ForeignKey(PriceGroup)
     item = models.ForeignKey(Item)
-    site = models.ForeignKey(Site)
+    site = models.ForeignKey(Site, default=Site.objects.get_current().pk)
     fixed_discount = models.DecimalField(_('fixed discount'), max_digits=8, decimal_places=2, default=0)
     relative_discount = models.DecimalField(_('relative discount'), max_digits=8, decimal_places=2, default=0)
     fixed = models.DecimalField(_('fixed'), max_digits=8, decimal_places=2, default=settings.DEFAULT_FIXED_PRICE)
@@ -209,7 +209,7 @@ class Account(models.Model):
     number = models.CharField(_('number'), max_length=32)
     multiplier = models.IntegerField(_('multiplier'), default=1, choices=MULTIPLIER_TYPES)
     tipo = models.CharField(_('type'), max_length=16, choices=ACCOUNT_TYPES)
-    site = models.ForeignKey(Site)
+    site = models.ForeignKey(Site, default=Site.objects.get_current().pk)
     objects = CurrentSiteManager()
 
 
@@ -412,7 +412,7 @@ def add_contact(sender, **kwargs):
             tax_group=l._tax_group,           
         )
 class TaxGroup(models.Model):
-    name = models.CharField(max_length=200)
+    name = models.CharField(max_length=32)
     value = models.DecimalField(max_digits=3, decimal_places=2, default='0.00')
     revenue_account = models.ForeignKey(Account, related_name = 'revenue_account_id')
     sales_tax_account = models.ForeignKey(Account, related_name = 'sales_tax_account_id')
@@ -500,6 +500,7 @@ class Branch(Account):
         )
 class Contact(models.Model):
     tax_group = models.ForeignKey(TaxGroup, blank=True, null=True)
+    tax_group_name = models.CharField(max_length=32)
     price_group = models.ForeignKey(PriceGroup, blank=True, null=True)
     address = models.CharField(max_length=32, blank=True, default="")
     state_name = models.CharField(max_length=32, blank=True, default="")
@@ -558,7 +559,11 @@ class TransactionManager(CurrentMultiSiteManager):
         return []
 
 class Transaction(models.Model):
-    objects = TransactionManager()
+    objects = CurrentMultiSiteManager()
+    def save(self, *args, **kwargs):
+        flag=self.pk
+        super(Transaction, self).save(*args, **kwargs)
+        if not flag: self.sites.add(Site.objects.get_current())            
     _date = models.DateTimeField(default=datetime.now())
     doc_number = models.CharField(max_length=32, default='', blank=True)
     comments = models.CharField(max_length=200, blank=True, default='')
@@ -686,6 +691,10 @@ class Entry(models.Model):
     sites = models.ManyToManyField(Site)
     objects = CurrentMultiSiteManager()
     
+    def save(self, *args, **kwargs):
+        flag=self.pk
+        super(Entry, self).save(*args, **kwargs)
+        if not flag: self.sites.add(Site.objects.get_current()) 
     def update(self, attribute, value):
         setattr(self, attribute, value)
         self.save()
@@ -1350,7 +1359,7 @@ class GaranteeOffer(models.Model):
     months = models.IntegerField(default=0, blank=True)
     price = models.DecimalField(max_digits=8, decimal_places=2, default=Decimal('0.00'), blank=True)
     item = models.ForeignKey(Item)
-    site = models.ForeignKey(Site)
+    site = models.ForeignKey(Site, default=Site.objects.get_current().pk)
     objects = CurrentSiteManager()
 
     def __init__(self, *args, **kwargs):
@@ -1772,6 +1781,13 @@ def add_user_profile(sender, **kwargs):
             UserProfile.objects.create(user=l, price_group=pg)
         except:pass
 post_save.connect(add_user_profile, sender=User, dispatch_uid="jade.inventory.moddels")
+class SiteDetail(models.Model):
+    site = models.OneToOneField(Site)
+    default_tax_group = models.ForeignKey(TaxGroup)
+def add_sitedetail(sender, **kwargs):
+    if kwargs['created']:
+        SiteDetail.objects.create(account=kwargs['instance'], default_tax_group=Site.objects.get_current().sitedetail.default_tax_group)
+post_save.connect(add_sitedetail, sender=Site, dispatch_uid="jade.inventory.models")
 class BranchDetail(models.Model):
     account = models.OneToOneField(Account)
     db_name = models.CharField(max_length=32)
