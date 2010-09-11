@@ -549,7 +549,7 @@ TRANSACTION_TYPES=(
         ('Process', 'Process'),
         ('Job', 'Job'),
 )
-class TransactionManager(models.Manager):
+class TransactionManager(CurrentSiteManager):
     def unbalanced(self):
         # TODO: Find a way to make a sql query to return all unbalanced transactions
         """
@@ -684,6 +684,9 @@ class Entry(models.Model):
     tipo = models.CharField(max_length=16, choices=ENTRY_TYPES)
     serial = models.CharField(max_length=32, null=True, blank=True)
     date = models.DateTimeField(default=datetime.now())
+    sites = models.ManyToManyField(Site)
+    objects = CurrentSiteManager()
+
     
     def update(self, attribute, value):
         setattr(self, attribute, value)
