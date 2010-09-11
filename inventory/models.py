@@ -1120,10 +1120,10 @@ class Purchase(Transaction):
         value=(value or 0)
         print "value = " + str(value)
 #        try:
-            
-        vendor=self.entry('Vendor').account
-        print "vendor = " + str(vendor)
-        print "vendor.tax_group.purchase_tax_account = " + str(vendor.tax_group.purchases_tax_account)
+        vendor=self.vendor
+#        vendor=self.entry('Vendor').account
+#        print "vendor = " + str(vendor)
+#        print "vendor.tax_group.purchase_tax_account = " + str(vendor.tax_group.purchases_tax_account)
         self.update_possible_entry('Tax', vendor.tax_group.purchases_tax_account, value)
         self.entry('Vendor').update('value', self.cost + value)
         self._tax=0
