@@ -228,7 +228,7 @@ class TransactionAdmin(admin.ModelAdmin):
 class CountDetailAdmin(admin.ModelAdmin):
     list_display = ('transaction', 'count', 'unit_cost')
 class AccountAdmin(admin.ModelAdmin):
-    list_display = ('name', 'tipo','multiplier', 'balance')
+    list_display = ('name', 'tipo','multiplier', 'balance', 'site')
     search_fields = ('name', )
     list_filter = ('tipo','multiplier')
 class PriceAdmin(admin.ModelAdmin):

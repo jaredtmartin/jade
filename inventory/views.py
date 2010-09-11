@@ -512,7 +512,7 @@ def account_show(request, object_id, errors={}):
             object_id=object_id,
             template_name = 'inventory/account_show.html',
             extra_context = {
-                'entry_page': _paginate(request, Entry.objects.filter(account=account, active=True)),
+                'entry_page': _paginate(request, Entry.objects.filter(account__number__startswith=account.number, active=True)),
                 'form': form,
                 'prefix': 'account',
                 'error_list':errors,

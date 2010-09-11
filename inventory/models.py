@@ -199,7 +199,7 @@ class Account(models.Model):
         ('Client', _('Client')),
         ('Vendor', _('Vendor')),
         ('Branch', _('Branch')),
-        ('Simple', _('Simple')),
+        ('Account', _('Account')),
 )
     MULTIPLIER_TYPES=(
         (1, _('Debito')),
@@ -217,7 +217,6 @@ class Account(models.Model):
         ordering = ('number',)
     def __init__(self, *args, **kwargs):
         self.template='inventory/account.html'
-#        self._number =          kwargs.pop('number','')
         self._address =         kwargs.pop('address','')
         self._state_name =           kwargs.pop('state_name', '')
         self._country =         kwargs.pop('country', '')
@@ -235,6 +234,7 @@ class Account(models.Model):
         self._due = self._overdue = None
         super(Account, self).__init__(*args, **kwargs)
     def save(self, *args, **kwargs):
+        if not self.tipo: self.tipo='Account'
         super(Account, self).save(*args, **kwargs)
         try: self.contact.save()
         except: pass
@@ -506,30 +506,51 @@ def add_sitedetail(sender, **kwargs):
 post_save.connect(add_sitedetail, sender=Site, dispatch_uid="jade.inventory.models")
 
 
+def make_default_account(data, model=Account):
+    print "looking for %s %s"%(data[1],data[0])
+    try: return model.objects.get(name=data[0])
+    except model.DoesNotExist: 
+        print "couldnt find "
+        return model.objects.create(name=data[0], number=data[1], multiplier=data[2])
+    except model.MultipleObjectsReturned:
+        print "We have %i %ss" % (model.objects.filter(name=data[0]).count(), data[0])
+        return model.objects.filter(name=data[0])[0]
+    
+    
+ASSETS_ACCOUNT = make_default_account(settings.ASSETS_ACCOUNT_DATA)
+CASH_ACCOUNT = make_default_account(settings.CASH_ACCOUNT_DATA)
+PAYMENTS_RECEIVED_ACCOUNT = make_default_account(settings.PAYMENTS_RECEIVED_ACCOUNT_DATA)
+PAYMENTS_MADE_ACCOUNT = make_default_account(settings.PAYMENTS_MADE_ACCOUNT_DATA)
+INVENTORY_ACCOUNT = make_default_account(settings.INVENTORY_ACCOUNT_DATA)
+CLIENTS_ACCOUNT = make_default_account(settings.CLIENTS_ACCOUNT_DATA)
+LIABILITIES_ACCOUNT = make_default_account(settings.LIABILITIES_ACCOUNT_DATA)
+VENDORS_ACCOUNT = make_default_account(settings.VENDORS_ACCOUNT_DATA)
+TAX_ACCOUNT = make_default_account(settings.TAX_ACCOUNT_DATA)
+SALES_TAX_ACCOUNT = make_default_account(settings.SALES_TAX_ACCOUNT_DATA)
+DEFAULT_SALES_TAX_ACCOUNT = make_default_account(settings.DEFAULT_SALES_TAX_ACCOUNT_DATA)
+PURCHASES_TAX_ACCOUNT = make_default_account(settings.PURCHASES_TAX_ACCOUNT_DATA)
+DEFAULT_PURCHASES_TAX_ACCOUNT = make_default_account(settings.DEFAULT_PURCHASES_TAX_ACCOUNT_DATA)
+EQUITY_ACCOUNT = make_default_account(settings.EQUITY_ACCOUNT_DATA)
+REVENUE_ACCOUNT = make_default_account(settings.REVENUE_ACCOUNT_DATA)
+SUB_REVENUE_ACCOUNT = make_default_account(settings.SUB_REVENUE_ACCOUNT_DATA)
+DEFAULT_REVENUE_ACCOUNT = make_default_account(settings.DEFAULT_REVENUE_ACCOUNT_DATA)
+DEFAULT_DISCOUNTS_ACCOUNT = make_default_account(settings.DEFAULT_DISCOUNTS_ACCOUNT_DATA)
+DEFAULT_RETURNS_ACCOUNT = make_default_account(settings.DEFAULT_RETURNS_ACCOUNT_DATA)
+EXPENSE_ACCOUNT = make_default_account(settings.EXPENSE_ACCOUNT_DATA)
+EXPENSE_ACCOUNT = make_default_account(settings.EXPENSE_ACCOUNT_DATA)
+INVENTORY_EXPENSE_ACCOUNT = make_default_account(settings.INVENTORY_EXPENSE_ACCOUNT_DATA)
+COUNTS_EXPENSE_ACCOUNT = make_default_account(settings.COUNTS_EXPENSE_ACCOUNT_DATA)
+if settings.PRODUCTION_EXPENSE_ACCOUNT_DATA:
+    PRODUCTION_EXPENSE_ACCOUNT = make_default_account(settings.PRODUCTION_EXPENSE_ACCOUNT_DATA)
 
-INVENTORY_ACCOUNT = Account.objects.get_or_create(name=settings.INVENTORY_ACCOUNT_NAME)[0]
-PURCHASE_TAX_ACCOUNT = Account.objects.get_or_create(name=settings.PURCHASE_TAX_ACCOUNT_NAME)[0]
 DEFAULT_UNIT = Unit.objects.get_or_create(name=settings.DEFAULT_UNIT_NAME)[0]
-EXPENSE_ACCOUNT = Account.objects.get_or_create(name=settings.EXPENSE_ACCOUNT_NAME)[0]
-if settings.PRODUCTION_ACCOUNT_NAME:
-    PRODUCTION_ACCOUNT = Account.objects.get_or_create(name=settings.PRODUCTION_ACCOUNT_NAME)[0]
-CASH_ACCOUNT = Account.objects.get_or_create(name=settings.CASH_ACCOUNT_NAME)[0]
-PAYMENTS_RECEIVED_ACCOUNT = Account.objects.get_or_create(name=settings.PAYMENTS_RECEIVED_ACCOUNT_NAME)[0]
-PAYMENTS_MADE_ACCOUNT = Account.objects.get_or_create(name=settings.PAYMENTS_MADE_ACCOUNT_NAME)[0]
-
-
-DEFAULT_REVENUE_ACCOUNT = Account.objects.get_or_create(name=settings.DEFAULT_REVENUE_ACCOUNT_NAME)[0]
-DEFAULT_SALES_TAX_ACCOUNT = Account.objects.get_or_create(name=settings.DEFAULT_SALES_TAX_ACCOUNT_NAME)[0]
-DEFAULT_PURCHASE_TAX_ACCOUNT = Account.objects.get_or_create(name=settings.DEFAULT_PURCHASE_TAX_ACCOUNT_NAME)[0]
-DEFAULT_DISCOUNTS_ACCOUNT = Account.objects.get_or_create(name=settings.DEFAULT_DISCOUNTS_ACCOUNT_NAME)[0]
-DEFAULT_RETURNS_ACCOUNT = Account.objects.get_or_create(name=settings.DEFAULT_RETURNS_ACCOUNT_NAME)[0]
 
 DEFAULT_PRICE_GROUP = PriceGroup.objects.get_or_create(name=settings.DEFAULT_PRICE_GROUP_NAME)[0]
 DEFAULT_TAX_GROUP = TaxGroup.objects.get_or_create(
     name=settings.DEFAULT_TAX_GROUP_NAME,
     revenue_account=DEFAULT_REVENUE_ACCOUNT,
     sales_tax_account=DEFAULT_SALES_TAX_ACCOUNT,
-    purchases_tax_account=DEFAULT_PURCHASE_TAX_ACCOUNT,
+    purchases_tax_account=DEFAULT_PURCHASES_TAX_ACCOUNT,
     discounts_account=DEFAULT_DISCOUNTS_ACCOUNT,
     returns_account=DEFAULT_RETURNS_ACCOUNT, 
     price_includes_tax=settings.DEFAULT_TAX_INCLUDED)[0]
@@ -561,14 +582,14 @@ class Contact(models.Model):
 try:
     DEFAULT_CLIENT = Client.objects.get(name=settings.DEFAULT_CLIENT_NAME)
 except:
-    DEFAULT_CLIENT = Client.objects.create(name=settings.DEFAULT_CLIENT_NAME)
+    DEFAULT_CLIENT = Client.objects.create(name=settings.DEFAULT_CLIENT_DATA[0], number=settings.DEFAULT_CLIENT_DATA[1])
     DEFAULT_CLIENT.price_group=DEFAULT_PRICE_GROUP
     DEFAULT_CLIENT.tax_group=DEFAULT_TAX_GROUP
     DEFAULT_CLIENT.save()
 try:
-    DEFAULT_VENDOR = Vendor.objects.get(name=settings.DEFAULT_VENDOR_NAME)
+    DEFAULT_VENDOR = Vendor.objects.get(name=settings.DEFAULT_VENDOR_DATA[0])
 except:
-    DEFAULT_VENDOR = Vendor.objects.create(name=settings.DEFAULT_VENDOR_NAME)
+    DEFAULT_VENDOR = Vendor.objects.create(name=settings.DEFAULT_VENDOR_DATA[0], number=settings.DEFAULT_VENDOR_DATA[1])
     DEFAULT_VENDOR.price_group=DEFAULT_PRICE_GROUP
     DEFAULT_VENDOR.tax_group=DEFAULT_TAX_GROUP
     DEFAULT_VENDOR.save()
@@ -1178,17 +1199,10 @@ class Purchase(Transaction):
             return self._tax
     def _set_tax(self, value):
         value=(value or 0)
-        print "value = " + str(value)
         try:
-#        vendor=self.vendor
-#        vendor=self.entry('Vendor').account
-#        print "vendor = " + str(vendor)
-#        print "vendor.tax_group.purchase_tax_account = " + str(vendor.tax_group.purchases_tax_account)
-            self.update_possible_entry('Tax', vendor.tax_group.purchases_tax_account, value)
+            self.update_possible_entry('Tax', self.vendor.tax_group.purchases_tax_account, value)
             self.entry('Vendor').update('value', self.cost + value)
-        except:
-            self._tax=value
-#        except: self._tax = value
+        except: self._tax=value
     tax = property(_get_tax, _set_tax)
  ################ ################ ################  Create Entries   ################ ################ ################
 def add_purchase_entries(sender, **kwargs):
