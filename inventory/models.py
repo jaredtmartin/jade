@@ -1119,14 +1119,15 @@ class Purchase(Transaction):
     def _set_tax(self, value):
         value=(value or 0)
         print "value = " + str(value)
-#        try:
-        vendor=self.vendor
+        try:
+#        vendor=self.vendor
 #        vendor=self.entry('Vendor').account
 #        print "vendor = " + str(vendor)
 #        print "vendor.tax_group.purchase_tax_account = " + str(vendor.tax_group.purchases_tax_account)
-        self.update_possible_entry('Tax', vendor.tax_group.purchases_tax_account, value)
-        self.entry('Vendor').update('value', self.cost + value)
-        self._tax=0
+            self.update_possible_entry('Tax', vendor.tax_group.purchases_tax_account, value)
+            self.entry('Vendor').update('value', self.cost + value)
+        except:
+            self._tax=value
 #        except: self._tax = value
     tax = property(_get_tax, _set_tax)
  ################ ################ ################  Create Entries   ################ ################ ################
