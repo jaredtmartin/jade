@@ -14,7 +14,7 @@ import jade
 import subprocess
 from django.contrib.sites.models import Site
 from django.contrib.sites.managers import CurrentSiteManager
-
+from jade.inventory.managers import CurrentMultiSiteManager
 
 """
 
@@ -132,7 +132,7 @@ class Item(models.Model):
         try:
             price=Price.objects.get(item=self, group=client)
         except Price.DoesNotExist:
-            price=Price.objects.create(item=self,group=group)
+            price=Price.objects.create(item=self,group=group, site=Site.objects.get_current())
         return Decimal(str(round(self.cost*price.relative + price.fixed,2)))
     def discount(self, client):
         price=Price.objects.get(item=self, group=client.price_group)
@@ -153,7 +153,7 @@ def create_prices_for_product(sender, **kwargs):
             create_barcode(kwargs['instance'].bar_code, settings.BARCODES_FOLDER)
     if kwargs['created']:
         for group in PriceGroup.objects.all():
-            Price.objects.create(item=kwargs['instance'], group=group)
+            Price.objects.create(item=kwargs['instance'], group=group, site=Site.objects.get_current())
 post_save.connect(create_prices_for_product, sender=Item, dispatch_uid="jade.inventory.models")
 
 class PriceGroup(models.Model):
@@ -163,7 +163,7 @@ class PriceGroup(models.Model):
 def create_prices_for_price_group(sender, **kwargs):
     if kwargs['created']:
         for item in Item.objects.all():
-            Price.objects.create(item=item, group=kwargs['instance'])
+            Price.objects.create(item=item, group=kwargs['instance'], site=Site.objects.get_current())
 post_save.connect(create_prices_for_price_group, sender=PriceGroup, dispatch_uid="jade.inventory.models")
 
 class Price(models.Model):
@@ -549,7 +549,7 @@ TRANSACTION_TYPES=(
         ('Process', 'Process'),
         ('Job', 'Job'),
 )
-class TransactionManager(CurrentSiteManager):
+class TransactionManager(CurrentMultiSiteManager):
     def unbalanced(self):
         # TODO: Find a way to make a sql query to return all unbalanced transactions
         """
@@ -676,7 +676,6 @@ class Entry(models.Model):
     transaction = models.ForeignKey(Transaction)
     value = models.DecimalField(max_digits=8, decimal_places=2, default='0.00')
     account = models.ForeignKey(Account)
-    sites = models.ManyToManyField(Site)
     delivered = models.BooleanField(default=True)
     quantity = models.DecimalField(max_digits=8, decimal_places=2, default='0.00')
     item = models.ForeignKey(Item, blank=True, null=True)
@@ -685,8 +684,7 @@ class Entry(models.Model):
     serial = models.CharField(max_length=32, null=True, blank=True)
     date = models.DateTimeField(default=datetime.now())
     sites = models.ManyToManyField(Site)
-    objects = CurrentSiteManager()
-
+    objects = CurrentMultiSiteManager()
     
     def update(self, attribute, value):
         setattr(self, attribute, value)
