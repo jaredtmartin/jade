@@ -1,0 +1,18 @@
+from jade.inventory.models import *
+Account.objects.create(name='Ingresos de Credito Fiscal', number='0402', multiplier=-1, site=Site.objects.get_current())
+revenue=Account.objects.create(name='Ventas de Credito Fiscal', number='040201', multiplier=-1, site=Site.objects.get_current())
+discounts=Account.objects.create(name='Descuentos de Credito Fiscal', number='040202', multiplier=-1, site=Site.objects.get_current())
+returns=Account.objects.create(name='Devoluciones de Credito Fiscal', number='040203', multiplier=-1, site=Site.objects.get_current())
+sales_tax=Account.objects.create(name='Impuestos de Ventas de Credito Fiscal', number='02020102', multiplier=-1, site=Site.objects.get_current())
+purchases_tax=Account.objects.create(name='Impuestos de Compras de Credito Fiscal', number='02020202', multiplier=-1, site=Site.objects.get_current())
+TaxGroup.objects.create(
+    name='Credito Fiscal',
+    value='0.13',
+    revenue_account=revenue,
+    sales_tax_account=sales_tax,
+    purchases_tax_account=purchases_tax,
+    discounts_account=discounts,
+    returns_account=returns,
+    price_includes_tax=True,
+    site=Site.objects.get_current(),    
+)
