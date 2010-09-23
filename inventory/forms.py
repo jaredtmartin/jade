@@ -58,7 +58,8 @@ class SaleForm(forms.ModelForm):
         model.tax =         (self.cleaned_data['unit_tax'] or 0)
         model.discount =    (self.cleaned_data['unit_discount'] or 0)
         model.price =       (self.cleaned_data['unit_price'] or model.item.price(model.client))
-        model.cost =        (self.cleaned_data['unit_cost'] or model.item.cost)
+        model.cost =        self.cleaned_data['unit_cost']
+        if model.item and not model.cost: model.cost = model.item.cost
         if self.cleaned_data['quantity']!=0: 
             model.tax=              model.tax            * self.cleaned_data['quantity']
             model.discount=         model.discount       * self.cleaned_data['quantity']
@@ -222,7 +223,7 @@ class PurchaseForm(forms.ModelForm):
 class TransferForm(forms.ModelForm):
     class Meta:
         model = Transfer
-        fields=('doc_number','date','account','item','quantity','serial','cost')
+        fields=('doc_number','date','client','vendor','item','quantity','serial','cost')
     def save(self, commit=True):
         model = super(TransferForm, self).save(commit=False)
         model.branch =      self.cleaned_data['account']
@@ -460,4 +461,26 @@ class NewTransactionForm(forms.Form):
 #        except:
 #            date=datetime.now()
 #        return self.cleaned_data['doc_number']
-
+class NewTransferForm(NewTransactionForm):
+    source = forms.CharField(required=False)
+    dest = forms.CharField(required=False)
+    def clean_dest(self):
+        data=self.cleaned_data['client']
+        if (not data) and (not self.fields['dest'].required): return None
+        try: data = Site.objects.filter(name=data).get()
+        except Site.MultipleObjectsReturned: 
+                raise forms.ValidationError('There are more than one %ss with the name %s. Resolve this issue and try again.' % ('site', data))
+        except Site.DoesNotExist: 
+            raise forms.ValidationError('Unable to find %s in the list of %ss.' % (data, 'site'))
+        return data
+    def clean_source(self):
+        data=self.cleaned_data['source']
+        if (not data) and (not self.fields['source'].required): return None
+        try: data = Site.objects.filter(name=data).get()
+        except Site.MultipleObjectsReturned: 
+                raise forms.ValidationError('There are more than one %ss with the name %s. Resolve this issue and try again.' % ('site', data))
+        except Site.DoesNotExist: 
+            raise forms.ValidationError('Unable to find %s in the list of %ss.' % (data, 'site'))
+        return data
+        
+    

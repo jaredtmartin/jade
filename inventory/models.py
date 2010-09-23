@@ -14,7 +14,7 @@ import jade
 import subprocess
 from django.contrib.sites.models import Site
 from django.contrib.sites.managers import CurrentSiteManager
-from jade.inventory.managers import CurrentMultiSiteManager
+from jade.inventory.managers import CurrentMultiSiteManager, AccountManager
 
 """
 
@@ -210,7 +210,8 @@ class Account(models.Model):
     multiplier = models.IntegerField(_('multiplier'), default=1, choices=MULTIPLIER_TYPES)
     tipo = models.CharField(_('type'), max_length=16, choices=ACCOUNT_TYPES)
     site = models.ForeignKey(Site, default=Site.objects.get_current().pk)
-    objects = CurrentSiteManager()
+    objects = AccountManager()
+    test = models.Manager()
 
 
     class Meta:
@@ -507,7 +508,6 @@ post_save.connect(add_sitedetail, sender=Site, dispatch_uid="jade.inventory.mode
 
 
 def make_default_account(data, model=Account):
-    print "looking for %s %s"%(data[1],data[0])
     try: return model.objects.get(name=data[0])
     except model.DoesNotExist: 
         print "couldnt find "
@@ -521,7 +521,7 @@ ASSETS_ACCOUNT = make_default_account(settings.ASSETS_ACCOUNT_DATA)
 CASH_ACCOUNT = make_default_account(settings.CASH_ACCOUNT_DATA)
 PAYMENTS_RECEIVED_ACCOUNT = make_default_account(settings.PAYMENTS_RECEIVED_ACCOUNT_DATA)
 PAYMENTS_MADE_ACCOUNT = make_default_account(settings.PAYMENTS_MADE_ACCOUNT_DATA)
-INVENTORY_ACCOUNT = make_default_account(settings.INVENTORY_ACCOUNT_DATA)
+INVENTORY_ACCOUNT = make_default_account(settings.INVENTORY_ACCOUNT_DATA, Branch)
 CLIENTS_ACCOUNT = make_default_account(settings.CLIENTS_ACCOUNT_DATA)
 LIABILITIES_ACCOUNT = make_default_account(settings.LIABILITIES_ACCOUNT_DATA)
 VENDORS_ACCOUNT = make_default_account(settings.VENDORS_ACCOUNT_DATA)
@@ -619,7 +619,7 @@ class TransactionManager(CurrentMultiSiteManager):
         return []
 
 class Transaction(models.Model):
-    objects = CurrentMultiSiteManager()
+#    objects = CurrentMultiSiteManager()
     def save(self, *args, **kwargs):
         flag=self.pk
         super(Transaction, self).save(*args, **kwargs)
@@ -749,7 +749,7 @@ class Entry(models.Model):
     serial = models.CharField(max_length=32, null=True, blank=True)
     date = models.DateTimeField(default=datetime.now())
     sites = models.ManyToManyField(Site)
-    objects = CurrentMultiSiteManager()
+#    objects = CurrentMultiSiteManager()
     
     def save(self, *args, **kwargs):
         flag=self.pk
@@ -1834,25 +1834,25 @@ def add_user_profile(sender, **kwargs):
             UserProfile.objects.create(user=l, price_group=pg)
         except:pass
 post_save.connect(add_user_profile, sender=User, dispatch_uid="jade.inventory.moddels")
-class BranchDetail(models.Model):
-    account = models.OneToOneField(Account)
-    db_name = models.CharField(max_length=32)
-    foreign_account_name = models.CharField(_('name'), max_length=200)
-    immediate = models.BooleanField(_('transfers are immediate'), default=True)
-    def __unicode__(self):
-        return self.account.name
-    def _get_foreign_account(self):
-        return Branch.objects.using(self.db_name).get(name=self.foreign_account_name)
-    foreign_account=property(_get_foreign_account)
+#class BranchDetail(models.Model):
+#    account = models.OneToOneField(Account)
+#    db_name = models.CharField(max_length=32)
+#    foreign_account_name = models.CharField(_('name'), max_length=200)
+#    immediate = models.BooleanField(_('transfers are immediate'), default=True)
+#    def __unicode__(self):
+#        return self.account.name
+#    def _get_foreign_account(self):
+#        return Branch.objects.using(self.db_name).get(name=self.foreign_account_name)
+#    foreign_account=property(_get_foreign_account)
 
-class TransferDetail(models.Model):
-    remote_id = models.IntegerField()
-    db_name = models.CharField(max_length=32)
-    transaction = models.OneToOneField(Transaction)
-    def _get_remote(self):
-        try: return Transfer.objects.using(self.db_name).get(pk=self.remote_id)
-        except: return None
-    remote=property(_get_remote)
+#class TransferDetail(models.Model):
+#    remote_id = models.IntegerField()
+#    db_name = models.CharField(max_length=32)
+#    transaction = models.OneToOneField(Transaction)
+#    def _get_remote(self):
+#        try: return Transfer.objects.using(self.db_name).get(pk=self.remote_id)
+#        except: return None
+#    remote=property(_get_remote)
 
 class TransferManager(models.Manager):
     def get_query_set(self):
@@ -1877,7 +1877,8 @@ class Transfer(Transaction):
         self._date = kwargs.pop('date', datetime.now())
         self._delivered = kwargs.pop('delivered', True)
         self._active = kwargs.pop('active', True)
-        self._branch = kwargs.pop('branch',None)
+        self._dest = kwargs.pop('dest',None)
+        self._source = kwargs.pop('source',None)
         self._item = kwargs.pop('item', None)
         self._quantity = kwargs.pop('quantity', 0)
         self._serial = kwargs.pop('serial', None)
@@ -1887,18 +1888,6 @@ class Transfer(Transaction):
         msg='Transfer'
         if str(self.doc_number)!='': msg+=" #"+self.doc_number
         return msg
-    def update_remote_entry(self, attr, value, tipo=None):
-        entries=Entry.objects.using(self.detail.db_name).filter(transaction=self.detail.remote)
-        if tipo: entries=entries.filter(tipo=tipo)
-        for entry in entries:
-            setattr(entry, attr, value)
-            entry.save()
-    def _get_detail(self):
-        try: return self.transferdetail
-        except: return None
-    def _set_detail(self, value):
-        self.transferdetail=value
-    detail=property(_get_detail, _set_detail)
  ################ ################ ################  Value   ################ ################ ################
     def _get_value(self):
         return self.cost
@@ -1907,34 +1896,30 @@ class Transfer(Transaction):
     value=property(_get_value, _set_value)
  ################ ################ ################  Active   ################ ################ ################
     def _get_active(self):
-        try: return self.entry('Inventory').active
+        try: return self.entry('Dest').active
         except AttributeError: return self._active
     def _set_active(self, value):
         self._active=value
         [e.update('active',value) for e in self.entry_set.all()]
-        try: 
-            if self.branch.branchdetail.immediate: self.update_remote_entry('active', value)
-        except:pass
-            
     active = property(_get_active, _set_active)
  ################ ################ ################  Delivered   ################ ################ ################
     def _get_delivered(self):
-        try: return self.entry('Inventory').delivered
+        try: return self.entry('Dest').delivered
         except AttributeError: return self._delivered
     def _set_delivered(self, value):
         try: 
-            x= [self.entry(e).update('delivered',value) for e in ['Inventory','Branch']]
+            x= [self.entry(e).update('delivered',value) for e in ['Source','Dest']]
             if self.branch.branchdetail.immediate: self.update_remote_entry('delivered', value)
         except AttributeError: self._delivered=value
         
     delivered = property(_get_delivered, _set_delivered)
  ################ ################ ################  Item   ################ ################ ################
     def _get_item(self):
-        try: return self.entry('Inventory').item
+        try: return self.entry('Source').item
         except AttributeError: return self._item
     def _set_item(self, value):
         try: 
-            x= [self.entry(e).update('item',value) for e in ['Inventory','Branch']]
+            x= [self.entry(e).update('item',value) for e in ['Source','Dest']]
             try: self.update_remote_entry('item', value)
             except:pass
         except AttributeError: self._item=value
@@ -1942,63 +1927,58 @@ class Transfer(Transaction):
     item = property(_get_item, _set_item)
  ################ ################ ################  Quantity   ################ ################ ################
     def _get_quantity(self):
-        try: return self.entry('Inventory').quantity
+        try: return self.entry('Dest').quantity
         except AttributeError: return self._quantity
     def _set_quantity(self, value):
         dif=value-self.quantity
         try:
-            self.entry('Branch').update('quantity', value)
-            self.entry('Inventory').update('quantity', -value)
+            self.entry('Source').update('quantity', value)
+            self.entry('Dest').update('quantity', -value)
             try:
-                self.update_remote_entry('quantity', -value, 'Branch')
-                self.update_remote_entry('quantity', value, 'Inventory')
+                self.update_remote_entry('quantity', -value, 'Source')
+                self.update_remote_entry('quantity', value, 'Dest')
             except:pass
         except AttributeError: self._quantity=value
     quantity = property(_get_quantity, _set_quantity)
  ################ ################ ################  Serial   ################ ################ ################
     def _get_serial(self):
-        try: return self.entry('Inventory').serial
+        try: return self.entry('Source').serial
         except AttributeError: return self._serial
     def _set_serial(self, value):
         try: 
-            x= [self.entry(e).update('serial',value) for e in ['Inventory','Branch']]
+            x= [self.entry(e).update('serial',value) for e in ['Source','Dest']]
             try:self.update_remote_entry('serial', value)
             except:pass
         except AttributeError: self._serial=value
     serial = property(_get_serial, _set_serial)
-    ################ ################ ################  branch   ################ ################ ################
-    def _get_branch(self):
-        try: return self.entry('Branch').account
-        except AttributeError: return self._branchv
-    def _set_branch(self, value):
+    ################ ################ ################  source   ################ ################ ################
+    def _get_source(self):
+        try: return self.entry('Source').account
+        except AttributeError: return self._source
+    def _set_source(self, value):
         try: 
-            if value!=self.entry('Branch').value:
-                self.entry('Branch').update('account', value)
-                self.delete_remote_transaction()
-#                try:
-#                    #Delete all entries on the other side
-#                    for entry in Entry.objects.using(self.transferdetail.db_name).filter(transaction=self.transferdetail.remote): entry.delete()
-#                    # Delete the transfer on the remote side
-#                    self.transferdetail.remote.delete()
-#                    # Also zap the transferdetail, since this will be recreated
-#                    self.transferdetail.delete()
-#                except:pass
-                # Now rebuild using the new current branch
-                self.create_remote_copy()
-        except AttributeError: self._branch = value
-    branch = property(_get_branch, _set_branch)
+            if value!=self.entry('Source').value:
+                self.entry('Source').update('account', value)
+        except AttributeError: self._source = value
+    source = property(_get_source, _set_source)
+    ################ ################ ################  dest   ################ ################ ################
+    def _get_dest(self):
+        try: return self.entry('Dest').account
+        except AttributeError: return self._dest
+    def _set_dest(self, value):
+        try: 
+            if value!=self.entry('Dest').value:
+                self.entry('Dest').update('account', value)
+        except AttributeError: self._dest = value
+    dest = property(_get_dest, _set_dest)
  ################ ################ ################  Cost   ################ ################ ################
     def _get_cost(self):
-        try: return self.entry('Inventory').value
+        try: return self.entry('Dest').value
         except AttributeError: return self._cost
     def _set_cost(self, value):
         try:
-            self.entry('Branch').update('value', value)
-            i=self.entry('Inventory').update('value', -value)
-            try:
-                self.update_remote_entry('value', -value, 'Branch')
-                self.update_remote_entry('value', value, 'Inventory')
-            except:pass
+            self.entry('Source').update('value', -value)
+            i=self.entry('Dest').update('value', value)
         except AttributeError:
             self._cost=value
     cost=property(_get_cost, _set_cost)
@@ -2007,63 +1987,13 @@ class Transfer(Transaction):
         if self.quantity != 0 and p !=0: return p / self.quantity
         else: return p
     unit_cost=property(_get_unit_cost)
-    def delete_remote_transaction(self):
-        if self.detail:
-            if self.detail.remote:
-                for entry in Entry.objects.using(self.detail.db_name).filter(transaction=self.detail.remote): entry.delete()
-                # Delete the transfer on the remote side
-                self.detail.remote.delete()
-            self.detail.delete()
-    def create_remote_copy(self):
-        remote_db=self.branch.branchdetail.db_name
-        remote_account=self.branch.branchdetail.foreign_account
-        foreign=RemoteTransfer()
-        foreign.save(using=self.branch.branchdetail.db_name)
-        # Make sure the item exists in the remote branchs db
-        remote_item=Item.objects.using(remote_db).get(name=self._item.name, bar_code=self._item.bar_code)
-        # Create the entries
-        Entry.objects.using(remote_db).create(
-            account = remote_account,
-            transaction = foreign,
-            tipo = 'Branch',
-            value = self.cost,
-            item = remote_item,
-            quantity = self._quantity,
-            serial = self._serial,
-            delivered = self._delivered,
-        )
-        Entry.objects.using(remote_db).create(
-            account = Account.objects.using(remote_db).get(name=settings.INVENTORY_ACCOUNT_NAME),
-            transaction = foreign,
-            tipo = 'Inventory',
-            value = -self.cost,
-            item = remote_item,
-            quantity = -self._quantity,
-            serial = self._serial,
-            delivered = self._delivered,
-        )
-        self.detail=TransferDetail.objects.create(transaction=self, remote_id=foreign.pk, db_name=remote_db)
-        remote=self.detail.remote
-        TransferDetail(transaction=remote, remote_id=self.pk, db_name=remote.branch.branchdetail.db_name)
-def delete_remote_transfer(sender, **kwargs):
-    kwargs['instance'].delete_remote_transaction()
-pre_delete.connect(delete_remote_transfer, sender=Transfer, dispatch_uid="jade.inventory.models")
-class RemoteTransfer(Transfer):
-    class Meta:
-        proxy = True
-    def update_remote(self, attr, value):
-        # To avoid repeating myself
-        pass
-class RemoteItem(Item):
-    class Meta:
-        proxy = True
 
 def add_transfer_entry(sender, **kwargs):
     if kwargs['created']:
         l=kwargs['instance']
         l.create_related_entry(
-            account = INVENTORY_ACCOUNT,
-            tipo = 'Inventory',
+            account = l.source,
+            tipo = 'Source',
             value = -l.cost,
             item = l._item,
             quantity = -l._quantity,
@@ -2071,14 +2001,12 @@ def add_transfer_entry(sender, **kwargs):
             delivered = l._delivered,
         )
         l.create_related_entry(
-            account = l._branch,
-            tipo = 'Branch',
+            account = l._dest,
+            tipo = 'Dest',
             value = l.cost,
             item = l._item,
             quantity=l._quantity,
             serial=l._serial,
             delivered=l._delivered,
-        )
-        l.create_remote_copy()
-    
+        )    
 post_save.connect(add_transfer_entry, sender=Transfer, dispatch_uid="jade.inventory.moddels")

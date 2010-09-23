@@ -9,7 +9,7 @@
     <div id="transfer-form" title="{% trans 'Create transfer' %}">
 	    <form>
 		    {% trans 'Doc Number' %}: <input id="doc_number" value="{{q}}" type="text"> <a href="#" onclick="$(this).prev().val('');return false;"><img id="next_doc_number" src="/media/img/clear.png"/></a><br>
-		    {% trans 'Branch' %}: <input id="branch" value="{{page.object_list.1.branch}}" type="text"><br>
+		    {% trans 'Site' %}: <input id="site" value="{{page.object_list.1.branch}}" type="text"><br>
 		    {% trans 'Item' %}: <input id="item" value="{{page.object_list.1.item}}" type="text"><br>
 	    </form>
     </div>
@@ -29,7 +29,7 @@
 			        }
 			    },
 		    });
-            $('#transfer-form #branch').autocomplete('/inventory/branch_list/', {matchSubset:0, autoFill:1,});
+            $('#transfer-form #site').autocomplete('/inventory/site_list/', {matchSubset:0, autoFill:1,});
             $('#transfer-form #item').autocomplete('/inventory/item_list/', {matchSubset:0, autoFill:1,});
             $('#transfer-form #item').keydown(function(e){
                 if (e.keyCode == 13) {

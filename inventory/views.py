@@ -6,6 +6,7 @@ from django.forms.models import modelformset_factory
 from django.core.paginator import Paginator, InvalidPage, EmptyPage
 from django import http
 
+from django.contrib.sites.models import Site
 import os
 from django.db.models import Q
 from django.shortcuts import get_object_or_404, render_to_response, HttpResponseRedirect
@@ -96,8 +97,8 @@ def search_entries(user, form, tipo=None):
     if form.cleaned_data['end']: entries=entries.filter(date__lt=form.cleaned_data['end']+timedelta(days=1))
     return entries
 
-def search_transactions(user, form, model):
-    transactions = model.objects.all().order_by('-_date')
+def search_transactions(user, form, transactions):
+#    transactions = model.objects.all().order_by('-_date')
     if not user.has_perm('inventory.view_sale'):transactions=transactions.exclude(tipo='Sale')
     if not user.has_perm('inventory.view_purchase'):transactions=transactions.exclude(tipo='Purchase')
     if not user.has_perm('inventory.view_count'):transactions=transactions.exclude(tipo='Count')
@@ -151,7 +152,8 @@ def search_and_paginate_transactions(request, model, template='inventory/transac
     q=form.cleaned_data['q']
     start=form.cleaned_data['start']
     end=form.cleaned_data['end']
-    transactions=search_transactions(request.user, form, model)
+    if q: transactions=search_transactions(request.user, form, model.objects.all())
+    else: transactions=search_transactions(request.user, form, model.objects.filter(entry__account__site=Site.objects.get_current()))
     for k,v in errors.items(): form.errors[k]=v
     return paginate_transactions(request, form, transactions, template)
 
@@ -239,11 +241,11 @@ def ajax_client_list(request):
     return _r2r(request,'inventory/ajax_list.html', {'object_list':Client.objects.filter(name__icontains=q),'q':q})
 
 @login_required
-@permission_required('inventory.view_branch', login_url="/blocked/")
-def ajax_branch_list(request):
+@permission_required('inventory.view_site', login_url="/blocked/")
+def ajax_site_list(request):
     try: q=request.GET['q']
     except KeyError: q=''
-    return _r2r(request,'inventory/ajax_list.html', {'object_list':Branch.objects.filter(name__icontains=q),'q':q})
+    return _r2r(request,'inventory/ajax_list.html', {'object_list':Site.objects.filter(name__icontains=q),'q':q})
 
 @login_required
 @permission_required('inventory.view_unit', login_url="/blocked/")
@@ -1275,7 +1277,7 @@ def new_transfer(request): # AJAX POST ONLY
     try: 
         sample=Transfer.objects.filter(doc_number=doc_number)[0]
         date=sample.date
-        branch=sample.branch
+        site=sample.site
     except:
         date=datetime.now()
     try: branch=Branch.objects.get(name=request.POST['branch'])
