@@ -153,7 +153,7 @@ def search_and_paginate_transactions(request, model, template='inventory/transac
     start=form.cleaned_data['start']
     end=form.cleaned_data['end']
     if q: transactions=search_transactions(request.user, form, model.objects.all())
-    else: transactions=search_transactions(request.user, form, model.objects.filter(entry__account__site=Site.objects.get_current()))
+    else: transactions=search_transactions(request.user, form, model.objects.filter(entry__account__site=Site.objects.get_current()).distinct())
     for k,v in errors.items(): form.errors[k]=v
     return paginate_transactions(request, form, transactions, template)
 
