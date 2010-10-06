@@ -19,23 +19,11 @@ MANAGERS = ADMINS
 
 DATABASES = {
     'default': {
-        'NAME': 'jade',
+        'NAME': 'minmax',
         'ENGINE': 'django.db.backends.mysql',
         'USER': 'root',
         'PASSWORD': 't1bur0n'
-    },
-    'branch': {
-        'NAME': 'branch',
-        'ENGINE': 'django.db.backends.mysql',
-        'USER': 'root',
-        'PASSWORD': 't1bur0n'
-    },    
-    'ahuachapan': {
-        'NAME': 'ahuachapan',
-        'ENGINE': 'django.db.backends.mysql',
-        'USER': 'root',
-        'PASSWORD': 't1bur0n'
-    }
+}
 }
 
 

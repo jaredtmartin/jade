@@ -18,8 +18,10 @@ from django.views.generic import list_detail
 from django.contrib.auth.decorators import permission_required, login_required
 #from jade.settings import settings.APP_LOCATION, settings.COMPANY_NAME, settings.CORTE_REPORT_NAME, settings.MOVEMENTS_REPORT_NAME, settings.PRICE_REPORT_NAME, settings.INVENTORY_REPORT_NAME, settings.MEDIA_URL, settings.APP_LOCATION, settings.RECEIPT_REPORT_NAME_SUFFIX, settings.RECEIPT_REPORT_NAME_PREFIX, settings.COUNT_SHEET_REPORT_NAME, settings.LABEL_SHEET_REPORT_NAME
 from jade import settings
+
 def root(response):
     return HttpResponseRedirect('/inventory/sales/')
+    
 def set_languages(request):
     request.session['django_language'] = request.GET.get('lang', 'en')
     return http.HttpResponseRedirect(request.META['HTTP_REFERER'])
@@ -563,6 +565,13 @@ def item_list(request, errors=[]):
     try: q=request.GET['q']
     except KeyError: q=''
     items=Item.objects.find(q)
+    return _r2r(request,'inventory/item_list.html', {'page':_paginate(request, items),'q':q, 'error_list':errors, 'boxform':BoxForm()})
+@login_required
+@permission_required('inventory.view_item', login_url="/blocked/")
+def item_list(request, errors=[]):
+    try: q=request.GET['q']
+    except KeyError: q=''
+    items=Item.objects.find(q).filter()
     return _r2r(request,'inventory/item_list.html', {'page':_paginate(request, items),'q':q, 'error_list':errors, 'boxform':BoxForm()})
 @login_required
 @permission_required('inventory.view_item', login_url="/blocked/")
