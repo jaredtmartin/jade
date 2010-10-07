@@ -33,6 +33,7 @@ def create_barcode(number, folder=''):
     bar.getImage(number,50,"png", folder=settings.BARCODES_FOLDER)
 def in_months(date, months):
     return date+timedelta(months*365/12)
+
 class TransactionTipo(models.Model):
     name = models.CharField('name', max_length=32)
     obj = models.CharField('obj', max_length=64)
@@ -67,7 +68,7 @@ class Category(models.Model):
 ITEM_TYPES=(
     ('Product', _('Product')),
     ('Service', _('Service')),
-)
+    )
 try: DEFAULT_UNIT=Unit.objects.get(name=settings.DEFAULT_UNIT_NAME)
 except:DEFAULT_UNIT=None
 def increment_string_number(number):
@@ -530,7 +531,6 @@ def add_sitedetail(sender, **kwargs):
             print "Unable to create SiteDetail for New Site"
 post_save.connect(add_sitedetail, sender=Site, dispatch_uid="jade.inventory.models")
 
-
 def make_default_account(data, model=Account):
     try: return model.objects.get(name=data[0])
     except model.DoesNotExist: 
@@ -555,6 +555,7 @@ PAYMENTS_RECEIVED_ACCOUNT = make_default_account(settings.PAYMENTS_RECEIVED_ACCO
 PAYMENTS_MADE_ACCOUNT = make_default_account(settings.PAYMENTS_MADE_ACCOUNT_DATA)
 INVENTORY_ACCOUNT = make_default_account(settings.INVENTORY_ACCOUNT_DATA, Branch)
 CLIENTS_ACCOUNT = make_default_account(settings.CLIENTS_ACCOUNT_DATA)
+TRANSFER_ACCOUNT = make_default_account(settings.TRANSFER_ACCOUNT_DATA)
 LIABILITIES_ACCOUNT = make_default_account(settings.LIABILITIES_ACCOUNT_DATA)
 VENDORS_ACCOUNT = make_default_account(settings.VENDORS_ACCOUNT_DATA)
 TAX_ACCOUNT = make_default_account(settings.TAX_ACCOUNT_DATA)
@@ -595,10 +596,6 @@ except TaxGroup.DoesNotExist:
     site=Site.objects.get_current())
     DEFAULT_TAX_GROUP.save()
 except DatabaseError: pass
-    #except:
-    #    DEFAULT_TAX_GROUP=None
-    #    print "Unable to set DEFAULT_TAX_GROUP"
-    #SiteDetail.objects.get_or_create(site=Site.objects.get_current(), default_tax_group=DEFAULT_TAX_GROUP)
 try: SiteDetail.objects.get_or_create(site=Site.objects.get_current(), default_tax_group=DEFAULT_TAX_GROUP, inventory=INVENTORY_ACCOUNT)
 except: print "Unable to establish SiteDetail for current site"
 class Contact(models.Model):
@@ -1341,7 +1338,6 @@ class PurchaseReturn(Purchase):
         self.template='inventory/purchase_return.html'
         self.tipo='PurchaseReturn'
 post_save.connect(add_purchase_entries, sender=PurchaseReturn, dispatch_uid="jade.inventory.models")##################################################
-    # Payments##################################################
 class ClientPaymentManager(models.Manager):
   def get_query_set(self):
     return super(ClientPaymentManager, self).get_query_set().filter(tipo="ClientPayment")
@@ -1447,7 +1443,6 @@ class VendorPayment(Payment):
         self.tipo='VendorPayment'
 
 post_save.connect(add_payment_entries, sender=VendorPayment, dispatch_uid="jade.inventory.models")
-
 class VendorRefundManager(models.Manager):
   def get_query_set(self):
     return super(VendorRefundManager, self).get_query_set().filter(tipo="VendorRefund")
@@ -1461,8 +1456,6 @@ class VendorRefund(Payment):
         self.template='inventory/vendor_payment.html'
         self.tipo='VendorRefund'
 post_save.connect(add_payment_entries, sender=VendorRefund, dispatch_uid="jade.inventory.models")
-    ##################################################
-    # Garantees##################################################
 
 class GaranteeOffer(models.Model):
     def save(self, *args, **kwargs):
@@ -1893,25 +1886,6 @@ def add_user_profile(sender, **kwargs):
             UserProfile.objects.create(user=l, price_group=pg)
         except:pass
 post_save.connect(add_user_profile, sender=User, dispatch_uid="jade.inventory.moddels")
-    #class BranchDetail(models.Model):
-    #    account = models.OneToOneField(Account)
-    #    db_name = models.CharField(max_length=32)
-    #    foreign_account_name = models.CharField(_('name'), max_length=200)
-    #    immediate = models.BooleanField(_('transfers are immediate'), default=True)
-    #    def __unicode__(self):
-    #        return self.account.name
-    #    def _get_foreign_account(self):
-    #        return Branch.objects.using(self.db_name).get(name=self.foreign_account_name)
-    #    foreign_account=property(_get_foreign_account)
-
-    #class TransferDetail(models.Model):
-    #    remote_id = models.IntegerField()
-    #    db_name = models.CharField(max_length=32)
-    #    transaction = models.OneToOneField(Transaction)
-    #    def _get_remote(self):
-    #        try: return Transfer.objects.using(self.db_name).get(pk=self.remote_id)
-    #        except: return None
-    #    remote=property(_get_remote)
 
 class TransferManager(models.Manager):
     def get_query_set(self):
@@ -1934,6 +1908,7 @@ class Transfer(Transaction):
     class Meta:
         proxy = True
     objects = TransferManager()
+    
     def __init__(self, *args, **kwargs):
         self.template='inventory/transfer.html'
         self._cost = kwargs.pop('cost', 0)
@@ -1948,74 +1923,71 @@ class Transfer(Transaction):
         self._serial = kwargs.pop('serial', None)
         super(Transfer, self).__init__(*args, **kwargs)
         self.tipo='Transfer'
+    
     def __unicode__(self):
         msg='Transfer'
         if str(self.doc_number)!='': msg+=" #"+self.doc_number
         return msg
-    ################ ################ ################  Value   ################ ################ ################
+    
+    def _get_local_inventory_entry(self):
+        return self.entry_set.get(account=INVENTORY_ACCOUNT, site=Site.get_current())
+    
     def _get_value(self):
         return self.cost
     def _set_value(self, value):
         self.cost=value
     value=property(_get_value, _set_value)
-    ################ ################ ################  Active   ################ ################ ################
+    
     def _get_active(self):
-        try: return self.entry('Dest').active
-        except AttributeError: return self._active
+        try: return self._get_local_inventory_entry().active
+        except Entry.DoesNotExist: return self._active
     def _set_active(self, value):
         self._active=value
         [e.update('active',value) for e in self.entry_set.all()]
     active = property(_get_active, _set_active)
-    ################ ################ ################  Delivered   ################ ################ ################
+    
     def _get_delivered(self):
-        try: return self.entry('Dest').delivered
-        except AttributeError: return self._delivered
+        try: return self._get_local_inventory_entry().delivered
+        except Entry.DoesNotExist: return self._delivered
     def _set_delivered(self, value):
         try: 
-            x= [self.entry(e).update('delivered',value) for e in ['Source','Dest']]
-            if self.branch.branchdetail.immediate: self.update_remote_entry('delivered', value)
+            [e.update('delivered',value) for e in self.entry_set.filter(site=Site.objects.get_current())]
         except AttributeError: self._delivered=value
         
     delivered = property(_get_delivered, _set_delivered)
-    ################ ################ ################  Item   ################ ################ ################
+    
     def _get_item(self):
-        try: return self.entry('Source').item
-        except AttributeError: return self._item
+        try: return self._get_local_inventory_entry().item
+        except Entry.DoesNotExist: return self._item
     def _set_item(self, value):
         try: 
-            x= [self.entry(e).update('item',value) for e in ['Source','Dest']]
-            try: self.update_remote_entry('item', value)
-            except:pass
+            [e.update('item',value) for e in self.entry_set.all()]
         except AttributeError: self._item=value
         
     item = property(_get_item, _set_item)
-    ################ ################ ################  Quantity   ################ ################ ################
+    
     def _get_quantity(self):
-        try: return self.entry('Dest').quantity
-        except AttributeError: return self._quantity
+        try: return self._get_local_inventory_entry().quantity
+        except Entry.DoesNotExist: return self._quantity
     def _set_quantity(self, value):
         dif=value-self.quantity
         try:
-            self.entry('Source').update('quantity', value)
-            self.entry('Dest').update('quantity', -value)
-            try:
-                self.update_remote_entry('quantity', -value, 'Source')
-                self.update_remote_entry('quantity', value, 'Dest')
-            except:pass
+            self.entry('SourceInventory').update('quantity', -value)
+            self.entry('SourceTransfer').update('quantity', value)
+            self.entry('DestinationInventory').update('quantity', value)
+            self.entry('DestinationTransfer').update('quantity', -value)
         except AttributeError: self._quantity=value
     quantity = property(_get_quantity, _set_quantity)
-    ################ ################ ################  Serial   ################ ################ ################
+    
     def _get_serial(self):
-        try: return self.entry('Source').serial
-        except AttributeError: return self._serial
+        try: return self._get_local_inventory_entry().serial
+        except Entry.DoesNotExist: return self._serial
     def _set_serial(self, value):
         try: 
-            x= [self.entry(e).update('serial',value) for e in ['Source','Dest']]
-            try:self.update_remote_entry('serial', value)
-            except:pass
+            [e.update('serial',value) for e in self.entry_set.all()]
         except AttributeError: self._serial=value
     serial = property(_get_serial, _set_serial)
-    ################ ################ ################  source   ################ ################ ################
+    
     def _get_source(self):
         try: return self.entry('SourceInventory').site
         except AttributeError: return self._source
@@ -2023,39 +1995,34 @@ class Transfer(Transaction):
         try: 
             if value!=self.entry('SourceInventory').site:
                 self.entry('SourceInventory').update('site', value)
+                self.entry('SourceTransfer').update('site', value)
         except AttributeError: self._source = value
     source = property(_get_source, _set_source)
-    ################ ################ ################  inventory_account   ################ ################ ################
-    def _get_inventory_account(self):
-        try: return self.entry('Source').account
-        except AttributeError: return self._source
-    def _set_source(self, value):
-        try: 
-            if value!=self.entry('Source').site:
-                self.entry('Source').update('site', value)
-        except AttributeError: self._source = value
-    source = property(_get_source, _set_source)
-    ################ ################ ################  dest   ################ ################ ################
+    
     def _get_dest(self):
-        try: return self.entry('Dest').site
+        try: return self.entry('DestInventory').site
         except AttributeError: return self._dest
     def _set_dest(self, value):
         try: 
-            if value!=self.entry('Dest').site:
-                self.entry('Dest').update('site', value)
+            if value!=self.entry('DestInventory').site:
+                self.entry('DestInventory').update('site', value)
+                self.entry('DestinationTransfer').update('site', value)
         except AttributeError: self._dest = value
     dest = property(_get_dest, _set_dest)
-    ################ ################ ################  Cost   ################ ################ ################
+    
     def _get_cost(self):
-        try: return self.entry('Dest').value
-        except AttributeError: return self._cost
+        try: self._get_local_inventory_entry().value
+        except Entry.DoesNotExist: return self._cost
     def _set_cost(self, value):
-        try:
-            self.entry('Source').update('value', -value)
-            i=self.entry('Dest').update('value', value)
+        try:            
+            self.entry('SourceInventory').update('value', -value)
+            self.entry('SourceTransfer').update('value', value)
+            self.entry('DestinationInventory').update('value', value)
+            self.entry('DestinationTransfer').update('value', -value)
         except AttributeError:
             self._cost=value
     cost=property(_get_cost, _set_cost)
+    
     def _get_unit_cost(self):
         p=self.cost
         if self.quantity != 0 and p !=0: return p / self.quantity
@@ -2066,8 +2033,8 @@ def add_transfer_entry(sender, **kwargs):
     if kwargs['created']:
         l=kwargs['instance']
         l.create_related_entry(
-            account = l.source,
-            tipo = 'Source',
+            account = INVENTORY_ACCOUNT,
+            tipo = 'SourceInventory',
             value = -l.cost,
             item = l._item,
             quantity = -l._quantity,
@@ -2075,11 +2042,29 @@ def add_transfer_entry(sender, **kwargs):
             delivered = l._delivered,
         )
         l.create_related_entry(
-            account = l._dest,
-            tipo = 'Dest',
+            account = TRANSFER_ACCOUNT,
+            tipo = 'SourceTransfer',
             value = l.cost,
             item = l._item,
-            quantity=l._quantity,
+            quantity = l._quantity,
+            serial = l._serial,
+            delivered = l._delivered,
+        )
+        l.create_related_entry(
+            account = INVENTORY_ACCOUNT,
+            tipo = 'DestinationInventory',
+            value = l.cost,
+            item = l._item,
+            quantity = l._quantity,
+            serial = l._serial,
+            delivered = l._delivered,
+        )
+        l.create_related_entry(
+            account = TRANSFER_ACCOUNT,
+            tipo = 'DestinationTransfer',
+            value = -l.cost,
+            item = l._item,
+            quantity=-l._quantity,
             serial=l._serial,
             delivered=l._delivered,
         )    
