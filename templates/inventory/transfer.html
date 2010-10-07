@@ -3,7 +3,7 @@
 {% load tags %}
 
 {% block other_fields_edit %}
-    <td><input id="id_transaction-{{ object.pk }}-account" title="{% trans 'Name of branch' %}"  class="field account lookup branch" value="{{object.subclass.branch|default:''}}" type="text"></td>
+    <td><input id="id_transaction-{{ object.pk }}-account" title="{% trans 'Name of account' %}"  class="field account lookup account" value="{{object.subclass.account|default:''}}" type="text"></td>
     <td><input id="id_transaction-{{ object.pk }}-item" title="{% trans 'Name of item' %}" class="field item lookup" value="{{object.subclass.item|default:''}}" type="text"></td>
     <td><input id="id_transaction-{{ object.pk }}-quantity" title="{% trans 'Quantity of item' %}" class="field quantity inventory-details" value="{{object.subclass.quantity|floatformat:-2}}" type="text"></td>
     <td><input id="id_transaction-{{ object.pk }}-serial" title="{% trans 'Serial number of item (if applicable)' %}" class="field serial inventory-details" value="{{object.subclass.serial|default:''}}" type="text"></td>
@@ -16,7 +16,7 @@
 
 
 {% block other_fields_show %}
-    <td id="id_transaction-{{ object.pk }}-account" title="{% trans 'Name of branch' %}"  value="{{object.subclass.branch|default:''}}" class="field account lookup branch"><a href="{{object.subclass.branch.url}}">{{object.subclass.branch|default:''}}</a></td>
+    <td id="id_transaction-{{ object.pk }}-account" title="{% trans 'Name of account' %}"  value="{{object.subclass.account|default:''}}" class="field account lookup account"><a href="{{object.subclass.account.url}}">{{object.subclass.account|default:''}}</a></td>
     <td id="id_transaction-{{ object.pk }}-item"   title="{% trans 'Name of item' %}"          value="{{object.subclass.item|default:''}}"                        class="field item lookup" class="inventory-details">{% if object.subclass.item %}<a href="{{object.subclass.item.url}}">{{object.subclass.item}}</a>{% endif %}</td>
     <td id="id_transaction-{{object.pk}}-quantity" title="{% trans 'Quantity of item' %}"          value="{{object.subclass.quantity|floatformat:-2}}"     class="field quantity inventory-details"> {{object.subclass.quantity|floatformat:-2}}</td>
     <td id="id_transaction-{{object.pk}}-serial"   title="{% trans 'Serial number of item (if applicable)' %}"          value="{{object.subclass.serial|default:''}}"                      class="field serial inventory-details">{% if object.subclass.serial %}<a href="/inventory/serial/{{object.subclass.serial}}/">{{object.subclass.serial}}</a>{% endif %}</td>

@@ -253,7 +253,7 @@ class Account(models.Model):
         return self.tax_group.value
     tax_rate = property(_get_tax_rate)
     def _get_balance(self):
-        b=Entry.objects.filter(active=True, account__number__startswith=self.number).aggregate(total=models.Sum('value'))['total'] or Decimal('0.00')
+        b=Entry.objects.filter(site=Site.objects.get_current(), active=True, account__number__startswith=self.number).aggregate(total=models.Sum('value'))['total'] or Decimal('0.00')
     #        b=self.entry_set.filter(active=True).aggregate(total=models.Sum('value'))['total'] or Decimal('0.00')
         if b!=0:b=b*self.multiplier
         return b
@@ -672,10 +672,7 @@ class TransactionManager(CurrentMultiSiteManager):
 
 class Transaction(models.Model):
     #    objects = CurrentMultiSiteManager()
-    def save(self, *args, **kwargs):
-        flag=self.pk
-        super(Transaction, self).save(*args, **kwargs)
-        if not flag: self.sites.add(Site.objects.get_current())            
+          
     _date = models.DateTimeField(default=datetime.now())
     doc_number = models.CharField(max_length=32, default='', blank=True)
     comments = models.CharField(max_length=200, blank=True, default='')
@@ -695,7 +692,7 @@ class Transaction(models.Model):
         return False
     def __unicode__(self):
         return self.doc_number
-    def create_related_entry(self, account, tipo, value=0, item=None, quantity=0, delivered=True, serial=None, count=0, cost=0, active=True):#cost_left=0, quantity_left=0, 
+    def create_related_entry(self, account, tipo, value=0, item=None, quantity=0, delivered=True, serial=None, count=0, cost=0, active=True, site=Site.objects.get_current()):#cost_left=0, quantity_left=0, 
         e=self.entry_set.create(
         account=account,
         tipo=tipo,
@@ -705,6 +702,7 @@ class Transaction(models.Model):
         serial=serial,
         active=active,
         delivered=delivered,
+        site=site,
     #        cost_left=cost_left,
     #        quantity_left=quantity_left
         )
@@ -756,6 +754,9 @@ class Transaction(models.Model):
             self.garantee.save()
     garantee_months = property(_get_garantee_months, _set_garantee_months)
 
+class EntryManager(models.Manager):
+    def get_query_set(self):
+        return super(EntryManager, self).get_query_set().filter(site=Site.objects.get_current())
 class Entry(models.Model):
     """
     """
@@ -790,6 +791,8 @@ class Entry(models.Model):
             ("view_entry", "Can view entries"),
         )
         ordering = ('-date',)
+    objects=EntryManager()
+    offsite_objects=models.Manager()
     transaction = models.ForeignKey(Transaction)
     value = models.DecimalField(max_digits=8, decimal_places=2, default='0.00')
     account = models.ForeignKey(Account)
@@ -804,10 +807,10 @@ class Entry(models.Model):
     site = models.ForeignKey(Site)
     #    objects = CurrentMultiSiteManager()
     
-    def save(self, *args, **kwargs):
-        flag=self.pk
-        super(Entry, self).save(*args, **kwargs)
-        if not flag: self.sites.add(Site.objects.get_current()) 
+#    def save(self, *args, **kwargs):
+#        flag=self.pk
+#        super(Entry, self).save(*args, **kwargs)
+#        if not flag: self.sites.add(Site.objects.get_current()) 
     def update(self, attribute, value):
         setattr(self, attribute, value)
         self.save()
@@ -1900,14 +1903,14 @@ class TransferManager(models.Manager):
         except: number='1001'
         return number
 class Transfer(Transaction):
+    objects = TransferManager()
     #    Entry Name             Account     Site
     #    SourceInventory        Inventory   A
     #    SourceTransfer         Transfer    A
-    #    DestinationInventory   Inventory   B
-    #    DestinationTransfer    Transfer    B
+    #    DestInventory   Inventory   B
+    #    DestTransfer    Transfer    B
     class Meta:
         proxy = True
-    objects = TransferManager()
     
     def __init__(self, *args, **kwargs):
         self.template='inventory/transfer.html'
@@ -1921,6 +1924,7 @@ class Transfer(Transaction):
         self._item = kwargs.pop('item', None)
         self._quantity = kwargs.pop('quantity', 0)
         self._serial = kwargs.pop('serial', None)
+        self._account = kwargs.pop('account', None)
         super(Transfer, self).__init__(*args, **kwargs)
         self.tipo='Transfer'
     
@@ -1930,22 +1934,21 @@ class Transfer(Transaction):
         return msg
     
     def _get_local_inventory_entry(self):
-        return self.entry_set.get(account=INVENTORY_ACCOUNT, site=Site.get_current())
-    
+        return self.entry_set.get(account=INVENTORY_ACCOUNT, site=Site.objects.get_current())
+    def _get_remote_inventory_entry(self):
+        return Entry.offsite_objects.filter(transaction=self).exclude(site=Site.objects.get_current()).get(account=INVENTORY_ACCOUNT)
+        #return self.entry_set.exclude(site=Site.objects.get_current()).get(account=INVENTORY_ACCOUNT)
+        
     def _get_value(self):
         return self.cost
     def _set_value(self, value):
         self.cost=value
-    value=property(_get_value, _set_value)
-    
     def _get_active(self):
         try: return self._get_local_inventory_entry().active
         except Entry.DoesNotExist: return self._active
     def _set_active(self, value):
         self._active=value
         [e.update('active',value) for e in self.entry_set.all()]
-    active = property(_get_active, _set_active)
-    
     def _get_delivered(self):
         try: return self._get_local_inventory_entry().delivered
         except Entry.DoesNotExist: return self._delivered
@@ -1954,8 +1957,6 @@ class Transfer(Transaction):
             [e.update('delivered',value) for e in self.entry_set.filter(site=Site.objects.get_current())]
         except AttributeError: self._delivered=value
         
-    delivered = property(_get_delivered, _set_delivered)
-    
     def _get_item(self):
         try: return self._get_local_inventory_entry().item
         except Entry.DoesNotExist: return self._item
@@ -1964,21 +1965,20 @@ class Transfer(Transaction):
             [e.update('item',value) for e in self.entry_set.all()]
         except AttributeError: self._item=value
         
-    item = property(_get_item, _set_item)
-    
     def _get_quantity(self):
-        try: return self._get_local_inventory_entry().quantity
+        try: 
+            v = self._get_local_inventory_entry().quantity
+            #if self.source != Site.objects.get_current(): v=-v
+            return v
         except Entry.DoesNotExist: return self._quantity
     def _set_quantity(self, value):
-        dif=value-self.quantity
+        #if self.source != Site.objects.get_current(): value=-value
         try:
-            self.entry('SourceInventory').update('quantity', -value)
-            self.entry('SourceTransfer').update('quantity', value)
-            self.entry('DestinationInventory').update('quantity', value)
-            self.entry('DestinationTransfer').update('quantity', -value)
+            self.entry('SourceInventory').update('quantity', value)
+            self.entry('SourceTransfer').update('quantity', -value)
+            self.entry('DestInventory').update('quantity', -value)
+            self.entry('DestTransfer').update('quantity', value)
         except AttributeError: self._quantity=value
-    quantity = property(_get_quantity, _set_quantity)
-    
     def _get_serial(self):
         try: return self._get_local_inventory_entry().serial
         except Entry.DoesNotExist: return self._serial
@@ -1986,8 +1986,13 @@ class Transfer(Transaction):
         try: 
             [e.update('serial',value) for e in self.entry_set.all()]
         except AttributeError: self._serial=value
-    serial = property(_get_serial, _set_serial)
-    
+    def _get_account(self):
+        return self._get_remote_inventory_entry().site
+    def _set_account(self, value):
+        remote=self._get_remote_inventory_entry()
+        if value!=remote.site:
+            remote.site=value
+            remote.save()
     def _get_source(self):
         try: return self.entry('SourceInventory').site
         except AttributeError: return self._source
@@ -1997,8 +2002,6 @@ class Transfer(Transaction):
                 self.entry('SourceInventory').update('site', value)
                 self.entry('SourceTransfer').update('site', value)
         except AttributeError: self._source = value
-    source = property(_get_source, _set_source)
-    
     def _get_dest(self):
         try: return self.entry('DestInventory').site
         except AttributeError: return self._dest
@@ -2006,66 +2009,81 @@ class Transfer(Transaction):
         try: 
             if value!=self.entry('DestInventory').site:
                 self.entry('DestInventory').update('site', value)
-                self.entry('DestinationTransfer').update('site', value)
+                self.entry('DestTransfer').update('site', value)
         except AttributeError: self._dest = value
-    dest = property(_get_dest, _set_dest)
-    
     def _get_cost(self):
-        try: self._get_local_inventory_entry().value
+        try: 
+            return self._get_local_inventory_entry().value
+            #if self.source != Site.objects.get_current(): v=-v
+            #return v
         except Entry.DoesNotExist: return self._cost
     def _set_cost(self, value):
+        #if self.source != Site.objects.get_current(): value=-value
         try:            
-            self.entry('SourceInventory').update('value', -value)
-            self.entry('SourceTransfer').update('value', value)
-            self.entry('DestinationInventory').update('value', value)
-            self.entry('DestinationTransfer').update('value', -value)
+            self.entry('SourceInventory').update('value', value)
+            self.entry('SourceTransfer').update('value', -value)
+            self.entry('DestInventory').update('value', -value)
+            self.entry('DestTransfer').update('value', value)
         except AttributeError:
             self._cost=value
-    cost=property(_get_cost, _set_cost)
-    
     def _get_unit_cost(self):
         p=self.cost
         if self.quantity != 0 and p !=0: return p / self.quantity
         else: return p
+    delivered = property(_get_delivered, _set_delivered)
+    item = property(_get_item, _set_item)
+    active = property(_get_active, _set_active)
+    value=property(_get_value, _set_value)
+    quantity = property(_get_quantity, _set_quantity)
+    serial = property(_get_serial, _set_serial)
+    account = property(_get_account, _set_account)
+    source = property(_get_source, _set_source)
+    dest = property(_get_dest, _set_dest)
+    cost=property(_get_cost, _set_cost)
     unit_cost=property(_get_unit_cost)
-
+            
 def add_transfer_entry(sender, **kwargs):
     if kwargs['created']:
         l=kwargs['instance']
+      
         l.create_related_entry(
             account = INVENTORY_ACCOUNT,
             tipo = 'SourceInventory',
-            value = -l.cost,
+            value = -l._cost,
             item = l._item,
             quantity = -l._quantity,
             serial = l._serial,
             delivered = l._delivered,
+            site = Site.objects.get_current(),
         )
         l.create_related_entry(
             account = TRANSFER_ACCOUNT,
             tipo = 'SourceTransfer',
-            value = l.cost,
+            value = l._cost,
             item = l._item,
             quantity = l._quantity,
             serial = l._serial,
             delivered = l._delivered,
+            site = Site.objects.get_current(),
         )
         l.create_related_entry(
             account = INVENTORY_ACCOUNT,
-            tipo = 'DestinationInventory',
-            value = l.cost,
+            tipo = 'DestInventory',
+            value = l._cost,
             item = l._item,
             quantity = l._quantity,
             serial = l._serial,
             delivered = l._delivered,
+            site = l._account,
         )
         l.create_related_entry(
             account = TRANSFER_ACCOUNT,
-            tipo = 'DestinationTransfer',
-            value = -l.cost,
+            tipo = 'DestTransfer',
+            value = -l._cost,
             item = l._item,
             quantity=-l._quantity,
             serial=l._serial,
             delivered=l._delivered,
+            site = l._account,
         )    
 post_save.connect(add_transfer_entry, sender=Transfer, dispatch_uid="jade.inventory.moddels")

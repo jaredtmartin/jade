@@ -206,10 +206,10 @@ class PurchaseForm(forms.ModelForm):
 class TransferForm(forms.ModelForm):
     class Meta:
         model = Transfer
-        fields=('doc_number','date','client','vendor','item','quantity','serial','cost')
+        fields=('doc_number','date','account','item','quantity','serial','cost')
     def save(self, commit=True):
         model = super(TransferForm, self).save(commit=False)
-        model.branch =      self.cleaned_data['account']
+        model.account =      self.cleaned_data['account']
         model.item =        self.cleaned_data['item']
         model.date =        self.cleaned_data['date']
         model.quantity =    self.cleaned_data['quantity']
@@ -225,7 +225,7 @@ class TransferForm(forms.ModelForm):
     date =              forms.DateField(initial=datetime.now()) #, input_formats=['%Y-%m-%d', '%d/%m/%Y',]) # Uncomment this for spanish dates
     serial =            forms.CharField(required=False)
     def clean_account(self):
-        return clean_lookup(self, 'account', Branch)
+        return clean_lookup(self, 'account', Site)
     def clean_item(self):
         x=clean_bar_code(self, 'item', Item)
         return x

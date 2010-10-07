@@ -19,6 +19,7 @@ from django.views.generic import list_detail
 from django.contrib.auth.decorators import permission_required, login_required
 #from jade.settings import settings.APP_LOCATION, settings.COMPANY_NAME, settings.CORTE_REPORT_NAME, settings.MOVEMENTS_REPORT_NAME, settings.PRICE_REPORT_NAME, settings.INVENTORY_REPORT_NAME, settings.MEDIA_URL, settings.APP_LOCATION, settings.RECEIPT_REPORT_NAME_SUFFIX, settings.RECEIPT_REPORT_NAME_PREFIX, settings.COUNT_SHEET_REPORT_NAME, settings.LABEL_SHEET_REPORT_NAME
 from jade import settings
+
 def root(response):
     return HttpResponseRedirect('/inventory/sales/')
 def set_languages(request):
@@ -38,7 +39,6 @@ def _r2r(request, template, context={}):
 
 def edit_object(request, object_id, model, form, prefix, tipo=None, extra_context={}):
     obj = get_object_or_404(model, pk=object_id)
-    print "extra_context = " + str(extra_context)
     if not request.user.has_perms('inventory.change_'+obj.tipo.lower()): return http.HttpResponseRedirect("/blocked/")
     f = form(request.POST, instance=obj)
     if not tipo: tipo=obj.get_tipo_display()
@@ -1273,25 +1273,23 @@ def new_transfer(request): # AJAX POST ONLY
     error_list={}
     try: doc_number=request.POST['doc_number']
     except: doc_number='' 
-    source=Site.objects.get_current().sitedetail.inventory
     if doc_number=='': doc_number=Transfer.objects.next_doc_number()
     try: 
         sample=Transfer.objects.filter(doc_number=doc_number)[0]
         date=sample.date
-        dest=sample.site
     except:
         date=datetime.now()
-    try: dest=Site.objects.get(name=request.POST['client']).sitedetail.inventory
+    try: account=Site.objects.get(name=request.POST['client'])
     except: 
-        dest=None
-        error_list['site']=[unicode('Unable to find a site with the name specified.')]
+        account=None
+        error_list['client']=[unicode('Unable to find a site with the name specified.')]
     try: 
         item=Item.objects.fetch(request.POST['item'])
         cost=item.cost
     except:
         item=None
         cost=0
-    transfer=Transfer(doc_number=doc_number, date=date, source=source, dest=dest, item=item, cost=cost)
+    transfer=Transfer(doc_number=doc_number, date=date, account=account, item=item, cost=cost)
     if len(error_list)==0:
         transfer.save()
     return _r2r(request,'inventory/results.html', {'edit_mode':True, 'objects':[transfer],'prefix':'transfer','line_template':"inventory/transaction.html",'error_list':error_list, 'info_list':{}})
