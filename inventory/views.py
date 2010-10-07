@@ -1273,7 +1273,7 @@ def new_transfer(request): # AJAX POST ONLY
     error_list={}
     try: doc_number=request.POST['doc_number']
     except: doc_number='' 
-    source=Site.objects.get_current()
+    source=Site.objects.get_current().sitedetail.inventory
     if doc_number=='': doc_number=Transfer.objects.next_doc_number()
     try: 
         sample=Transfer.objects.filter(doc_number=doc_number)[0]
@@ -1281,8 +1281,7 @@ def new_transfer(request): # AJAX POST ONLY
         dest=sample.site
     except:
         date=datetime.now()
-    print "request.POST['client'] = " + str(request.POST['client'])
-    try: dest=Site.objects.get(name=request.POST['client'])
+    try: dest=Site.objects.get(name=request.POST['client']).sitedetail.inventory
     except: 
         dest=None
         error_list['site']=[unicode('Unable to find a site with the name specified.')]
