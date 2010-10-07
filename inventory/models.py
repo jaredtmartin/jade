@@ -1,6 +1,7 @@
 from django.utils.translation import ugettext_lazy as _
 from django.db import models
 from decimal import *
+from django.db.utils import DatabaseError
 from datetime import datetime, timedelta
 from django.contrib.auth.models import User
 from django.db.models import Q
@@ -167,9 +168,12 @@ def create_prices_for_price_group(sender, **kwargs):
 post_save.connect(create_prices_for_price_group, sender=PriceGroup, dispatch_uid="jade.inventory.models")
 
 class Price(models.Model):
+    def save(self, *args, **kwargs):
+        if not self.site: self.site=Site.objects.get_current()
+        super(Price, self).save(*args, **kwargs)
     group = models.ForeignKey(PriceGroup)
     item = models.ForeignKey(Item)
-    site = models.ForeignKey(Site, default=Site.objects.get_current().pk)
+    site = models.ForeignKey(Site)#, default=Site.objects.get_current().pk
     fixed_discount = models.DecimalField(_('fixed discount'), max_digits=8, decimal_places=2, default=0)
     relative_discount = models.DecimalField(_('relative discount'), max_digits=8, decimal_places=2, default=0)
     fixed = models.DecimalField(_('fixed'), max_digits=8, decimal_places=2, default=settings.DEFAULT_FIXED_PRICE)
@@ -209,7 +213,7 @@ class Account(models.Model):
     number = models.CharField(_('number'), max_length=32)
     multiplier = models.IntegerField(_('multiplier'), default=1, choices=MULTIPLIER_TYPES)
     tipo = models.CharField(_('type'), max_length=16, choices=ACCOUNT_TYPES)
-    site = models.ForeignKey(Site, default=Site.objects.get_current().pk)
+    site = models.ForeignKey(Site)#, default=Site.objects.get_current().pk
     objects = AccountManager()
     test = models.Manager()
 
@@ -236,6 +240,7 @@ class Account(models.Model):
         super(Account, self).__init__(*args, **kwargs)
     def save(self, *args, **kwargs):
         if not self.tipo: self.tipo='Account'
+        if not self.site: self.site=Site.objects.get_current()
         super(Account, self).save(*args, **kwargs)
         try: self.contact.save()
         except: pass
@@ -409,6 +414,19 @@ def add_contact(sender, **kwargs):
             tax_group=l._tax_group,           
         )
 class TaxGroup(models.Model):
+    def __init__(self, *args, **kwargs):
+        super(TaxGroup, self).__init__(*args, **kwargs)  
+        try:
+            if not self.site: self.site=Site.objects.get_current()
+        except:
+            print "unable to set site on TaxGroup"
+            pass
+#    def save(self, *args, **kwargs):
+#        print "SITE_ID=%i"% settings.SITE_ID
+#        print "self.site=%s"% self.site
+#        print "SITE=%s" % Site.objects.get(pk=settings.SITE_ID)
+#        if not self.site: self.site=Site.objects.get(pk=settings.SITE_ID)
+#        super(TaxGroup, self).save(*args, **kwargs)
     name = models.CharField(max_length=32)
     value = models.DecimalField(max_digits=3, decimal_places=2, default='0.00')
     revenue_account = models.ForeignKey(Account, related_name = 'revenue_account_id')
@@ -417,7 +435,7 @@ class TaxGroup(models.Model):
     discounts_account = models.ForeignKey(Account, related_name = 'discounts_account_id')
     returns_account = models.ForeignKey(Account, related_name = 'returns_account_id')
     price_includes_tax = models.BooleanField(blank=True, default=True)
-    site = models.ForeignKey(Site, default=Site.objects.get_current().pk)
+    site = models.ForeignKey(Site)#, default=Site.objects.get_current().pk
     objects = CurrentSiteManager()
     
     def __unicode__(self):
@@ -500,23 +518,35 @@ class Branch(Account):
 
 class SiteDetail(models.Model):
     site = models.OneToOneField(Site)
+    inventory = models.ForeignKey(Account)
     default_tax_group = models.ForeignKey(TaxGroup)
 def add_sitedetail(sender, **kwargs):
     if kwargs['created']:
-        SiteDetail.objects.create(site=kwargs['instance'], default_tax_group=Site.objects.get_current().sitedetail.default_tax_group)
+        try:
+            SiteDetail.objects.create(site=kwargs['instance'], default_tax_group=Site.objects.get_current().sitedetail.default_tax_group)
+        except:
+            print "Unable to create SiteDetail for New Site"
 post_save.connect(add_sitedetail, sender=Site, dispatch_uid="jade.inventory.models")
 
 
 def make_default_account(data, model=Account):
     try: return model.objects.get(name=data[0])
     except model.DoesNotExist: 
-        print "couldnt find "
-        return model.objects.create(name=data[0], number=data[1], multiplier=data[2])
+        print "couldnt find "+data[0]
+        try:
+            return model.objects.create(name=data[0], number=data[1], multiplier=data[2], site_id=settings.SITE_ID)
+        except Site.DoesNotExist:
+            print "Unable to create account because a site with id=%i does not exist" % settings.SITE_ID
     except model.MultipleObjectsReturned:
         print "We have %i %ss" % (model.objects.filter(name=data[0]).count(), data[0])
         return model.objects.filter(name=data[0])[0]
-    
-    
+    except DatabaseError: pass
+Site.objects.get(pk=settings.SITE_ID)
+try:
+    try: Site.objects.filter(pk=settings.SITE_ID)
+    except: Site.objects.create(name='Default', id=settings.SITE_ID)
+except:
+    print "Unable to create a site to match the current site_id"
 ASSETS_ACCOUNT = make_default_account(settings.ASSETS_ACCOUNT_DATA)
 CASH_ACCOUNT = make_default_account(settings.CASH_ACCOUNT_DATA)
 PAYMENTS_RECEIVED_ACCOUNT = make_default_account(settings.PAYMENTS_RECEIVED_ACCOUNT_DATA)
@@ -543,20 +573,37 @@ COUNTS_EXPENSE_ACCOUNT = make_default_account(settings.COUNTS_EXPENSE_ACCOUNT_DA
 if settings.PRODUCTION_EXPENSE_ACCOUNT_DATA:
     PRODUCTION_EXPENSE_ACCOUNT = make_default_account(settings.PRODUCTION_EXPENSE_ACCOUNT_DATA)
 
-DEFAULT_UNIT = Unit.objects.get_or_create(name=settings.DEFAULT_UNIT_NAME)[0]
+try: DEFAULT_UNIT = Unit.objects.get_or_create(name=settings.DEFAULT_UNIT_NAME)[0]
+except DatabaseError: pass
 
-DEFAULT_PRICE_GROUP = PriceGroup.objects.get_or_create(name=settings.DEFAULT_PRICE_GROUP_NAME)[0]
-DEFAULT_TAX_GROUP = TaxGroup.objects.get_or_create(
+try: DEFAULT_PRICE_GROUP = PriceGroup.objects.get_or_create(name=settings.DEFAULT_PRICE_GROUP_NAME)[0]
+except DatabaseError: pass
+#try:
+try: 
+    DEFAULT_TAX_GROUP = TaxGroup.objects.get(name=settings.DEFAULT_TAX_GROUP_NAME)
+except TaxGroup.DoesNotExist:
+    DEFAULT_TAX_GROUP=TaxGroup(
     name=settings.DEFAULT_TAX_GROUP_NAME,
     revenue_account=DEFAULT_REVENUE_ACCOUNT,
     sales_tax_account=DEFAULT_SALES_TAX_ACCOUNT,
     purchases_tax_account=DEFAULT_PURCHASES_TAX_ACCOUNT,
     discounts_account=DEFAULT_DISCOUNTS_ACCOUNT,
     returns_account=DEFAULT_RETURNS_ACCOUNT, 
-    price_includes_tax=settings.DEFAULT_TAX_INCLUDED)[0]
-SiteDetail.objects.get_or_create(site=Site.objects.get_current(), default_tax_group=DEFAULT_TAX_GROUP)
+    price_includes_tax=settings.DEFAULT_TAX_INCLUDED,
+    site=Site.objects.get_current())
+    DEFAULT_TAX_GROUP.save()
+except DatabaseError: pass
+#except:
+#    DEFAULT_TAX_GROUP=None
+#    print "Unable to set DEFAULT_TAX_GROUP"
+#SiteDetail.objects.get_or_create(site=Site.objects.get_current(), default_tax_group=DEFAULT_TAX_GROUP)
+try: SiteDetail.objects.get_or_create(site=Site.objects.get_current(), default_tax_group=DEFAULT_TAX_GROUP, inventory=INVENTORY_ACCOUNT)
+except: print "Unable to establish SiteDetail for current site"
 class Contact(models.Model):
-    tax_group_name = models.CharField(max_length=32, default=Site.objects.get_current().sitedetail.default_tax_group.name)
+    def save(self, *args, **kwargs):
+        if not self.tax_group_name: tax_group_name=Site.objects.get_current().sitedetail.default_tax_group.name
+        super(Contact, self).save(*args, **kwargs)
+    tax_group_name = models.CharField(max_length=32)#, default=Site.objects.get_current().sitedetail.default_tax_group.name
     price_group = models.ForeignKey(PriceGroup, blank=True, null=True)
     address = models.CharField(max_length=32, blank=True, default="")
     state_name = models.CharField(max_length=32, blank=True, default="")
@@ -582,17 +629,23 @@ class Contact(models.Model):
 try:
     DEFAULT_CLIENT = Client.objects.get(name=settings.DEFAULT_CLIENT_NAME)
 except:
-    DEFAULT_CLIENT = Client.objects.create(name=settings.DEFAULT_CLIENT_DATA[0], number=settings.DEFAULT_CLIENT_DATA[1])
-    DEFAULT_CLIENT.price_group=DEFAULT_PRICE_GROUP
-    DEFAULT_CLIENT.tax_group=DEFAULT_TAX_GROUP
-    DEFAULT_CLIENT.save()
+    try:
+        DEFAULT_CLIENT = Client.objects.create(name=settings.DEFAULT_CLIENT_DATA[0], number=settings.DEFAULT_CLIENT_DATA[1])
+        DEFAULT_CLIENT.price_group=DEFAULT_PRICE_GROUP
+        DEFAULT_CLIENT.tax_group=DEFAULT_TAX_GROUP
+        DEFAULT_CLIENT.save()
+    except:
+        pass
 try:
     DEFAULT_VENDOR = Vendor.objects.get(name=settings.DEFAULT_VENDOR_DATA[0])
 except:
-    DEFAULT_VENDOR = Vendor.objects.create(name=settings.DEFAULT_VENDOR_DATA[0], number=settings.DEFAULT_VENDOR_DATA[1])
-    DEFAULT_VENDOR.price_group=DEFAULT_PRICE_GROUP
-    DEFAULT_VENDOR.tax_group=DEFAULT_TAX_GROUP
-    DEFAULT_VENDOR.save()
+    try:
+        DEFAULT_VENDOR = Vendor.objects.create(name=settings.DEFAULT_VENDOR_DATA[0], number=settings.DEFAULT_VENDOR_DATA[1])
+        DEFAULT_VENDOR.price_group=DEFAULT_PRICE_GROUP
+        DEFAULT_VENDOR.tax_group=DEFAULT_TAX_GROUP
+        DEFAULT_VENDOR.save()
+    except:
+        pass
 
 TRANSACTION_TYPES=(
         ('Sale', 'Sale'),
@@ -1409,10 +1462,13 @@ post_save.connect(add_payment_entries, sender=VendorRefund, dispatch_uid="jade.i
 # Garantees##################################################
 
 class GaranteeOffer(models.Model):
+    def save(self, *args, **kwargs):
+        if not self.site: self.site=Site.objects.get_current()
+        super(GaranteeOffer, self).save(*args, **kwargs)
     months = models.IntegerField(default=0, blank=True)
     price = models.DecimalField(max_digits=8, decimal_places=2, default=Decimal('0.00'), blank=True)
     item = models.ForeignKey(Item)
-    site = models.ForeignKey(Site, default=Site.objects.get_current().pk)
+    site = models.ForeignKey(Site)#, default=Site.objects.get_current().pk
     objects = CurrentSiteManager()
 
     def __init__(self, *args, **kwargs):
