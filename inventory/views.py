@@ -1273,23 +1273,26 @@ def new_transfer(request): # AJAX POST ONLY
     error_list={}
     try: doc_number=request.POST['doc_number']
     except: doc_number='' 
+    source=Site.objects.get_current()
     if doc_number=='': doc_number=Transfer.objects.next_doc_number()
     try: 
         sample=Transfer.objects.filter(doc_number=doc_number)[0]
         date=sample.date
-        site=sample.site
+        dest=sample.site
     except:
         date=datetime.now()
-    try: branch=Branch.objects.get(name=request.POST['branch'])
-    except: branch=None
+    print "request.POST['client'] = " + str(request.POST['client'])
+    try: dest=Site.objects.get(name=request.POST['client'])
+    except: 
+        dest=None
+        error_list['site']=[unicode('Unable to find a site with the name specified.')]
     try: 
         item=Item.objects.fetch(request.POST['item'])
         cost=item.cost
     except:
         item=None
         cost=0
-    if not branch: error_list['branch']=[unicode('Unable to find a branch with the name specified.')]
-    transfer=Transfer(doc_number=doc_number, date=date, branch=branch, item=item, cost=cost)
+    transfer=Transfer(doc_number=doc_number, date=date, source=source, dest=dest, item=item, cost=cost)
     if len(error_list)==0:
         transfer.save()
     return _r2r(request,'inventory/results.html', {'edit_mode':True, 'objects':[transfer],'prefix':'transfer','line_template':"inventory/transaction.html",'error_list':error_list, 'info_list':{}})
