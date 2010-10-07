@@ -40,9 +40,6 @@ def clean_bar_code(form, name, model):
     print "data = " + str(data)
     return data
 
-######################################################################################
-# Sale Form
-######################################################################################
 
 class SaleForm(forms.ModelForm):
     class Meta:
@@ -83,9 +80,6 @@ class SaleForm(forms.ModelForm):
         x=clean_bar_code(self, 'item', Item)
         return x
 
-######################################################################################
-# Garantee Forms
-######################################################################################
 
 class ClientGaranteeForm(forms.ModelForm):
     class Meta:
@@ -114,6 +108,7 @@ class ClientGaranteeForm(forms.ModelForm):
         x=clean_bar_code(self, 'item', Item)
         return x
         
+
 class VendorGaranteeForm(forms.ModelForm):
     class Meta:
         model = VendorGarantee
@@ -140,11 +135,6 @@ class VendorGaranteeForm(forms.ModelForm):
     def clean_item(self):
         x=clean_bar_code(self, 'item', Item)
         return x
-######################################################################################
-# Payment Forms
-######################################################################################
-# Client Payment Form
-######################################################################################
 
 class ClientPaymentForm(forms.ModelForm):
     class Meta:
@@ -163,9 +153,6 @@ class ClientPaymentForm(forms.ModelForm):
     date =              forms.DateField(initial=datetime.now()) #, input_formats=['%Y-%m-%d', '%d/%m/%Y',]) # Uncomment this for spanish dates
     def clean_account(self):
         return clean_lookup(self, 'account', Client)
-######################################################################################
-# Vendor Payment Form
-######################################################################################
 
 class VendorPaymentForm(forms.ModelForm):
     class Meta:
@@ -184,9 +171,7 @@ class VendorPaymentForm(forms.ModelForm):
     date =              forms.DateField(initial=datetime.now()) #, input_formats=['%Y-%m-%d', '%d/%m/%Y',]) # Uncomment this for spanish dates
     def clean_account(self):
         return clean_lookup(self, 'account', Vendor)
-######################################################################################
-# Purchase Forms
-######################################################################################
+
 class PurchaseForm(forms.ModelForm):
     class Meta:
         model = Purchase
@@ -217,9 +202,7 @@ class PurchaseForm(forms.ModelForm):
     def clean_item(self):
         x=clean_bar_code(self, 'item', Item)
         return x
-######################################################################################
-# Transfer Forms
-######################################################################################
+
 class TransferForm(forms.ModelForm):
     class Meta:
         model = Transfer
@@ -246,9 +229,7 @@ class TransferForm(forms.ModelForm):
     def clean_item(self):
         x=clean_bar_code(self, 'item', Item)
         return x
-######################################################################################
-# Count Forms
-######################################################################################
+
 class CountForm(forms.ModelForm):
     class Meta:
         model = Purchase
@@ -271,9 +252,7 @@ class CountForm(forms.ModelForm):
     def clean_item(self):
         x=clean_bar_code(self, 'item', Item)
         return x
-######################################################################################
-# Search Form
-######################################################################################
+
 class SearchForm(forms.Form):
     q =                 forms.CharField(required=False)
     start =             forms.DateField(required=False)
@@ -282,16 +261,16 @@ class SearchForm(forms.Form):
         validate = kwargs.pop('validate','')
         super(SearchForm, self).__init__(*args, **kwargs)
         if validate: self.is_valid()
+
 class BoxForm(forms.Form):
     box = forms.ModelChoiceField(queryset=Item.objects.all(), empty_label="---")
 
-######################################################################################
-# Item Form 
-######################################################################################
+
 class ItemImageForm(forms.ModelForm):
     class Meta:
         model = Item
         fields = ('image',)
+
 
 class ItemForm(forms.ModelForm):
     class Meta:
@@ -323,31 +302,26 @@ class ItemForm(forms.ModelForm):
             raise forms.ValidationError('Unable to find %s in the list of %ss.' % (data, 'unit'))
         return data
         
-######################################################################################
-# Price Form
-######################################################################################
+
 class PriceForm(forms.ModelForm):
     class Meta:
         model = Price
         fields=('relative','fixed')
 PriceFormSet = modelformset_factory(Price, form=PriceForm, extra=0)
-######################################################################################
-# GaranteeOffer Form
-######################################################################################
+
 class GaranteeOfferForm(forms.ModelForm):
     months=forms.IntegerField(initial=0)
     price=forms.DecimalField(initial=Decimal('0.00'))
     class Meta:
         model = GaranteeOffer
         fields=('item', 'months','price')
-######################################################################################
-# Account Forms
-######################################################################################
+
 class AccountForm(forms.ModelForm):
     class Meta:
         model = Account
         exclude=('tax_group', 'price_group', 'tipo')
     
+
 class ContactForm(forms.ModelForm):
     class Meta:
         model = Account
@@ -439,6 +413,7 @@ class ContactForm(forms.ModelForm):
         if commit: model.save()
         return model
 
+
 class NewTransactionForm(forms.Form):
     doc_number =            forms.CharField(required=False)
     account =               forms.CharField(required=False)
@@ -454,13 +429,7 @@ class NewTransactionForm(forms.Form):
     def clean_item(self):
         x=clean_bar_code(self, 'item', Item)
         return x
-#    def clean_doc_number(self):
-#        try: 
-#            sample=Transaction.objects.filter(doc_number=self.cleaned_data['doc_number'])[0]
-#            date=sample.date
-#        except:
-#            date=datetime.now()
-#        return self.cleaned_data['doc_number']
+
 class NewTransferForm(NewTransactionForm):
     source = forms.CharField(required=False)
     dest = forms.CharField(required=False)
