@@ -7,7 +7,7 @@ from django.contrib.auth.models import User
 from django.db.models import Q
 from django.db.models.signals import pre_save, post_save, pre_delete
 from jade import settings
-    #from settings import settings.BARCODES_FOLDER, settings.DEFAULT_CLIENT_NAME, settings.DEFAULT_VENDOR_NAME, settings.DEFAULT_FIXED_PRICE,settings.DEFAULT_RELATIVE_PRICE, settings.PAYMENTS_RECEIVED_ACCOUNT_NAME, settings.PAYMENTS_MADE_ACCOUNT_NAME, settings.APP_LOCATION, settings.DEFAULT_PRICE_GROUP_NAME, settings.DEFAULT_TAX_GROUP_NAME, settings.AUTOCREATE_CLIENTS, settings.AUTOCREATE_VENDORS, settings.DEFAULT_UNIT_NAME, settings.BASE_TABS,settings.DEFAULT_CREDIT_DAYS
+#from settings import settings.BARCODES_FOLDER, settings.DEFAULT_CLIENT_NAME, settings.DEFAULT_VENDOR_NAME, settings.DEFAULT_FIXED_PRICE,settings.DEFAULT_RELATIVE_PRICE, settings.PAYMENTS_RECEIVED_ACCOUNT_NAME, settings.PAYMENTS_MADE_ACCOUNT_NAME, settings.APP_LOCATION, settings.DEFAULT_PRICE_GROUP_NAME, settings.DEFAULT_TAX_GROUP_NAME, settings.AUTOCREATE_CLIENTS, settings.AUTOCREATE_VENDORS, settings.DEFAULT_UNIT_NAME, settings.BASE_TABS,settings.DEFAULT_CREDIT_DAYS
 from django.core.exceptions import ObjectDoesNotExist
 import re
 from thumbs import ImageWithThumbsField
@@ -205,11 +205,11 @@ class Account(models.Model):
         ('Vendor', _('Vendor')),
         ('Branch', _('Branch')),
         ('Account', _('Account')),
-)
+        )
     MULTIPLIER_TYPES=(
         (1, _('Debito')),
         (-1, _('Credito')),
-)
+        )
     name = models.CharField(_('name'), max_length=200)
     number = models.CharField(_('number'), max_length=32)
     multiplier = models.IntegerField(_('multiplier'), default=1, choices=MULTIPLIER_TYPES)
@@ -543,7 +543,7 @@ def make_default_account(data, model=Account):
         print "We have %i %ss" % (model.objects.filter(name=data[0]).count(), data[0])
         return model.objects.filter(name=data[0])[0]
     except DatabaseError: pass
-Site.objects.get(pk=settings.SITE_ID)
+
 try:
     try: Site.objects.filter(pk=settings.SITE_ID)
     except: Site.objects.create(name='Default', id=settings.SITE_ID)
@@ -573,8 +573,6 @@ EXPENSE_ACCOUNT = make_default_account(settings.EXPENSE_ACCOUNT_DATA)
 EXPENSE_ACCOUNT = make_default_account(settings.EXPENSE_ACCOUNT_DATA)
 INVENTORY_EXPENSE_ACCOUNT = make_default_account(settings.INVENTORY_EXPENSE_ACCOUNT_DATA)
 COUNTS_EXPENSE_ACCOUNT = make_default_account(settings.COUNTS_EXPENSE_ACCOUNT_DATA)
-if settings.PRODUCTION_EXPENSE_ACCOUNT_DATA:
-    PRODUCTION_EXPENSE_ACCOUNT = make_default_account(settings.PRODUCTION_EXPENSE_ACCOUNT_DATA)
 
 try: DEFAULT_UNIT = Unit.objects.get_or_create(name=settings.DEFAULT_UNIT_NAME)[0]
 except DatabaseError: pass
@@ -661,7 +659,7 @@ TRANSACTION_TYPES=(
         ('PurchaseReturn', 'Return.'),
         ('Process', 'Process'),
         ('Job', 'Job'),
-)
+        )
 class TransactionManager(CurrentMultiSiteManager):
     def unbalanced(self):
         # TODO: Find a way to make a sql query to return all unbalanced transactions
@@ -671,14 +669,14 @@ class TransactionManager(CurrentMultiSiteManager):
         return []
 
 class Transaction(models.Model):
-    #    objects = CurrentMultiSiteManager()
-          
+#    objects = CurrentMultiSiteManager()
+    
     _date = models.DateTimeField(default=datetime.now())
     doc_number = models.CharField(max_length=32, default='', blank=True)
     comments = models.CharField(max_length=200, blank=True, default='')
-    #    sites = models.ManyToManyField(Site)
+    sites = models.ManyToManyField(Site)
     tipo = models.CharField(max_length=16, choices=TRANSACTION_TYPES)
-    ################ ################ ################  Date   ################ ################ ################
+    
     def _get_date(self):
         return self._date
     def _set_date(self, value):
@@ -733,7 +731,6 @@ class Transaction(models.Model):
             
     def url(self):
         return '/inventory/transactions/?q='+self.doc_number
-    ################ ################ ################  Garantee   ################ ################ ################
     def _get_garantee_expires(self):
         try: return self.garantee.expires
         except ObjectDoesNotExist: return None
@@ -785,11 +782,11 @@ class Entry(models.Model):
         
         
         ('Production', 'Production'), # Credit
-    )
+        )
     class Meta:
         permissions = (
             ("view_entry", "Can view entries"),
-        )
+            )
         ordering = ('-date',)
     objects=EntryManager()
     offsite_objects=models.Manager()
@@ -807,10 +804,6 @@ class Entry(models.Model):
     site = models.ForeignKey(Site)
     #    objects = CurrentMultiSiteManager()
     
-#    def save(self, *args, **kwargs):
-#        flag=self.pk
-#        super(Entry, self).save(*args, **kwargs)
-#        if not flag: self.sites.add(Site.objects.get_current()) 
     def update(self, attribute, value):
         setattr(self, attribute, value)
         self.save()
@@ -1919,8 +1912,6 @@ class Transfer(Transaction):
         self._date = kwargs.pop('date', datetime.now())
         self._delivered = kwargs.pop('delivered', True)
         self._active = kwargs.pop('active', True)
-        self._dest = kwargs.pop('dest',None)
-        self._source = kwargs.pop('source',None)
         self._item = kwargs.pop('item', None)
         self._quantity = kwargs.pop('quantity', 0)
         self._serial = kwargs.pop('serial', None)
@@ -1933,6 +1924,9 @@ class Transfer(Transaction):
         if str(self.doc_number)!='': msg+=" #"+self.doc_number
         return msg
     
+    def entry(self, tipo):
+        try: return Entry.offsite_objects.filter(transaction=self, tipo=tipo)[0]
+        except: return None
     def _get_local_inventory_entry(self):
         return self.entry_set.get(account=INVENTORY_ACCOUNT, site=Site.objects.get_current())
     def _get_remote_inventory_entry(self):
@@ -1989,10 +1983,13 @@ class Transfer(Transaction):
     def _get_account(self):
         return self._get_remote_inventory_entry().site
     def _set_account(self, value):
-        remote=self._get_remote_inventory_entry()
-        if value!=remote.site:
-            remote.site=value
-            remote.save()
+        try:
+            remote=self._get_remote_inventory_entry()
+            if value!=remote.site:
+                remote.site=value
+                remote.save()
+        except Entry.DoesNotExist:
+            self._account=value
     def _get_source(self):
         try: return self.entry('SourceInventory').site
         except AttributeError: return self._source
@@ -2045,10 +2042,22 @@ class Transfer(Transaction):
 def add_transfer_entry(sender, **kwargs):
     if kwargs['created']:
         l=kwargs['instance']
+        l.sites.add(l._account)
+        l.sites.add(Site.objects.get_current())
       
         l.create_related_entry(
             account = INVENTORY_ACCOUNT,
             tipo = 'SourceInventory',
+            value = l._cost,
+            item = l._item,
+            quantity = l._quantity,
+            serial = l._serial,
+            delivered = l._delivered,
+            site = Site.objects.get_current(),
+        )
+        l.create_related_entry(
+            account = TRANSFER_ACCOUNT,
+            tipo = 'SourceTransfer',
             value = -l._cost,
             item = l._item,
             quantity = -l._quantity,
@@ -2057,21 +2066,11 @@ def add_transfer_entry(sender, **kwargs):
             site = Site.objects.get_current(),
         )
         l.create_related_entry(
-            account = TRANSFER_ACCOUNT,
-            tipo = 'SourceTransfer',
-            value = l._cost,
-            item = l._item,
-            quantity = l._quantity,
-            serial = l._serial,
-            delivered = l._delivered,
-            site = Site.objects.get_current(),
-        )
-        l.create_related_entry(
             account = INVENTORY_ACCOUNT,
             tipo = 'DestInventory',
-            value = l._cost,
+            value = -l._cost,
             item = l._item,
-            quantity = l._quantity,
+            quantity = -l._quantity,
             serial = l._serial,
             delivered = l._delivered,
             site = l._account,
@@ -2079,9 +2078,9 @@ def add_transfer_entry(sender, **kwargs):
         l.create_related_entry(
             account = TRANSFER_ACCOUNT,
             tipo = 'DestTransfer',
-            value = -l._cost,
+            value = l._cost,
             item = l._item,
-            quantity=-l._quantity,
+            quantity=l._quantity,
             serial=l._serial,
             delivered=l._delivered,
             site = l._account,

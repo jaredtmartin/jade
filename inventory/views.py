@@ -98,7 +98,6 @@ def search_entries(user, form, tipo=None):
     return entries
 
 def search_transactions(user, form, transactions):
-#    transactions = model.objects.all().order_by('-_date')
     if not user.has_perm('inventory.view_sale'):transactions=transactions.exclude(tipo='Sale')
     if not user.has_perm('inventory.view_purchase'):transactions=transactions.exclude(tipo='Purchase')
     if not user.has_perm('inventory.view_count'):transactions=transactions.exclude(tipo='Count')
@@ -153,7 +152,7 @@ def search_and_paginate_transactions(request, model, template='inventory/transac
     start=form.cleaned_data['start']
     end=form.cleaned_data['end']
     if q: transactions=search_transactions(request.user, form, model.objects.all())
-    else: transactions=search_transactions(request.user, form, model.objects.filter(entry__account__site=Site.objects.get_current()).distinct())
+    else: transactions=search_transactions(request.user, form, model.objects.filter(sites__id__exact=settings.SITE_ID))
     for k,v in errors.items(): form.errors[k]=v
     return paginate_transactions(request, form, transactions, template)
 
@@ -221,7 +220,6 @@ def delete_purchase(request, object_id):
 ######################################################################################
 # Ajax Views
 ######################################################################################
-
 
 @login_required
 def serial_history(request, serial):
@@ -331,7 +329,6 @@ def render_report(request, name, context={}):
     try:report=Report.objects.get(name=name)
     except Report.DoesNotExist: 
         return account_show(request, context['account'].pk, errors={'Report':[unicode(_('Unable to find a report template with the name "%s"') % (name,)  ),]})
-#       return fallback_to_transactions(request, doc_number, _('Unable to find a report template with the name"%s"') % (name,))
     return render_string_to_pdf(Template(report.body), context)
     
 @login_required
@@ -397,7 +394,6 @@ def labels(request, doc_number):
             if x>=settings.LABELS_PER_PAGE:
                 p.showPage()
                 x-=settings.LABELS_PER_PAGE
-#            print "x=%i ->  %i,%i" % (x, int(x%settings.LABELS_PER_LINE), int(x/settings.LABELS_PER_LINE+1))
             p.drawImage(filepath, x%settings.LABELS_PER_LINE*150, p._pagesize[1]-(x/settings.LABELS_PER_LINE+1)*75)
             x+=1
     p.showPage()
@@ -574,9 +570,7 @@ def price_report(request):
     items=Item.objects.find(q)
     print "items = " + str(items)
     try:report=Report.objects.get(name=settings.PRICE_REPORT_NAME)
-    except Report.DoesNotExist: 
-        request.GET=request.GET.copy()
-#        request.GET['q']=doc_number
+    except Report.DoesNotExist:
         errors={'Report':[unicode(_('Unable to find a report template with the name "%s"') % (settings.PRICE_REPORT_NAME,))]}
         return item_list(request, errors=errors)
     return render_string_to_pdf(Template(report.body), {'items':items, 'user':request.user})
@@ -590,7 +584,6 @@ def inventory_report(request):
     try:report=Report.objects.get(name=settings.INVENTORY_REPORT_NAME)
     except Report.DoesNotExist: 
         request.GET=request.GET.copy()
-#        request.GET['q']=doc_number
         errors={'Report':[unicode(_('Unable to find a report template with the name "%s"') % (settings.PRICE_REPORT_NAME,))]}
         return item_list(request, errors=errors)
     return render_string_to_pdf(Template(report.body), {'items':items, 'user':request.user})  
@@ -637,7 +630,6 @@ def item_image_upload(request, object_id):
         item.image=form.cleaned_data['image']
         item.save()
         print "form.cleaned_data['image'] = " + str(form.cleaned_data['image'])
-#        item.image=form.cleaned_data['image']
     return _r2r(request,'inventory/item_image.html', {'item':item})
         
 @login_required
@@ -1021,10 +1013,6 @@ def mark_transaction(request, object_id, attr, value):
             return _r2r(request,'inventory/results.html', {'objects':[obj],'error_list':{'Process':[_('You do not have sufficient rights to start production'),]}, 'info_list':[]})
         if attr in ['delivered','active' ] and obj.quantity > 0 and not request.user.has_perm('production.finish_production'):
             return _r2r(request,'inventory/results.html', {'objects':[obj],'error_list':{'Process':[_('You do not have sufficient rights to finish production'),]}, 'info_list':[]})
-
-#    print "attr=" + str(attr)
-#    print "value=" + str(value)
-    
     setattr(obj, attr, value)
 #    print "obj = " + str(obj)
 #    print "obj.pk = " + str(obj.pk)
