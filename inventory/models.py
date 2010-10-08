@@ -241,7 +241,11 @@ class Account(models.Model):
         super(Account, self).__init__(*args, **kwargs)
     def save(self, *args, **kwargs):
         if not self.tipo: self.tipo='Account'
-        if not self.site: self.site=Site.objects.get_current()
+        try:
+            if not self.site: raise Site.DoesNotExist
+        except Site.DoesNotExist:
+            self.site=Site.objects.get_current()
+            
         super(Account, self).save(*args, **kwargs)
         try: self.contact.save()
         except: pass
@@ -1079,8 +1083,6 @@ def add_sale_entries(sender, **kwargs):
     if kwargs['created']:
         l=kwargs['instance']
         if l.tipo=='Sale':
-            print "l._client = " + str(l._client)
-            print "l._client.tax_group = " + str(l._client.tax_group)
             account=l._client.tax_group.revenue_account
             tipo='Revenue'
         else:
