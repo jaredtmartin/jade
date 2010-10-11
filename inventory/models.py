@@ -85,7 +85,11 @@ class ItemManager(models.Manager):
             return number
         except: return '1'
     def find(self, q):
-        return super(ItemManager, self).get_query_set().filter(Q(name__icontains=q) | Q(bar_code__icontains=q)|Q(description__icontains=q))
+        query=super(ItemManager, self).get_query_set()
+        for key in q.split():
+            query=query.filter(Q(name__icontains=key) | Q(bar_code__icontains=key)|Q(description__icontains=key))
+        return query
+#        return super(ItemManager, self).get_query_set().filter(Q(name__icontains=q) | Q(bar_code__icontains=q)|Q(description__icontains=q))
     def fetch(self, q):
         return super(ItemManager, self).get_query_set().get(Q(name=q) | Q(bar_code=q))
 class Item(models.Model):
