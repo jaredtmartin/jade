@@ -227,8 +227,8 @@ class Account(models.Model):
         super(Account, self).__init__(*args, **kwargs)
     def save(self, *args, **kwargs):
         super(Account, self).save(*args, **kwargs)
-        try: self.contact.save()
-        except: pass
+        self.contact.save()
+#        except: print "Unable to save contact"
     def __unicode__(self):
         return self.name
     def url(self):
@@ -380,13 +380,9 @@ class Account(models.Model):
 def add_contact(sender, **kwargs):
     if kwargs['created'] and kwargs['instance'].tipo in ('Client', 'Vendor'):
         l=kwargs['instance']
-#        print "l.id=" + str(l.id)
-        print "making contact"
-        print "l._address = " + str(l._address)
-        print "l._registration = " + str(l._registration)
         Contact.objects.create(
             account=l, 
-            credit_days=settings.DEFAULT_CREDIT_DAYS,
+            credit_days=l._credit_days,
             address=l._address,
             state_name=l._state_name,
             country=l._country,
@@ -400,7 +396,7 @@ def add_contact(sender, **kwargs):
             registration=l._registration,
             user=l._user,
             price_group=l._price_group,
-            tax_group=l._tax_group,           
+            tax_group=l._tax_group,             
         )
 class TaxGroup(models.Model):
     name = models.CharField(max_length=200)
@@ -588,7 +584,7 @@ class Transaction(models.Model):
             if self._subclass: return self._subclass
         except: pass
         if not self.pk: return None
-        print "self.tipo = " + str(self.tipo)
+#        print "self.tipo = " + str(self.tipo)
         
         self._subclass=eval(TransactionTipo.objects.get(name=self.tipo).obj).objects.get(pk=self.id)
         return self._subclass

@@ -404,6 +404,7 @@ class ContactForm(forms.ModelForm):
         else:
             self.initial['price_group'] = settings.DEFAULT_PRICE_GROUP_NAME
             self.initial['tax_group'] = settings.DEFAULT_TAX_GROUP_NAME
+            self.initial['credit_days'] = settings.DEFAULT_CREDIT_DAYS
     def clean_tax_group(self):
         return clean_lookup(self, 'tax_group', TaxGroup)
     def clean_price_group(self):
@@ -435,6 +436,7 @@ class ContactForm(forms.ModelForm):
         model.registration =        self.cleaned_data['registration']
         model.user =        self.cleaned_data['user']
         model.credit_days =        self.cleaned_data['credit_days']
+        print "model.credit_days = " + str(model.credit_days)
         if commit: model.save()
         return model
 
