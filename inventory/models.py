@@ -439,6 +439,7 @@ class Client(Account):
         super(Client, self).save(*args, **kwargs)
     objects = ClientManager()
     class Meta:
+        ordering = ('name',)
         proxy = True
         permissions = (
             ("view_client", "Can view clients"),
@@ -470,6 +471,7 @@ class Vendor(Account):
         super(Vendor, self).save(*args, **kwargs)
     objects = VendorManager()
     class Meta:
+        ordering = ('name',)
         proxy = True
         permissions = (
             ("view_vendor", "Can view vendors"),
