@@ -12,7 +12,7 @@
     {% for object in objects %}
         {{object.tipo}}
         {{object.template}}
-        {% include object.subclass.template %}
+        {% include object.template %}
     {% endfor %}
 </table>
 

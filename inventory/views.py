@@ -66,17 +66,26 @@ def new_object(request, form, prefix, template='', tipo=None, extra_context={}):
     if tipo and not request.user.has_perms('inventory.change_'+tipo.lower()): return http.HttpResponseRedirect("/blocked/")
     if request.POST:
         f = form(request.POST)
-        if f.is_valid():            
+        print "adadad"
+        if f.is_valid():      
+            print "valid"      
             if tipo:
+                print "tipo = " + str(tipo)
                 obj=f.save(commit=False)
                 obj.tipo=tipo
+                print "tipo = " + str(tipo)
             obj=f.save()
+            print "ppp"
+            print 'ererer'
+            print "obj.pk = " + str(obj.pk)
             updated_form=form(instance=obj, prefix=prefix+'-'+str(obj.pk))
             info_list=['The '+tipo+' has been created successfully.',]
             error_list={}
         else:
+            print "invalid"      
             info_list=[]
             obj=None
+            print "f.errors = " + str(f.errors)
             error_list=f.errors
             updated_form=None
         if not tipo: tipo=prefix
@@ -219,8 +228,6 @@ def delete_purchase(request, object_id):
 ######################################################################################
 # Ajax Views
 ######################################################################################
-
-
 @login_required
 def serial_history(request, serial):
     return _r2r(request,'inventory/entry_list.html', {'page':_paginate(request, Entry.objects.filter(serial=serial)), 'q':''})
@@ -555,6 +562,7 @@ def new_branch(request):
 @login_required
 @permission_required('inventory.change_account', login_url="/blocked/")
 def new_account(request):
+    print "asdjhaskdjhaskjdh"
     return new_object(request, AccountForm, "account", 'inventory/account_show.html', tipo='Account', extra_context={'tipo':'account'})
 
 ######################################################################################

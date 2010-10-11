@@ -223,12 +223,13 @@ class Account(models.Model):
         self._user =            kwargs.pop('user', None)
         self._tax_group =       kwargs.pop('tax_group', None)
         self._price_group =     kwargs.pop('price_group', None)
+        self._credit_days =     kwargs.pop('credit_days', settings.DEFAULT_CREDIT_DAYS)
         self._due = self._overdue = None
         super(Account, self).__init__(*args, **kwargs)
     def save(self, *args, **kwargs):
         super(Account, self).save(*args, **kwargs)
-        self.contact.save()
-#        except: print "Unable to save contact"
+        try: self.contact.save()
+        except Contact.DoesNotExist: pass
     def __unicode__(self):
         return self.name
     def url(self):
@@ -679,6 +680,10 @@ class Entry(models.Model):
     def __unicode__(self):
         return str(self.account.name) +"($" + str(self.value)+") " + str(self.tipo)
         
+class ExtraValue(models.Model):
+    name = models.CharField(max_length=32, blank=True, default="")
+    value = models.DecimalField(max_digits=8, decimal_places=2, null=True, blank=True)
+    transaction = models.ForeignKey(Transaction)
 
  ######################################################################################
  # Sales
@@ -1024,6 +1029,7 @@ class Purchase(Transaction):
         self.template='inventory/purchase.html'
         self._cost = kwargs.pop('cost', 0)
         self._tax = kwargs.pop('tax', 0)
+        self._taxbackup = self._tax
         self._date = kwargs.pop('date', datetime.now())
         self._delivered = kwargs.pop('delivered', True)
         self._active = kwargs.pop('active', True)
@@ -1034,7 +1040,32 @@ class Purchase(Transaction):
         super(Purchase, self).__init__(*args, **kwargs)
         self._initial_cost=self.cost
         self._initial_quantity=self.quantity
-        self.tipo='Purchase'
+        self.tipo='Purchase'    
+    def save(self, *args, **kwargs):
+        try: 
+            cc=self.extravalue_set.get(name='CalculatedCost')
+            if cc.value==self.cost and self._initial_quantity != self.quantity:
+                    self.cost = cc.value = self.calculate_cost()
+                    cc.save()
+        except ExtraValue.DoesNotExist: pass
+        
+        
+        try: 
+            ct=self.extravalue_set.get(name='CalculatedTax')
+            print "-ct.value = " + str(-ct.value)
+            print "self.tax = " + str(self.tax)
+            print "-ct.value==self.tax = " + str(-ct.value==self.tax)
+            print "self._cost = " + str(self._cost)
+            print "self.cost = " + str(self.cost)
+            print "self._cost != self.cost = " + str(self._cost != self.cost)
+            print "-ct.value==self.tax and self._cost != self.cost = " + str(-ct.value==self.tax and self._cost != self.cost)
+            if -ct.value==self.tax and self._cost != self.cost:
+                    self.tax = ct.value = self.calculate_tax()
+                    print "ct.value = " + str(ct.value)
+                    print "self.tax = " + str(self.tax)
+                    ct.save()
+        except ExtraValue.DoesNotExist: pass
+        super(Purchase, self).save(*args, **kwargs)
     def _get_item(self):
         try: return self.entry('Inventory').item
         except AttributeError: return self._item
@@ -1094,6 +1125,27 @@ class Purchase(Transaction):
         try: self.entry('Vendor').update('account', value)
         except AttributeError: self._vendor = value
     vendor = property(_get_vendor, _set_vendor)
+    
+    def calculate_tax(self):
+        print "self.cost = " + str(self.cost)
+        print "self.vendor.tax_group.value = " + str(self.vendor.tax_group.value)
+        try: return self.cost * self.vendor.tax_group.value
+        except NameError: return 0
+        except AttributeError: return 0
+        
+    def calculate_cost(self):
+        try:
+            if self.active: value=self.item.total_cost-self.cost
+            else: value=self.item.total_cost
+            print "value = " + str(value)
+            if self.delivered: stock=self.item.stock-self.quantity
+            else: stock=self.item.stock
+            print "stock = " + str(stock)
+            print "value(%f)/stock(%f)*self.quantity(%f) = " % (value,stock,self.quantity)
+            return value/stock*self.quantity
+        except NameError: return 0
+        except AttributeError: return 0
+            
  ################ ################ ################  Cost   ################ ################ ################
     def _get_cost(self):
         try: return self.entry('Inventory').value
@@ -1117,21 +1169,25 @@ class Purchase(Transaction):
     def _set_tax(self, value):
         value=(value or 0)
         print "value = " + str(value)
-        try:
+#        try:
 #        vendor=self.vendor
 #        vendor=self.entry('Vendor').account
 #        print "vendor = " + str(vendor)
 #        print "vendor.tax_group.purchase_tax_account = " + str(vendor.tax_group.purchases_tax_account)
-            self.update_possible_entry('Tax', vendor.tax_group.purchases_tax_account, value)
-            self.entry('Vendor').update('value', self.cost + value)
-        except:
-            self._tax=value
+        print "value = " + str(value)
+        self.update_possible_entry('Tax', self.vendor.tax_group.purchases_tax_account, value)
+        print "self.tax = " + str(self.tax)
+        self.entry('Vendor').update('value', self.cost + value)
+#        except:
+#            print "fail"
+#            self._tax=value
 #        except: self._tax = value
     tax = property(_get_tax, _set_tax)
  ################ ################ ################  Create Entries   ################ ################ ################
 def add_purchase_entries(sender, **kwargs):
     l=kwargs['instance']
     if kwargs['created']:
+        
         l.create_related_entry(
         account = INVENTORY_ACCOUNT,
         tipo = 'Inventory',
@@ -1141,7 +1197,7 @@ def add_purchase_entries(sender, **kwargs):
         serial=l._serial,
         delivered=l._delivered,
         )
-        l.create_related_entry(
+        e=l.create_related_entry(
         account = l._vendor,
         tipo = 'Vendor',
         value = - l._cost,
@@ -1150,11 +1206,14 @@ def add_purchase_entries(sender, **kwargs):
         serial=l._serial,
         delivered=l._delivered,
         )   
+        ExtraValue.objects.create(transaction = l, name = 'CalculatedCost', value = l._cost)
+        ExtraValue.objects.create(transaction = l, name = 'CalculatedTax', value = l.tax)
         if l.tax!=0:
-            l.create_related_entry(
+            e=l.create_related_entry(
                 account = l._vendor.tax_group.purchases_tax_account,
                 tipo = 'Tax',
                 value = l._tax)
+            
 #    if l.cost!=l._initial_cost and l.item:
 #        item = l.entry("Inventory").item
 #        # remove our old data from the equation
@@ -1329,8 +1388,7 @@ class VendorRefund(Payment):
         self.template='inventory/vendor_payment.html'
         self.tipo='VendorRefund'
 post_save.connect(add_payment_entries, sender=VendorRefund, dispatch_uid="jade.inventory.models")
-##################################################
-# Garantees##################################################
+######################################## Garantees ##################################################
 
 class GaranteeOffer(models.Model):
     months = models.IntegerField(default=0, blank=True)
