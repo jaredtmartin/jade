@@ -500,7 +500,10 @@ def branch_list(request):
 @login_required
 def account_show(request, object_id, errors={}):
     if request.POST:
-        return edit_object(request, object_id, Account, ContactForm, "account")
+        obj = get_object_or_404(Account, pk=object_id)
+        if obj.tipo=='Account': return edit_object(request, object_id, Account, AccountForm, "account")
+        else: return edit_object(request, object_id, Account, ContactForm, "account")
+#        return edit_object(request, object_id, Account, ContactForm, "account")
     else:
         account = get_object_or_404(Account, pk=object_id)
         if not request.user.has_perm('inventory.view_client') and account.tipo=="Client": return http.HttpResponseRedirect("/blocked/")
