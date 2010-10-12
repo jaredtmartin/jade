@@ -398,8 +398,9 @@ class ContactForm(forms.ModelForm):
         except User.DoesNotExist: 
             raise forms.ValidationError('Unable to find %s in the list of %ss.' % (data, 'user'))
         return data
-    def save(self, commit=True):        
+    def save(self, commit=True, tipo=None):        
         model = super(ContactForm, self).save(commit=False)
+        if tipo: model.tipo=tipo
         model.address =        self.cleaned_data['address']
         model.state_name =        self.cleaned_data['state_name']
         model.country =        self.cleaned_data['country']
@@ -415,7 +416,6 @@ class ContactForm(forms.ModelForm):
         model.registration =        self.cleaned_data['registration']
         model.user =        self.cleaned_data['user']
         model.credit_days =        self.cleaned_data['credit_days']
-        print "model.credit_days = " + str(model.credit_days)
         if commit: model.save()
         return model
 class ClientForm(ContactForm):

@@ -283,7 +283,7 @@ class Account(models.Model):
     balance = property(_get_balance)
     def _get_tax_group(self):
         try: return self.contact.tax_group
-        except: return None
+        except: return self._tax_group
     def _set_tax_group(self, value):
         try: self.contact.tax_group = value
         except: self._tax_group= value
@@ -417,9 +417,10 @@ class Account(models.Model):
     overdue=property(_get_overdue)
             
 def add_contact(sender, **kwargs):
+    print "making contact"
     if kwargs['created'] and kwargs['instance'].tipo in ('Client', 'Vendor'):
         l=kwargs['instance']
-        Contact.objects.create(
+        c=Contact.objects.create(
             account=l, 
             credit_days=l._credit_days,
             address=l._address,
@@ -437,9 +438,11 @@ def add_contact(sender, **kwargs):
             price_group=l._price_group,
             tax_group=l._tax_group,             
         )
+        print "c = " + str(c)
+        print "c.pk = " + str(c.pk)
 class TaxGroup(models.Model):
     def __init__(self, *args, **kwargs):
-        super(TaxGroup, self).__init__(*args, **kwargs)  
+        super(TaxGroup, self).__init__(*args, **kwargs)
         try:
             if not self.site: self.site=Site.objects.get_current()
         except:
@@ -615,7 +618,7 @@ try: SiteDetail.objects.get_or_create(site=Site.objects.get_current(), default_t
 except: print "Unable to establish SiteDetail for current site"
 class Contact(models.Model):
     def save(self, *args, **kwargs):
-        if not self.tax_group_name: tax_group_name=Site.objects.get_current().sitedetail.default_tax_group.name
+        if not self.tax_group_name: tax_group_name=settings.DEFAULT_TAX_GROUP_NAME
         super(Contact, self).save(*args, **kwargs)
     tax_group_name = models.CharField(max_length=32)#, default=Site.objects.get_current().sitedetail.default_tax_group.name
     price_group = models.ForeignKey(PriceGroup, blank=True, null=True)
@@ -635,9 +638,10 @@ class Contact(models.Model):
     credit_days=models.IntegerField(default=settings.DEFAULT_CREDIT_DAYS)
     
     def _get_tax_group(self):
-        try: return TaxGroup.objects.get(name=self.tax_group_name)
-        except: Site.objects.get_current().sitedetail.default_tax_group
-    tax_group=property(_get_tax_group)    
+        return TaxGroup.objects.get(name=self.tax_group_name)
+    def _set_tax_group(self, value):
+        self.tax_group_name=value.name
+    tax_group=property(_get_tax_group, _set_tax_group)    
     def __unicode__(self):
         return self.account.name
 try:

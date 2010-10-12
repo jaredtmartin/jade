@@ -69,16 +69,9 @@ def new_object(request, form, prefix, template='', tipo=None, extra_context={}):
         f = form(request.POST)
         print "adadad"
         if f.is_valid():      
-            print "valid"      
-            if tipo:
-                print "tipo = " + str(tipo)
-                obj=f.save(commit=False)
-                obj.tipo=tipo
-                print "tipo = " + str(tipo)
-            obj=f.save()
-            print "ppp"
-            print 'ererer'
-            print "obj.pk = " + str(obj.pk)
+            print "valid"
+            print "tipo = " + str(tipo)
+            obj=f.save(tipo=tipo)
             updated_form=form(instance=obj, prefix=prefix+'-'+str(obj.pk))
             info_list=['The '+tipo+' has been created successfully.',]
             error_list={}
