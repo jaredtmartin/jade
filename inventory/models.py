@@ -145,7 +145,7 @@ class Item(models.Model):
     total_cost=property(_get_total_cost)
     def price(self, client):
         if type(client)==PriceGroup: group=client
-        elif type(client) in (Account, Client, Vendor, Branch):group=client.price_group
+        elif type(client) in (Account, Client, Vendor):group=client.price_group
         else: group=client.get_profile().price_group
         if not group: return 0
         try:
@@ -223,7 +223,6 @@ class Account(models.Model):
     ACCOUNT_TYPES=(
         ('Client', _('Client')),
         ('Vendor', _('Vendor')),
-        ('Branch', _('Branch')),
         ('Account', _('Account')),
         )
     MULTIPLIER_TYPES=(
@@ -234,7 +233,7 @@ class Account(models.Model):
     number = models.CharField(_('number'), max_length=32)
     multiplier = models.IntegerField(_('multiplier'), default=1, choices=MULTIPLIER_TYPES)
     tipo = models.CharField(_('type'), max_length=16, choices=ACCOUNT_TYPES)
-    site = models.ForeignKey(Site)#, default=Site.objects.get_current().pk
+    site = models.ForeignKey(Site)
     objects = AccountManager()
     test = models.Manager()
 
@@ -268,7 +267,7 @@ class Account(models.Model):
             
         super(Account, self).save(*args, **kwargs)
         try: self.contact.save()
-        except Contact.DoesNotExist: pass
+        except: pass
     def __unicode__(self):
         return self.name
     def url(self):
@@ -560,7 +559,7 @@ def make_default_account(data, model=Account):
     except model.MultipleObjectsReturned:
         print "We have %i %ss" % (model.objects.filter(name=data[0]).count(), data[0])
         return model.objects.filter(name=data[0])[0]
-    except DatabaseError: pass
+    except DatabaseError: print "pass"
 
 try:
     try: Site.objects.filter(pk=settings.SITE_ID)
@@ -571,7 +570,7 @@ ASSETS_ACCOUNT = make_default_account(settings.ASSETS_ACCOUNT_DATA)
 CASH_ACCOUNT = make_default_account(settings.CASH_ACCOUNT_DATA)
 PAYMENTS_RECEIVED_ACCOUNT = make_default_account(settings.PAYMENTS_RECEIVED_ACCOUNT_DATA)
 PAYMENTS_MADE_ACCOUNT = make_default_account(settings.PAYMENTS_MADE_ACCOUNT_DATA)
-INVENTORY_ACCOUNT = make_default_account(settings.INVENTORY_ACCOUNT_DATA, Branch)
+INVENTORY_ACCOUNT = make_default_account(settings.INVENTORY_ACCOUNT_DATA)
 CLIENTS_ACCOUNT = make_default_account(settings.CLIENTS_ACCOUNT_DATA)
 TRANSFER_ACCOUNT = make_default_account(settings.TRANSFER_ACCOUNT_DATA)
 LIABILITIES_ACCOUNT = make_default_account(settings.LIABILITIES_ACCOUNT_DATA)
@@ -708,20 +707,22 @@ class Transaction(models.Model):
         return False
     def __unicode__(self):
         return self.doc_number
-    def create_related_entry(self, account, tipo, value=0, item=None, quantity=0, delivered=True, serial=None, count=0, cost=0, active=True, site=Site.objects.get_current()):#cost_left=0, quantity_left=0, 
+    def create_related_entry(self, account, tipo, value=0, item=None, quantity=0, delivered=True, serial=None, count=0, cost=0, active=True, site=None):
+        try: 
+            if not site: site = Site.objects.get_current()
+        except DatabaseError:
+            print "pass"
         e=self.entry_set.create(
-        account=account,
-        tipo=tipo,
-        value=value,
-        item=item,
-        quantity=quantity,
-        serial=serial,
-        active=active,
-        delivered=delivered,
-        site=site,
-    #        cost_left=cost_left,
-    #        quantity_left=quantity_left
-        )
+            account=account,
+            tipo=tipo,
+            value=value,
+            item=item,
+            quantity=quantity,
+            serial=serial,
+            active=active,
+            delivered=delivered,
+            site=site,
+            )
     def _get_subclass(self):
         try:
             if self._subclass: return self._subclass
@@ -1955,8 +1956,8 @@ class Transfer(Transaction):
     #    Entry Name             Account     Site
     #    SourceInventory        Inventory   A
     #    SourceTransfer         Transfer    A
-    #    DestInventory   Inventory   B
-    #    DestTransfer    Transfer    B
+    #    DestInventory          Inventory   B
+    #    DestTransfer           Transfer    B
     class Meta:
         proxy = True
     
