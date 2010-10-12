@@ -1181,7 +1181,7 @@ class Purchase(Transaction):
         print "value = " + str(value)
         self.update_possible_entry('Tax', self.vendor.tax_group.purchases_tax_account, value)
         print "self.tax = " + str(self.tax)
-        self.entry('Vendor').update('value', self.cost + value)
+        self.entry('Vendor').update('value', -(self.cost + value))
 #        except:
 #            print "fail"
 #            self._tax=value
