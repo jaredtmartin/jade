@@ -548,17 +548,12 @@ def new_client(request):
         if not request.POST['user'] or request.POST['user']=='':
             request.POST=request.POST.copy()
             request.POST['user']=unicode(request.user.username)
-    return new_object(request, ContactForm, "account", 'inventory/account_show.html', tipo='Client', extra_context={'tipo':'client'})
+    return new_object(request, ClientForm, "account", 'inventory/account_show.html', tipo='Client', extra_context={'tipo':'client'})
 @login_required
 @permission_required('inventory.change_vendor', login_url="/blocked/")
 def new_vendor(request):
     
-    return new_object(request, ContactForm, "account", 'inventory/account_show.html', tipo='Vendor', extra_context={'tipo':'vendor'})
-@login_required
-@permission_required('inventory.change_branch', login_url="/blocked/")
-def new_branch(request):
-    return new_object(request, ContactForm, "account", 'inventory/account_show.html', tipo='Branch', extra_context={'tipo':'branch'})
-
+    return new_object(request, VendorForm, "account", 'inventory/account_show.html', tipo='Vendor', extra_context={'tipo':'vendor'})
 @login_required
 @permission_required('inventory.change_account', login_url="/blocked/")
 def new_account(request):
