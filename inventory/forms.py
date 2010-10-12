@@ -278,6 +278,11 @@ class ItemForm(forms.ModelForm):
         exclude = ('tipo',)
     unit=forms.CharField(widget=AutoCompleteInput(url="/inventory/unit_list/"), required=False)
     description=forms.CharField(widget=Textarea(),required=False)
+    def save(self, commit=True, tipo=None):        
+        model = super(ItemForm, self).save(commit=False)
+        if tipo: model.tipo=tipo
+        if commit: model.save()
+        return model
     def __init__(self, *args, **kwargs):
         super(ItemForm, self).__init__(*args, **kwargs)
         if kwargs.has_key('instance'):
