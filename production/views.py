@@ -101,7 +101,7 @@ def job_start(request):
     q=form.cleaned_data['q']
     start=form.cleaned_data['start']
     end=form.cleaned_data['end']
-    jobs=search_transactions(request.user,form, Job)
+    jobs=search_transactions(request.user,form, Job.objects.all())
     print "jobs.count() = " + str(jobs.count())
     for job in jobs:
         print "job.quantity = " + str(job.quantity)
@@ -119,7 +119,7 @@ def job_finish(request):
     q=form.cleaned_data['q']
     start=form.cleaned_data['start']
     end=form.cleaned_data['end']
-    jobs=search_transactions(request.user,form, Job)
+    jobs=search_transactions(request.user,form, Job.objects.all())
     for job in jobs:
         if job.quantity>0:
             job.active=True

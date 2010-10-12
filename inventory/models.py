@@ -2022,7 +2022,7 @@ class Transfer(Transaction):
         except Entry.DoesNotExist: return self._item
     def _set_item(self, value):
         try: 
-            [e.update('item',value) for e in Entry.offsite_objects.filter(transactions=self)]
+            [e.update('item',value) for e in Entry.offsite_objects.filter(transaction=self)]
         except AttributeError: self._item=value
         
     def _get_quantity(self):
@@ -2050,7 +2050,7 @@ class Transfer(Transaction):
         except Entry.DoesNotExist: return self._serial
     def _set_serial(self, value):
         try: 
-            [e.update('serial',value) for e in Entry.offsite_objects.filter(transactions=self)]
+            [e.update('serial',value) for e in Entry.offsite_objects.filter(transaction=self)]
         except AttributeError: self._serial=value
     def _get_account(self):
         return self._get_remote_inventory_entry().site

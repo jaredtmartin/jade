@@ -7,6 +7,9 @@ from django.db.models import Q
 from datetime import datetime
 import settings
 import re
+from django.contrib.sites.models import Site
+from django.contrib.sites.managers import CurrentSiteManager
+from jade.inventory.managers import CurrentMultiSiteManager, AccountManager
 
 
 print "settings.PRODUCTION_EXPENSE_ACCOUNT_DATA=%s" % str(settings.PRODUCTION_EXPENSE_ACCOUNT_DATA)
@@ -126,6 +129,7 @@ class Process(Production):
 def add_process_entries(sender, **kwargs):
     l=kwargs['instance']
     if kwargs['created']:
+        l.sites.add(Site.objects.get_current())
         l.create_related_entry(
         account = PRODUCTION_EXPENSE_ACCOUNT,
         tipo = 'Production',
@@ -185,6 +189,7 @@ class Job(Production):
 def add_job_entries(sender, **kwargs):
     l=kwargs['instance']
     if kwargs['created']:
+        l.sites.add(Site.objects.get_current())
         l.create_related_entry(
         account = INVENTORY_ACCOUNT,
         tipo = 'Inventory',
