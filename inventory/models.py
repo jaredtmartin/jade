@@ -1984,59 +1984,59 @@ class Transfer(Transaction):
     
     def entry(self, tipo):
         try: return Entry.offsite_objects.filter(transaction=self, tipo=tipo)[0]
-        except: return None
-    def _get_local_inventory_entry(self):
-        return self.entry_set.get(account=INVENTORY_ACCOUNT, site=Site.objects.get_current())
-    def _get_remote_inventory_entry(self):
-        return Entry.offsite_objects.filter(transaction=self).exclude(site=Site.objects.get_current()).get(account=INVENTORY_ACCOUNT)
-        #return self.entry_set.exclude(site=Site.objects.get_current()).get(account=INVENTORY_ACCOUNT)
-        
+        except: return None        
     def _get_value(self):
         return self.cost
     def _set_value(self, value):
         self.cost=value
     def _get_active(self):
-        try: return self._get_local_inventory_entry().active
+        try: return self.local_inventory_entry.active
         except Entry.DoesNotExist: return self._active
     def _set_active(self, value):
         self._active=value
-        [e.update('active',value) for e in self.entry_set.all()]
+        [e.update('active',value) for e in Entry.offsite_objects.filter(transaction=self)]
     def _get_delivered(self):
-        try: return self._get_local_inventory_entry().delivered
+        try: return self.local_inventory_entry.delivered
         except Entry.DoesNotExist: return self._delivered
     def _set_delivered(self, value):
         try: 
-            [e.update('delivered',value) for e in self.entry_set.filter(site=Site.objects.get_current())]
+            [e.update('delivered',value) for e in self.entry_set.all()]
         except AttributeError: self._delivered=value
         
     def _get_item(self):
-        try: return self._get_local_inventory_entry().item
+        try: return self.local_inventory_entry.item
         except Entry.DoesNotExist: return self._item
     def _set_item(self, value):
         try: 
-            [e.update('item',value) for e in self.entry_set.all()]
+            [e.update('item',value) for e in Entry.offsite_objects.filter(transactions=self)]
         except AttributeError: self._item=value
         
     def _get_quantity(self):
         try: 
-            v = self._get_local_inventory_entry().quantity
+            v = self.local_inventory_entry.quantity
             #if self.source != Site.objects.get_current(): v=-v
             return v
         except Entry.DoesNotExist: return self._quantity
     def _set_quantity(self, value):
         #if self.source != Site.objects.get_current(): value=-value
         try:
-            self.entry('SourceInventory').update('quantity', value)
-            self.entry('SourceTransfer').update('quantity', -value)
-            self.entry('DestInventory').update('quantity', -value)
-            self.entry('DestTransfer').update('quantity', value)
+            
+            self.local_inventory_entry.update('quantity', value)
+            self.local_transfer_entry.update('quantity', -value)
+            self.remote_inventory_entry.update('quantity', -value)
+            self.remote_transfer_entry.update('quantity', value)
+            
+#            self.entry('SourceInventory').update('quantity', value)
+#            self.entry('SourceTransfer').update('quantity', -value)
+#            self.entry('DestInventory').update('quantity', -value)
+#            self.entry('DestTransfer').update('quantity', value)
         except AttributeError: self._quantity=value
     def _get_serial(self):
-        try: return self._get_local_inventory_entry().serial
+        try: return self.local_inventory_entry.serial
         except Entry.DoesNotExist: return self._serial
     def _set_serial(self, value):
         try: 
-            [e.update('serial',value) for e in self.entry_set.all()]
+            [e.update('serial',value) for e in Entry.offsite_objects.filter(transactions=self)]
         except AttributeError: self._serial=value
     def _get_account(self):
         return self._get_remote_inventory_entry().site
@@ -2066,19 +2066,41 @@ class Transfer(Transaction):
                 self.entry('DestInventory').update('site', value)
                 self.entry('DestTransfer').update('site', value)
         except AttributeError: self._dest = value
+    
+    def _get_local_inventory_entry(self):
+        return Entry.offsite_objects.filter(transaction=self, site=Site.objects.get_current(), account=INVENTORY_ACCOUNT).get()
+    local_inventory_entry=property(_get_local_inventory_entry)
+    
+    def _get_local_transfer_entry(self):
+        return Entry.offsite_objects.filter(transaction=self, site=Site.objects.get_current(), account=TRANSFER_ACCOUNT).get()
+    local_transfer_entry=property(_get_local_transfer_entry)
+    
+    def _get_remote_inventory_entry(self):
+        return Entry.offsite_objects.filter(transaction=self, account=INVENTORY_ACCOUNT).exclude(site=Site.objects.get_current()).get()
+    remote_inventory_entry=property(_get_remote_inventory_entry)
+    
+    def _get_remote_transfer_entry(self):
+        return Entry.offsite_objects.filter(transaction=self, account=TRANSFER_ACCOUNT).exclude(site=Site.objects.get_current()).get()
+    remote_transfer_entry=property(_get_remote_transfer_entry)
+    
     def _get_cost(self):
         try: 
-            return self._get_local_inventory_entry().value
+            return self.local_inventory_entry.value
             #if self.source != Site.objects.get_current(): v=-v
             #return v
         except Entry.DoesNotExist: return self._cost
     def _set_cost(self, value):
         #if self.source != Site.objects.get_current(): value=-value
-        try:            
-            self.entry('SourceInventory').update('value', value)
-            self.entry('SourceTransfer').update('value', -value)
-            self.entry('DestInventory').update('value', -value)
-            self.entry('DestTransfer').update('value', value)
+        try:
+            self.local_inventory_entry.update('value', value)
+            self.local_transfer_entry.update('value', -value)
+            self.remote_inventory_entry.update('value', -value)
+            self.remote_transfer_entry.update('value', value)
+            
+#            self.entry('SourceInventory').update('value', value)
+#            self.entry('SourceTransfer').update('value', -value)
+#            self.entry('DestInventory').update('value', -value)
+#            self.entry('DestTransfer').update('value', value)
         except AttributeError:
             self._cost=value
     def _get_unit_cost(self):
