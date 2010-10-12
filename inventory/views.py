@@ -71,9 +71,10 @@ def new_object(request, form, prefix, template='', tipo=None, extra_context={}):
         if f.is_valid():      
             print "valid"
             print "tipo = " + str(tipo)
-            obj=f.save(tipo=tipo)
+            if tipo:obj=f.save(tipo=tipo)
+            else:obj=f.save()
             updated_form=form(instance=obj, prefix=prefix+'-'+str(obj.pk))
-            info_list=['The '+tipo+' has been created successfully.',]
+            info_list=['The %s has been created successfully.'% tipo, ]
             error_list={}
         else:
             print "invalid"      

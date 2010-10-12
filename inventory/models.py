@@ -1105,6 +1105,7 @@ def add_sale_entries(sender, **kwargs):
     #    print "Sale:add_sale_entries"
     if kwargs['created']:
         l=kwargs['instance']
+        l.sites.add(Site.objects.get_current())
         if l.tipo=='Sale':
             account=l._client.tax_group.revenue_account
             tipo='Revenue'
@@ -1327,6 +1328,7 @@ class Purchase(Transaction):
 def add_purchase_entries(sender, **kwargs):
     l=kwargs['instance']
     if kwargs['created']:
+        l.sites.add(Site.objects.get_current())
         
         l.create_related_entry(
         account = INVENTORY_ACCOUNT,
@@ -1453,6 +1455,7 @@ class Payment(Transaction):
 def add_payment_entries(sender, **kwargs):
     if kwargs['created']:
         l=kwargs['instance']
+        l.sites.add(Site.objects.get_current())
         l.create_related_entry(
             account = l._dest,
             tipo = 'Debit',
@@ -1515,7 +1518,9 @@ post_save.connect(add_payment_entries, sender=VendorRefund, dispatch_uid="jade.i
 
 class GaranteeOffer(models.Model):
     def save(self, *args, **kwargs):
-        if not self.site: self.site=Site.objects.get_current()
+        print "Site.objects.get_current() = " + str(Site.objects.get_current())
+        try:self.site
+        except Site.DoesNotExist: self.site=Site.objects.get_current()
         super(GaranteeOffer, self).save(*args, **kwargs)
     months = models.IntegerField(default=0, blank=True)
     price = models.DecimalField(max_digits=8, decimal_places=2, default=Decimal('0.00'), blank=True)
@@ -1610,6 +1615,7 @@ class Garantee(Transaction):
 def add_garantee_entries(sender, **kwargs):
     if kwargs['created']:
         l=kwargs['instance']
+        l.sites.add(Site.objects.get_current())
         if not l._price: l.price=0
         if not l._quantity: l._quantity=0
         l.create_related_entry(
@@ -1818,7 +1824,10 @@ class Count(Transaction):
         except ObjectDoesNotExist: return self._unit_cost
     def _set_unit_cost(self, value):
         try:
-            self.countdetail.unit_cost = value
+            if self.countdetail.unit_cost != value:
+                c=self.countdetail
+                c.unit_cost = value
+                c.save()
             if self.quantity: self.cost=value*self.quantity
         except: self._unit_cost = value
     unit_cost = property(_get_unit_cost, _set_unit_cost)
@@ -1874,6 +1883,7 @@ def add_count_entry(sender, **kwargs):
     if kwargs['created']:
         print "creating entries"
         l=kwargs['instance']
+        l.sites.add(Site.objects.get_current())
         if l._quantity > 0 :
             # if the value is greater than 0 then be sure to include cost_left
             print "here"
