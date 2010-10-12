@@ -67,17 +67,26 @@ def new_object(request, form, prefix, template='', tipo=None, extra_context={}):
     if tipo and not request.user.has_perms('inventory.change_'+tipo.lower()): return http.HttpResponseRedirect("/blocked/")
     if request.POST:
         f = form(request.POST)
-        if f.is_valid():            
+        print "adadad"
+        if f.is_valid():      
+            print "valid"      
             if tipo:
+                print "tipo = " + str(tipo)
                 obj=f.save(commit=False)
                 obj.tipo=tipo
+                print "tipo = " + str(tipo)
             obj=f.save()
+            print "ppp"
+            print 'ererer'
+            print "obj.pk = " + str(obj.pk)
             updated_form=form(instance=obj, prefix=prefix+'-'+str(obj.pk))
             info_list=['The '+tipo+' has been created successfully.',]
             error_list={}
         else:
+            print "invalid"      
             info_list=[]
             obj=None
+            print "f.errors = " + str(f.errors)
             error_list=f.errors
             updated_form=None
         if not tipo: tipo=prefix
@@ -220,7 +229,6 @@ def delete_purchase(request, object_id):
 ######################################################################################
 # Ajax Views
 ######################################################################################
-
 @login_required
 def serial_history(request, serial):
     return _r2r(request,'inventory/entry_list.html', {'page':_paginate(request, Entry.objects.filter(serial=serial)), 'q':''})
@@ -498,7 +506,10 @@ def branch_list(request):
 @login_required
 def account_show(request, object_id, errors={}):
     if request.POST:
-        return edit_object(request, object_id, Account, ContactForm, "account")
+        obj = get_object_or_404(Account, pk=object_id)
+        if obj.tipo=='Account': return edit_object(request, object_id, Account, AccountForm, "account")
+        else: return edit_object(request, object_id, Account, ContactForm, "account")
+#        return edit_object(request, object_id, Account, ContactForm, "account")
     else:
         account = get_object_or_404(Account, pk=object_id)
         if not request.user.has_perm('inventory.view_client') and account.tipo=="Client": return http.HttpResponseRedirect("/blocked/")
@@ -536,20 +547,16 @@ def new_client(request):
         if not request.POST['user'] or request.POST['user']=='':
             request.POST=request.POST.copy()
             request.POST['user']=unicode(request.user.username)
-    return new_object(request, ContactForm, "account", 'inventory/account_show.html', tipo='Client', extra_context={'tipo':'client'})
+    return new_object(request, ClientForm, "account", 'inventory/account_show.html', tipo='Client', extra_context={'tipo':'client'})
 @login_required
 @permission_required('inventory.change_vendor', login_url="/blocked/")
 def new_vendor(request):
     
-    return new_object(request, ContactForm, "account", 'inventory/account_show.html', tipo='Vendor', extra_context={'tipo':'vendor'})
-@login_required
-@permission_required('inventory.change_branch', login_url="/blocked/")
-def new_branch(request):
-    return new_object(request, ContactForm, "account", 'inventory/account_show.html', tipo='Branch', extra_context={'tipo':'branch'})
-
+    return new_object(request, VendorForm, "account", 'inventory/account_show.html', tipo='Vendor', extra_context={'tipo':'vendor'})
 @login_required
 @permission_required('inventory.change_account', login_url="/blocked/")
 def new_account(request):
+    print "asdjhaskdjhaskjdh"
     return new_object(request, AccountForm, "account", 'inventory/account_show.html', tipo='Account', extra_context={'tipo':'account'})
 
 ######################################################################################

@@ -26,7 +26,14 @@ mysqldump -uroot -pThaneM3dia --add-drop-table --no-data simplejade | grep '^DRO
 
 DEBIT=1
 CREDIT=-1
-
+def increment_string_number(number, default='1001', hold_places=True):
+    try:
+        number=re.split("(\d*)", number)
+        if number[-1]=='':
+            number[-2]=str(int(number[-2])+1)
+        return "".join(number)
+    except: return default
+    
 def create_barcode(number, folder=''):
     from jade.inventory.code128 import Code128
     bar = Code128()
@@ -71,14 +78,20 @@ ITEM_TYPES=(
     )
 try: DEFAULT_UNIT=Unit.objects.get(name=settings.DEFAULT_UNIT_NAME)
 except:DEFAULT_UNIT=None
-def increment_string_number(number):
-    number=re.split("(\d*)", number)
-    if number[-1]=='':
-        number[-2]=str(int(number[-2])+1)
-    else:
-        number=number[0]+'1'
-    number="".join(number)
-    return number
+def increment_string_number(number, default='1001', zfill=True):
+    import string
+    try:
+        number=re.split("(\d*)", number)
+        if number[-1]=='':
+            if zfill:
+                number[-2]=string.zfill(int(number[-2])+1, len(number[-2]))
+            else:
+                number[-2]=str(int(number[-2])+1)
+        else:
+            number=number[0]+'1'
+        number="".join(number)
+        return number
+    except: return default
 class ItemManager(models.Manager):
     def next_bar_code(self):
         try:
@@ -90,7 +103,11 @@ class ItemManager(models.Manager):
             return number
         except: return '1'
     def find(self, q):
-        return super(ItemManager, self).get_query_set().filter(Q(name__icontains=q) | Q(bar_code__icontains=q)|Q(description__icontains=q))
+        query=super(ItemManager, self).get_query_set()
+        for key in q.split():
+            query=query.filter(Q(name__icontains=key) | Q(bar_code__icontains=key)|Q(description__icontains=key))
+        return query
+#        return super(ItemManager, self).get_query_set().filter(Q(name__icontains=q) | Q(bar_code__icontains=q)|Q(description__icontains=q))
     def fetch(self, q):
         return super(ItemManager, self).get_query_set().get(Q(name=q) | Q(bar_code=q))
 class Item(models.Model):
@@ -197,7 +214,10 @@ class Price(models.Model):
     def __unicode__(self):
         return self.item.name + " para " + self.group.name
 
-
+class AccountManager(models.Manager):
+    def next_number(self):
+        number=super(AccountManager, self).get_query_set().all().order_by('-number')[0].number
+        return increment_string_number(number)
 
 class Account(models.Model):
     ACCOUNT_TYPES=(
@@ -218,7 +238,6 @@ class Account(models.Model):
     objects = AccountManager()
     test = models.Manager()
 
-
     class Meta:
         ordering = ('number',)
     def __init__(self, *args, **kwargs):
@@ -237,6 +256,7 @@ class Account(models.Model):
         self._user =            kwargs.pop('user', None)
         self._tax_group =       kwargs.pop('tax_group', None)
         self._price_group =     kwargs.pop('price_group', None)
+        self._credit_days =     kwargs.pop('credit_days', settings.DEFAULT_CREDIT_DAYS)
         self._due = self._overdue = None
         super(Account, self).__init__(*args, **kwargs)
     def save(self, *args, **kwargs):
@@ -248,7 +268,7 @@ class Account(models.Model):
             
         super(Account, self).save(*args, **kwargs)
         try: self.contact.save()
-        except: pass
+        except Contact.DoesNotExist: pass
     def __unicode__(self):
         return self.name
     def url(self):
@@ -402,7 +422,7 @@ def add_contact(sender, **kwargs):
         l=kwargs['instance']
         Contact.objects.create(
             account=l, 
-            credit_days=settings.DEFAULT_CREDIT_DAYS,
+            credit_days=l._credit_days,
             address=l._address,
             state_name=l._state_name,
             country=l._country,
@@ -416,7 +436,7 @@ def add_contact(sender, **kwargs):
             registration=l._registration,
             user=l._user,
             price_group=l._price_group,
-            tax_group=l._tax_group,           
+            tax_group=l._tax_group,             
         )
 class TaxGroup(models.Model):
     def __init__(self, *args, **kwargs):
@@ -449,6 +469,9 @@ class TaxGroup(models.Model):
 class ClientManager(models.Manager):
     def default(self):
         return super(ClientManager, self).get_query_set().get(name=settings.DEFAULT_CLIENT_NAME)
+    def next_number(self):
+        number=super(ClientManager, self).get_query_set().filter(tipo="Client").order_by('-number')[0].number
+        return increment_string_number(number)
     def get_or_create_by_name(self, name):
         
         try:
@@ -470,6 +493,7 @@ class Client(Account):
         super(Client, self).save(*args, **kwargs)
     objects = ClientManager()
     class Meta:
+        ordering = ('name',)
         proxy = True
         permissions = (
             ("view_client", "Can view clients"),
@@ -481,6 +505,9 @@ class VendorManager(models.Manager):
         return super(VendorManager, self).get_query_set().get(name=settings.DEFAULT_VENDOR_NAME)
     def get_query_set(self):
         return super(VendorManager, self).get_query_set().filter(tipo="Vendor")
+    def next_number(self):
+        number=super(VendorManager, self).get_query_set().filter(tipo="Vendor").order_by('-number')[0].number
+        return increment_string_number(number)
     def get_or_create_by_name(self, name):        
     #        print "geting and creating"
     #        print "name=" + str(name)
@@ -501,25 +528,12 @@ class Vendor(Account):
         super(Vendor, self).save(*args, **kwargs)
     objects = VendorManager()
     class Meta:
+        ordering = ('name',)
         proxy = True
         permissions = (
             ("view_vendor", "Can view vendors"),
         )
 post_save.connect(add_contact, sender=Vendor, dispatch_uid="jade.inventory.models")
-class BranchManager(models.Manager):
-    def get_query_set(self):
-        return super(BranchManager, self).get_query_set().filter(tipo="Branch")
-class Branch(Account):
-    def save(self, *args, **kwargs):
-        self.tipo="Branch"
-        self.multiplier=DEBIT
-        super(Branch, self).save(*args, **kwargs)
-    objects = BranchManager()
-    class Meta:
-        proxy = True
-        permissions = (
-            ("view_branch", "Can view branches"),
-        )
 
 class SiteDetail(models.Model):
     site = models.OneToOneField(Site)
@@ -713,7 +727,7 @@ class Transaction(models.Model):
             if self._subclass: return self._subclass
         except: pass
         if not self.pk: return None
-        print "self.tipo = " + str(self.tipo)
+#        print "self.tipo = " + str(self.tipo)
         
         self._subclass=eval(TransactionTipo.objects.get(name=self.tipo).obj).objects.get(pk=self.id)
         return self._subclass
@@ -815,6 +829,10 @@ class Entry(models.Model):
     def __unicode__(self):
         return str(self.account.name) +"($" + str(self.value)+") " + str(self.tipo)
         
+class ExtraValue(models.Model):
+    name = models.CharField(max_length=32, blank=True, default="")
+    value = models.DecimalField(max_digits=8, decimal_places=2, null=True, blank=True)
+    transaction = models.ForeignKey(Transaction)
 
  ######################################################################################
  # Sales
@@ -1158,6 +1176,7 @@ class Purchase(Transaction):
         self.template='inventory/purchase.html'
         self._cost = kwargs.pop('cost', 0)
         self._tax = kwargs.pop('tax', 0)
+        self._taxbackup = self._tax
         self._date = kwargs.pop('date', datetime.now())
         self._delivered = kwargs.pop('delivered', True)
         self._active = kwargs.pop('active', True)
@@ -1168,7 +1187,32 @@ class Purchase(Transaction):
         super(Purchase, self).__init__(*args, **kwargs)
         self._initial_cost=self.cost
         self._initial_quantity=self.quantity
-        self.tipo='Purchase'
+        self.tipo='Purchase'    
+    def save(self, *args, **kwargs):
+        try: 
+            cc=self.extravalue_set.get(name='CalculatedCost')
+            if cc.value==self.cost and self._initial_quantity != self.quantity:
+                    self.cost = cc.value = self.calculate_cost()
+                    cc.save()
+        except ExtraValue.DoesNotExist: pass
+        
+        
+        try: 
+            ct=self.extravalue_set.get(name='CalculatedTax')
+            print "-ct.value = " + str(-ct.value)
+            print "self.tax = " + str(self.tax)
+            print "-ct.value==self.tax = " + str(-ct.value==self.tax)
+            print "self._cost = " + str(self._cost)
+            print "self.cost = " + str(self.cost)
+            print "self._cost != self.cost = " + str(self._cost != self.cost)
+            print "-ct.value==self.tax and self._cost != self.cost = " + str(-ct.value==self.tax and self._cost != self.cost)
+            if -ct.value==self.tax and self._cost != self.cost:
+                    self.tax = ct.value = self.calculate_tax()
+                    print "ct.value = " + str(ct.value)
+                    print "self.tax = " + str(self.tax)
+                    ct.save()
+        except ExtraValue.DoesNotExist: pass
+        super(Purchase, self).save(*args, **kwargs)
     def _get_item(self):
         try: return self.entry('Inventory').item
         except AttributeError: return self._item
@@ -1228,7 +1272,28 @@ class Purchase(Transaction):
         try: self.entry('Vendor').update('account', value)
         except AttributeError: self._vendor = value
     vendor = property(_get_vendor, _set_vendor)
-    ################ ################ ################  Cost   ################ ################ ################
+    
+    def calculate_tax(self):
+        print "self.cost = " + str(self.cost)
+        print "self.vendor.tax_group.value = " + str(self.vendor.tax_group.value)
+        try: return self.cost * self.vendor.tax_group.value
+        except NameError: return 0
+        except AttributeError: return 0
+        
+    def calculate_cost(self):
+        try:
+            if self.active: value=self.item.total_cost-self.cost
+            else: value=self.item.total_cost
+            print "value = " + str(value)
+            if self.delivered: stock=self.item.stock-self.quantity
+            else: stock=self.item.stock
+            print "stock = " + str(stock)
+            print "value(%f)/stock(%f)*self.quantity(%f) = " % (value,stock,self.quantity)
+            return value/stock*self.quantity
+        except NameError: return 0
+        except AttributeError: return 0
+            
+ ################ ################ ################  Cost   ################ ################ ################
     def _get_cost(self):
         try: return self.entry('Inventory').value
         except AttributeError: return self._cost
@@ -1250,15 +1315,14 @@ class Purchase(Transaction):
             return self._tax
     def _set_tax(self, value):
         value=(value or 0)
-        try:
-            self.update_possible_entry('Tax', self.vendor.tax_group.purchases_tax_account, value)
-            self.entry('Vendor').update('value', self.cost + value)
-        except: self._tax=value
+        self.update_possible_entry('Tax', self.vendor.tax_group.purchases_tax_account, value)
+        self.entry('Vendor').update('value', -(self.cost + value))
     tax = property(_get_tax, _set_tax)
     ################ ################ ################  Create Entries   ################ ################ ################
 def add_purchase_entries(sender, **kwargs):
     l=kwargs['instance']
     if kwargs['created']:
+        
         l.create_related_entry(
         account = INVENTORY_ACCOUNT,
         tipo = 'Inventory',
@@ -1268,7 +1332,7 @@ def add_purchase_entries(sender, **kwargs):
         serial=l._serial,
         delivered=l._delivered,
         )
-        l.create_related_entry(
+        e=l.create_related_entry(
         account = l._vendor,
         tipo = 'Vendor',
         value = - l._cost,
@@ -1277,24 +1341,13 @@ def add_purchase_entries(sender, **kwargs):
         serial=l._serial,
         delivered=l._delivered,
         )   
+        ExtraValue.objects.create(transaction = l, name = 'CalculatedCost', value = l._cost)
+        ExtraValue.objects.create(transaction = l, name = 'CalculatedTax', value = l.tax)
         if l.tax!=0:
-            l.create_related_entry(
+            e=l.create_related_entry(
                 account = l._vendor.tax_group.purchases_tax_account,
                 tipo = 'Tax',
                 value = l._tax)
-    #    if l.cost!=l._initial_cost and l.item:
-    #        item = l.entry("Inventory").item
-    #        # remove our old data from the equation
-    #        qty=item.stock-l.quantity
-    #        if l._initial_quantity!=0: cost=item.cost*item.stock-l._initial_cost
-    #        else: cost=item.cost*qty        
-
-    #        #calculate new cost
-    #        cost = (cost+l.cost)/(qty+l.quantity)
-    #        # save it if its new
-    #        if cost!=item.cost: 
-    #            item.cost=cost
-    #            item.save()
 
 post_save.connect(add_purchase_entries, sender=Purchase, dispatch_uid="jade.inventory.models")
     #post_save.connect(update_entry_costs, sender=Purchase, dispatch_uid="jade.inventory.models:update_entry_costs_for_purchases")##################################################

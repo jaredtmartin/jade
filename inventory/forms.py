@@ -320,6 +320,10 @@ class AccountForm(forms.ModelForm):
     class Meta:
         model = Account
         exclude=('tax_group', 'price_group', 'tipo')
+    def __init__(self, *args, **kwargs):
+        super(AccountForm, self).__init__(*args, **kwargs)
+        if not kwargs.has_key('instance'):
+            self.initial['number'] = Account.objects.next_number()
     
 
 class ContactForm(forms.ModelForm):
@@ -379,6 +383,7 @@ class ContactForm(forms.ModelForm):
         else:
             self.initial['price_group'] = settings.DEFAULT_PRICE_GROUP_NAME
             self.initial['tax_group'] = settings.DEFAULT_TAX_GROUP_NAME
+            self.initial['credit_days'] = settings.DEFAULT_CREDIT_DAYS
     def clean_tax_group(self):
         return clean_lookup(self, 'tax_group', TaxGroup)
     def clean_price_group(self):
@@ -410,10 +415,21 @@ class ContactForm(forms.ModelForm):
         model.registration =        self.cleaned_data['registration']
         model.user =        self.cleaned_data['user']
         model.credit_days =        self.cleaned_data['credit_days']
+        print "model.credit_days = " + str(model.credit_days)
         if commit: model.save()
         return model
-
-
+class ClientForm(ContactForm):
+    def __init__(self, *args, **kwargs):
+        super(ClientForm, self).__init__(*args, **kwargs)
+        if not kwargs.has_key('instance'):
+            self.initial['number'] = Client.objects.next_number()
+            self.initial['multiplier'] = 1
+class VendorForm(ContactForm):
+    def __init__(self, *args, **kwargs):
+        super(VendorForm, self).__init__(*args, **kwargs)
+        if not kwargs.has_key('instance'):
+            self.initial['number'] = Vendor.objects.next_number()
+            self.initial['multiplier'] = -1
 class NewTransactionForm(forms.Form):
     doc_number =            forms.CharField(required=False)
     account =               forms.CharField(required=False)
