@@ -22,7 +22,14 @@ mysqldump -uroot -pThaneM3dia --add-drop-table --no-data simplejade | grep '^DRO
 
 DEBIT=1
 CREDIT=-1
-
+def increment_string_number(number, default='1001', hold_places=True):
+    try:
+        number=re.split("(\d*)", number)
+        if number[-1]=='':
+            number[-2]=str(int(number[-2])+1)
+        return "".join(number)
+    except: return default
+    
 def create_barcode(number, folder=''):
     from jade.inventory.code128 import Code128
     bar = Code128()
@@ -66,14 +73,20 @@ ITEM_TYPES=(
 )
 try: DEFAULT_UNIT=Unit.objects.get(name=settings.DEFAULT_UNIT_NAME)
 except:DEFAULT_UNIT=None
-def increment_string_number(number):
-    number=re.split("(\d*)", number)
-    if number[-1]=='':
-        number[-2]=str(int(number[-2])+1)
-    else:
-        number=number[0]+'1'
-    number="".join(number)
-    return number
+def increment_string_number(number, default='1001', zfill=True):
+    import string
+    try:
+        number=re.split("(\d*)", number)
+        if number[-1]=='':
+            if zfill:
+                number[-2]=string.zfill(int(number[-2])+1, len(number[-2]))
+            else:
+                number[-2]=str(int(number[-2])+1)
+        else:
+            number=number[0]+'1'
+        number="".join(number)
+        return number
+    except: return default
 class ItemManager(models.Manager):
     def next_bar_code(self):
         try:
@@ -191,7 +204,10 @@ class Price(models.Model):
     def __unicode__(self):
         return self.item.name + " para " + self.group.name
 
-
+class AccountManager(models.Manager):
+    def next_number(self):
+        number=super(AccountManager, self).get_query_set().all().order_by('-number')[0].number
+        return increment_string_number(number)
 
 class Account(models.Model):
     ACCOUNT_TYPES=(
@@ -208,6 +224,7 @@ class Account(models.Model):
     number = models.CharField(_('number'), max_length=32)
     multiplier = models.IntegerField(_('multiplier'), default=1, choices=MULTIPLIER_TYPES)
     tipo = models.CharField(_('type'), max_length=16, choices=ACCOUNT_TYPES)
+    objects=AccountManager()
     class Meta:
         ordering = ('number',)
     def __init__(self, *args, **kwargs):
@@ -419,6 +436,9 @@ class TaxGroup(models.Model):
 class ClientManager(models.Manager):
     def default(self):
         return super(ClientManager, self).get_query_set().get(name=settings.DEFAULT_CLIENT_NAME)
+    def next_number(self):
+        number=super(ClientManager, self).get_query_set().filter(tipo="Client").order_by('-number')[0].number
+        return increment_string_number(number)
     def get_or_create_by_name(self, name):
         
         try:
@@ -452,6 +472,9 @@ class VendorManager(models.Manager):
         return super(VendorManager, self).get_query_set().get(name=settings.DEFAULT_VENDOR_NAME)
     def get_query_set(self):
         return super(VendorManager, self).get_query_set().filter(tipo="Vendor")
+    def next_number(self):
+        number=super(VendorManager, self).get_query_set().filter(tipo="Vendor").order_by('-number')[0].number
+        return increment_string_number(number)
     def get_or_create_by_name(self, name):        
 #        print "geting and creating"
 #        print "name=" + str(name)
