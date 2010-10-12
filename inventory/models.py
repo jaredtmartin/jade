@@ -1912,6 +1912,8 @@ post_save.connect(add_count_entry, sender=Count, dispatch_uid="jade.inventory.mo
 class UserProfile(models.Model):
     user = models.ForeignKey(User, unique=True)
     price_group = models.ForeignKey(PriceGroup)
+    def __unicode__(self):
+        return self.user.username
     def _get_tabs(self):
         try: t=self._tabs
         except:
