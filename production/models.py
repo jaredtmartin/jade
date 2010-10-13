@@ -5,7 +5,7 @@ except:pass
 from django.db.models.signals import post_save #pre_save, , pre_delete
 from django.db.models import Q
 from datetime import datetime
-import settings
+from jade import settings
 import re
 from django.contrib.sites.models import Site
 from django.contrib.sites.managers import CurrentSiteManager
