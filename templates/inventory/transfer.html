@@ -11,7 +11,7 @@
     <td/><td/><td/>
 {% endblock %}
 {% block other_actions_edit %}
-    <a style="display:none;" class="show" id="id_transaction-{{object.pk}}-return" title="Return Purchase" href="#" onclick="newTransaction('/inventory/purchasereturn/{{object.pk}}/new/'); return false;"><img src="/media/img/return.png"/></a>    
+    <a style="display:none;" class="show" id="id_transaction-{{object.pk}}-return" title="Return Purchase" href="#" onclick="newTransaction('/inventory/purchasereturn/{{object.pk}}/new/'); return false;"><img src="{{MEDIA_URL}}/img/return.png"/></a>    
 {% endblock %}
 
 
@@ -25,10 +25,10 @@
     <td/><td/>
 {% endblock %}
 {% block other_actions_show %}
-    <a class="show" id="id_transaction-{{object.pk}}-return" title="{% trans 'Return transfer' %}" href="#" onclick="newTransaction('/inventory/purchasereturn/{{object.pk}}/new/'); return false;"><img src="/media/img/return.png"/></a>
+    <a class="show" id="id_transaction-{{object.pk}}-return" title="{% trans 'Return transfer' %}" href="#" onclick="newTransaction('/inventory/purchasereturn/{{object.pk}}/new/'); return false;"><img src="{{MEDIA_URL}}/img/return.png"/></a>
     {% if object.subclass.delivered %}
-        <a class="show" id="id_transaction-{{object.pk}}-undeliver" title="{% trans 'Mark as NOT Delivered' %}" href="#" onclick="markTransaction('/inventory/transaction/{{object.pk}}/undeliver/'); return false;"><img src="/media/img/delivered.png"/></a>
+        <a class="show" id="id_transaction-{{object.pk}}-undeliver" title="{% trans 'Mark as NOT Delivered' %}" href="#" onclick="markTransaction('/inventory/transaction/{{object.pk}}/undeliver/'); return false;"><img src="{{MEDIA_URL}}/img/delivered.png"/></a>
     {% else %}
-        <a class="show" id="id_transaction-{{object.pk}}-deliver" title="{% trans 'Mark as Delivered' %}" href="#" onclick="markTransaction('/inventory/transaction/{{object.pk}}/deliver/'); return false;"><img src="/media/img/undelivered.png"/></a>
+        <a class="show" id="id_transaction-{{object.pk}}-deliver" title="{% trans 'Mark as Delivered' %}" href="#" onclick="markTransaction('/inventory/transaction/{{object.pk}}/deliver/'); return false;"><img src="{{MEDIA_URL}}/img/undelivered.png"/></a>
     {% endif %}    
 {% endblock %}

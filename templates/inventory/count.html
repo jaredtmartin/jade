@@ -10,8 +10,8 @@
     <td/><td/><td/>
 {% endblock %}
 {% block other_actions_edit %}
-    <a style="display:none;" class="show" id="id_transaction-{{object.pk}}-post" title="{% trans 'Post Count' %}" href="#" onclick="postCount({{object.pk}}); return false;"><img src="/media/img/post.png"/></a>
-    <a style="display:none;" class="show" id="id_transaction-{{object.pk}}-print" title="{% trans 'Print Count' %}" href="{{object.subclass.print_url}}" ><img src="/media/img/pdf.png"/></a>
+    <a style="display:none;" class="show" id="id_transaction-{{object.pk}}-post" title="{% trans 'Post Count' %}" href="#" onclick="postCount({{object.pk}}); return false;"><img src="{{MEDIA_URL}}/img/post.png"/></a>
+    <a style="display:none;" class="show" id="id_transaction-{{object.pk}}-print" title="{% trans 'Print Count' %}" href="{{object.subclass.print_url}}" ><img src="{{MEDIA_URL}}/img/pdf.png"/></a>
 {% endblock %}
 {% block other_fields_show %}
     <td/>
@@ -22,6 +22,6 @@
     <td/><td/><td/>
 {% endblock %}
 {% block other_actions_show %}
-    <a class="show" id="id_transaction-{{object.pk}}-post" title="{% trans 'Post Count' %}" href="#" onclick="postCount({{object.pk}}); return false;"><img src="/media/img/post.png"/></a>
+    <a class="show" id="id_transaction-{{object.pk}}-post" title="{% trans 'Post Count' %}" href="#" onclick="postCount({{object.pk}}); return false;"><img src="{{MEDIA_URL}}/img/post.png"/></a>
 {% endblock %}
 
