@@ -23,7 +23,7 @@
 {% block user-corner %}
     {% trans 'User' %}: {{ user.username }}<br>
     {% trans 'Price Group' %}: {{user.get_profile.price_group}}<br>
-    <a href="/logout">{% trans 'Logout' %}</a><br>
+    <a href="{{APP_LOCATION}}/logout">{% trans 'Logout' %}</a><br>
 {% endblock %}
 {% block right %}
     {% block actdions %}{% endblock%}
