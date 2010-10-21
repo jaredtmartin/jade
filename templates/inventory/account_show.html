@@ -3,15 +3,15 @@
 {% load i18n %}
 {% load tags %}
 {% block js %}
-    <script type="text/javascript" src="{{ MEDIA_URL }}/media/js/jade.js"></script> 
+    <script type="text/javascript" src="{{MEDIA_URL}}/js/jade.js"></script> 
 {% endblock %}
 
 {% block actions %}
     {% if tipo == 'client' %}
         {% if perms.inventory.change_client %}
-            <div class="actiontab" ><a href="/inventory/client/" class="action">{% trans 'New' %}</a></div>
+            <div class="actiontab" ><a href="{% url new_client %}" class="action">{% trans 'New' %}</a></div>
             {% if object %}
-                <div class="actiontab" ><a href='/inventory/account/{{object.pk}}/delete/?redirect_url=/inventory/clients/'>{% trans 'Delete' %}</a></div>
+                <div class="actiontab" ><a href='{% url delete_account object.pk %}?redirect_url=/inventory/clients/'>{% trans 'Delete' %}</a></div>
                 <div class="actiontab" ><a href='/inventory/account/{{object.pk}}/statement.pdf'>{% trans 'Statement' %}</a></div>
             {% endif %}
         {% endif %}

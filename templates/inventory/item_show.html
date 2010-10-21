@@ -9,13 +9,13 @@
     {% endif %}
 {% endblock%}
 {% block js %}
-    <script type="text/javascript" src="/media/js/jade.js"></script> 
-    <script type="text/javascript" src="/media/js/ajaxfileupload.js"></script>  
-    <script type="text/javascript" src="/media/js/jquery.lightbox-0.5.min.js"></script>
-    <link rel="stylesheet" type="text/css" href="/media/css/jquery.lightbox-0.5.css" media="screen" />
+    <script type="text/javascript" src="{{MEDIA_URL}}/js/jade.js"></script> 
+    <script type="text/javascript" src="{{MEDIA_URL}}/js/ajaxfileupload.js"></script>  
+    <script type="text/javascript" src="{{MEDIA_URL}}/js/jquery.lightbox-0.5.min.js"></script>
+    <link rel="stylesheet" type="text/css" href="{{MEDIA_URL}}/css/jquery.lightbox-0.5.css" media="screen" />
 {% endblock %}
 {% block pre-table %}
-    <a href="/inventory/item/" class="action"><b>{% trans 'New Item' %} </b><img src="/media/img/add.png"/></a>
+    <a href="/inventory/item/" class="action"><b>{% trans 'New Item' %} </b><img src="{{MEDIA_URL}}/img/add.png"/></a>
 {% endblock%}
 {% block top %}
     <h1>

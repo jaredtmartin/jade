@@ -6,10 +6,10 @@
     <td><input id="id_transaction-{{object.pk}}-date" title="{% trans 'Date' %}" class="field date" value="{{object.date|date:"m/d/Y"}}" type="text"></td>
     {% block other_fields_edit %}{% endblock %}
     <td>
-        <a class="show" style="display:none;" id="id_transaction-{{object.pk}}-edit" href="#" title="{% trans 'Edit Sale' %}" onclick="editTransaction({{object.pk}}); return false;"><img src="/media/img/edit.png"/></a>
-        {% block edit_save_link %}<a class="edit save" id="id_transaction-{{object.pk}}-save" title="{% trans 'Save Changes' %}" href="#" onclick="saveTransaction({{object.pk}}, '/inventory/{{object.tipo|lower}}/{{object.pk}}/');$('.quantity:first').select(); return false;"><img src="/media/img/save.png"/></a>{% endblock %}
-        <a id="show_entries_link_{{object.pk}}" title="{% trans 'Show Entries' %}" onclick="show_entries({{object.pk}});return false;" href="#"><img src="/media/img/list.png"/></a><a style="display: none;" title="{% trans 'Hide Entries' %}" id="hide_entries_link_{{object.pk}}" onclick="hide_entries({{object.pk}});return false;" href="#"><img src="/media/img/hide_list.png"/></a>
-        <a onclick="deleteTransaction({{ object.pk }}); return false;" href="#" title="{% trans 'Delete Sale' %}" id="id_transaction-{{ object.pk }}-delete" style=""><img src="/media/img/trash.png"/></a>
+        <a class="show" style="display:none;" id="id_transaction-{{object.pk}}-edit" href="#" title="{% trans 'Edit Sale' %}" onclick="editTransaction({{object.pk}}); return false;"><img src="{{MEDIA_URL}}/img/edit.png"/></a>
+        {% block edit_save_link %}<a class="edit save" id="id_transaction-{{object.pk}}-save" title="{% trans 'Save Changes' %}" href="#" onclick="saveTransaction({{object.pk}}, '/inventory/{{object.tipo|lower}}/{{object.pk}}/');$('.quantity:first').select(); return false;"><img src="{{MEDIA_URL}}/img/save.png"/></a>{% endblock %}
+        <a id="show_entries_link_{{object.pk}}" title="{% trans 'Show Entries' %}" onclick="show_entries({{object.pk}});return false;" href="#"><img src="{{MEDIA_URL}}/img/list.png"/></a><a style="display: none;" title="{% trans 'Hide Entries' %}" id="hide_entries_link_{{object.pk}}" onclick="hide_entries({{object.pk}});return false;" href="#"><img src="{{MEDIA_URL}}/img/hide_list.png"/></a>
+        <a onclick="deleteTransaction({{ object.pk }}); return false;" href="#" title="{% trans 'Delete Sale' %}" id="id_transaction-{{ object.pk }}-delete" style=""><img src="{{MEDIA_URL}}/img/trash.png"/></a>
         {% block other_actions_edit %}{% endblock %}
     </td>
 {% else %}
@@ -18,16 +18,16 @@
     <td id="id_transaction-{{object.pk}}-date" title="{% trans 'Date' %}" value="{{object.date|date:"m/d/Y"}}" class="field date">{{object.date|date:"m/d/Y"}}</td>
     {% block other_fields_show %}{% endblock %}
     <td>
-        <a class="show" id="id_transaction-{{object.pk}}-edit" href="#" title="{% trans 'Edit Sale' %}" onclick="editTransaction({{object.pk}}); return false;"><img src="/media/img/edit.png"/></a>
-        {% block show_save_link %}<a class="edit save" style="display:none;" id="id_transaction-{{object.pk}}-save" title="{% trans 'Save Changes' %}" href="#" onclick="saveTransaction({{object.pk}}, '/inventory/{{object.tipo|lower}}/{{object.pk}}/');$('.quantity:first').select(); return false;"><img src="/media/img/save.png"/></a>{% endblock %}
-        <a class="edit" style="display:none;" id="id_transaction-{{object.pk}}-cancel" title="{% trans 'Cancel Changes' %}" href="#" onclick="cancelTransaction({{object.pk}}); return false;"><img src="/media/img/cancel.png"/></a>
+        <a class="show" id="id_transaction-{{object.pk}}-edit" href="#" title="{% trans 'Edit Sale' %}" onclick="editTransaction({{object.pk}}); return false;"><img src="{{MEDIA_URL}}/img/edit.png"/></a>
+        {% block show_save_link %}<a class="edit save" style="display:none;" id="id_transaction-{{object.pk}}-save" title="{% trans 'Save Changes' %}" href="#" onclick="saveTransaction({{object.pk}}, '/inventory/{{object.tipo|lower}}/{{object.pk}}/');$('.quantity:first').select(); return false;"><img src="{{MEDIA_URL}}/img/save.png"/></a>{% endblock %}
+        <a class="edit" style="display:none;" id="id_transaction-{{object.pk}}-cancel" title="{% trans 'Cancel Changes' %}" href="#" onclick="cancelTransaction({{object.pk}}); return false;"><img src="{{MEDIA_URL}}/img/cancel.png"/></a>
         {% if object.subclass.active %}
-            <a class="show" id="id_transaction-{{object.pk}}-deactivate" title="{% trans 'Mark as Inactive' %}" href="#" onclick="markTransaction('/inventory/transaction/{{object.pk}}/deactivate/'); return false;"><img src="/media/img/on.png"/></a>
+            <a class="show" id="id_transaction-{{object.pk}}-deactivate" title="{% trans 'Mark as Inactive' %}" href="#" onclick="markTransaction('/inventory/transaction/{{object.pk}}/deactivate/'); return false;"><img src="{{MEDIA_URL}}/img/on.png"/></a>
         {% else %}
-            <a class="show" id="id_transaction-{{object.pk}}-activate" title="{% trans 'Mark as Active' %}" href="#" onclick="markTransaction('/inventory/transaction/{{object.pk}}/activate/'); return false;"><img src="/media/img/off.png"/></a>
+            <a class="show" id="id_transaction-{{object.pk}}-activate" title="{% trans 'Mark as Active' %}" href="#" onclick="markTransaction('/inventory/transaction/{{object.pk}}/activate/'); return false;"><img src="{{MEDIA_URL}}/img/off.png"/></a>
         {% endif %}
-        <a id="show_entries_link_{{object.pk}}" title="{% trans 'Show Entries' %}" onclick="show_entries({{object.pk}});return false;" href="#"><img src="/media/img/list.png"/></a><a style="display: none;" title="{% trans 'Edit Sale' %}" id="hide_entries_link_{{object.pk}}" onclick="hide_entries({{object.pk}});return false;" href="#"><img src="/media/img/hide_list.png"/></a>
-        <a onclick="deleteTransaction({{ object.pk }}); return false;" href="#" title="{% trans 'Delete Sale' %}" id="id_transaction-{{ object.pk }}-delete" style=""><img src="/media/img/trash.png"/></a>
+        <a id="show_entries_link_{{object.pk}}" title="{% trans 'Show Entries' %}" onclick="show_entries({{object.pk}});return false;" href="#"><img src="{{MEDIA_URL}}/img/list.png"/></a><a style="display: none;" title="{% trans 'Edit Sale' %}" id="hide_entries_link_{{object.pk}}" onclick="hide_entries({{object.pk}});return false;" href="#"><img src="{{MEDIA_URL}}/img/hide_list.png"/></a>
+        <a onclick="deleteTransaction({{ object.pk }}); return false;" href="#" title="{% trans 'Delete Sale' %}" id="id_transaction-{{ object.pk }}-delete" style=""><img src="{{MEDIA_URL}}/img/trash.png"/></a>
         {% block other_actions_show %}{% endblock %}
     </td>
 {% endif %}

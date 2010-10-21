@@ -13,7 +13,7 @@
     <div class="actiontab" ><a href="/inventory/transfers/?{% if q %}q={{q}}&{% endif %}{% if start %}start={{start}}&{% endif %}{% if end %}end={{end}}{% endif %}" class="action">{% trans 'Transfers' %}</a></div>
     <div id="sale-form" title="{% trans 'Create sale' %}">
 	    <form>
-		    {% trans 'Doc Number' %}: <input id="doc_number" value="{{q}}" type="text"> <a href="#" onclick="$(this).prev().val('');return false;"><img id="next_doc_number" src="/media/img/clear.png"/></a><br>
+		    {% trans 'Doc Number' %}: <input id="doc_number" value="{{q}}" type="text"> <a href="#" onclick="$(this).prev().val('');return false;"><img id="next_doc_number" src="{{MEDIA_URL}}/img/clear.png"/></a><br>
 		    {% trans 'Client' %}: <input id="client" value="{{page.object_list.1.client}}" type="text"><br>
 		    {% trans 'Item' %}: <input id="item" value="{{page.object_list.1.item}}" type="text"><br>
 	    </form>

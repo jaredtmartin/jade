@@ -33,9 +33,9 @@ urlpatterns = patterns('',
     (r'^admin/', include(admin.site.urls)), 
     (r'^inventory/', include('jade.inventory.urls')), 
     (r'^production/', include('jade.production.urls')), 
-    (r'^blocked/$',direct_to_template, {'template': 'blocked.html'}),
-    (r'^login/$', 'django.contrib.auth.views.login', {'template_name': 'login.html'}),
-    (r'^logout/$', 'django.contrib.auth.views.logout', {'template_name': 'logout.html'}),
+    (r'^blocked/$',direct_to_template, {'template': 'blocked.html'},"blocked"),
+    (r'^login/$', 'django.contrib.auth.views.login', {'template_name': 'login.html'}, "login"),
+    (r'^logout/$', 'django.contrib.auth.views.logout', {'template_name': 'logout.html'}, "logout"),
 #    (r'^i18n/', include('django.conf.urls.i18n')),
 
 )

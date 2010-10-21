@@ -15,14 +15,14 @@
                 <td>{% if entry.serial %}<a href="/inventory/serial/{{entry.serial}}/">{{entry.serial}}</a>{% endif %}</td>
                 <td>
                     {% if entry.transaction.subclass.active %}
-                        <img title="{% trans 'Click on document number to deactivate this entry' %}" src="/media/img/on.png"/>
+                        <img title="{% trans 'Click on document number to deactivate this entry' %}" src="{{MEDIA_URL}}/img/on.png"/>
                     {% else %}
-                        <img title="{% trans 'Click on document number to activate this entry' %}" src="/media/img/off.png"/>
+                        <img title="{% trans 'Click on document number to activate this entry' %}" src="{{MEDIA_URL}}/img/off.png"/>
                     {% endif %}
                     {% if entry.transaction.subclass.delivered %}
-                        <img title="{% trans 'Click on document number to mark this entry undelivered' %}" src="/media/img/delivered.png"/>
+                        <img title="{% trans 'Click on document number to mark this entry undelivered' %}" src="{{MEDIA_URL}}/img/delivered.png"/>
                     {% else %}
-                        <img title="{% trans 'Click on document number to mark this entry delivered' %}" src="/media/img/undelivered.png"/>
+                        <img title="{% trans 'Click on document number to mark this entry delivered' %}" src="{{MEDIA_URL}}/img/undelivered.png"/>
                     {% endif %}
                 </td>
             </tr>
