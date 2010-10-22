@@ -7,7 +7,7 @@ TEMPLATE_DEBUG = DEBUG
 ADMINS = (
     # ('Your Name', 'your_email@domain.com'),
 )
-
+APP_PREFIX='/chalchuapa'
 MANAGERS = ADMINS
 
 DATABASE_ENGINE = 'mysql'           # 'postgresql_psycopg2', 'postgresql', 'mysql', 'sqlite3' or 'oracle'.
@@ -52,9 +52,13 @@ MEDIA_ROOT = os.path.join(os.path.abspath(os.path.dirname(__file__)), 'media')
 MEDIA_URL = '/chalchuapa/media/'
 APP_LOCATION='/home/jared/Jade/jade'
 try:
-    if not APP_PREFIX: APP_PREFIX=''
+    if not APP_PREFIX: 
+        print "APP_PREFIX=%s" % APP_PREFIX
+        APP_PREFIX=''
 except:
     APP_PREFIX=''
+    print "APP_PREFIX=%s" % APP_PREFIX
+print "APP_PREFIX=%s" % APP_PREFIX
 # URL prefix for admin media -- CSS, JavaScript and images. Make sure to use a
 # trailing slash.
 # Examples: "http://foo.com/media/", "/media/".
@@ -112,21 +116,6 @@ class Tab():
         self.label=label
         self.url=url
         self.permission=permission
-BASE_TABS = [
-    Tab(label='Items', url=APP_PREFIX+'/inventory/items', permission='inventory.view_item'),
-    Tab(label='Transactions', url=APP_PREFIX+'/inventory/transactions', permission='inventory.view_transaction'),
-    
-    Tab(label='Accounts', url=APP_PREFIX+'/inventory/accounts', permission='inventory.view_account'),
-#    Tab(label='Clients', url=APP_PREFIX+'/inventory/clients', permission='inventory.view_client'),
-#    Tab(label='Vendors', url=APP_PREFIX+'/inventory/vendors', permission='inventory.view_vendor'),
-    Tab(label='Production', url=APP_PREFIX+'/production/production/list/', permission='production.view_production'),
-]
-ACTIONS = [
-    Tab(label='Sales', url=APP_PREFIX+'/inventory/sales', permission='inventory.view_sale'),
-    Tab(label='Purchases', url=APP_PREFIX+'/inventory/purchases', permission='inventory.view_purchase'),
-    Tab(label='Counts', url=APP_PREFIX+'/inventory/counts', permission='inventory.view_count'),
-    Tab(label='Transfers', url=APP_PREFIX+'/inventory/sales', permission='inventory.view_transfers'),
-]
 ASSETS_ACCOUNT_DATA=('Activos','01', 1)
 CASH_ACCOUNT_DATA=('Efectivo','0101', 1)
 PAYMENTS_RECEIVED_ACCOUNT_DATA=('Efectivo','0101', 1)
