@@ -51,7 +51,7 @@ MEDIA_ROOT = os.path.join(os.path.abspath(os.path.dirname(__file__)), 'media')
 # Examples: "http://media.lawrence.com", "http://example.com/media/"
 MEDIA_URL = '/chalchuapa/media/'
 APP_LOCATION='/home/jared/Jade/jade'
-
+APP_PREFIX=''
 # URL prefix for admin media -- CSS, JavaScript and images. Make sure to use a
 # trailing slash.
 # Examples: "http://foo.com/media/", "/media/".
@@ -110,19 +110,19 @@ class Tab():
         self.url=url
         self.permission=permission
 BASE_TABS = [
-    Tab(label='Items', url='/inventory/items', permission='inventory.view_item'),
-    Tab(label='Transactions', url='/inventory/transactions', permission='inventory.view_transaction'),
+    Tab(label='Items', url=APP_PREFIX+APP_PREFIX+'/inventory/items', permission='inventory.view_item'),
+    Tab(label='Transactions', url=APP_PREFIX+'/inventory/transactions', permission='inventory.view_transaction'),
     
-    Tab(label='Accounts', url='/inventory/accounts', permission='inventory.view_account'),
-#    Tab(label='Clients', url='/inventory/clients', permission='inventory.view_client'),
-#    Tab(label='Vendors', url='/inventory/vendors', permission='inventory.view_vendor'),
+    Tab(label='Accounts', url=APP_PREFIX+'/inventory/accounts', permission='inventory.view_account'),
+#    Tab(label='Clients', url=APP_PREFIX+'/inventory/clients', permission='inventory.view_client'),
+#    Tab(label='Vendors', url=APP_PREFIX+'/inventory/vendors', permission='inventory.view_vendor'),
     Tab(label='Production', url='/production/production/list/', permission='production.view_production'),
 ]
 ACTIONS = [
-    Tab(label='Sales', url='/inventory/sales', permission='inventory.view_sale'),
-    Tab(label='Purchases', url='/inventory/purchases', permission='inventory.view_purchase'),
-    Tab(label='Counts', url='/inventory/counts', permission='inventory.view_count'),
-    Tab(label='Transfers', url='/inventory/sales', permission='inventory.view_transfers'),
+    Tab(label='Sales', url=APP_PREFIX+'/inventory/sales', permission='inventory.view_sale'),
+    Tab(label='Purchases', url=APP_PREFIX+'/inventory/purchases', permission='inventory.view_purchase'),
+    Tab(label='Counts', url=APP_PREFIX+'/inventory/counts', permission='inventory.view_count'),
+    Tab(label='Transfers', url=APP_PREFIX+'/inventory/sales', permission='inventory.view_transfers'),
 ]
 ASSETS_ACCOUNT_DATA=('Activos','01', 1)
 CASH_ACCOUNT_DATA=('Efectivo','0101', 1)
