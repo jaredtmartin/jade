@@ -114,7 +114,7 @@ def search_transactions(user, form, transactions):
     return transactions
     
 def paginate_transactions(request, form, collection, template='inventory/transactions.html', errors=[]):
-    page= _paginate(request,collection)
+    page = _paginate(request,collection)
     tax = cost = charge = discount = price = None
     try:q=form.cleaned_data['q']
     except: q=''
@@ -566,11 +566,9 @@ def item_list(request, errors=[]):
     return _r2r(request,'inventory/item_list.html', {'page':_paginate(request, items),'q':q, 'error_list':errors, 'boxform':BoxForm()})
 @login_required
 @permission_required('inventory.view_item', login_url="/blocked/")
-def item_list(request, errors=[]):
-    try: q=request.GET['q']
-    except KeyError: q=''
-    items=Item.objects.find(q).filter()
-    return _r2r(request,'inventory/item_list.html', {'page':_paginate(request, items),'q':q, 'error_list':errors, 'boxform':BoxForm()})
+def low_stock(request, errors=[]):
+    items=Item.objects.low_stock()
+    return _r2r(request,'inventory/low_stock.html', {'page':_paginate(request, items), 'q':'', 'error_list':errors, 'boxform':BoxForm()})
 @login_required
 @permission_required('inventory.view_item', login_url="/blocked/")
 def price_report(request):

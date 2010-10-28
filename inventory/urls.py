@@ -88,6 +88,7 @@ urlpatterns = patterns('',
     #Items
     (r'^items/$', 'jade.inventory.views.item_list'),
 #    (r'^item/$', create_update.create_object, item),
+    (r'^low_stock/$', 'jade.inventory.views.low_stock'),
     (r'^item/$', 'jade.inventory.views.new_item'),
     (r'^item//$', 'jade.inventory.views.new_item'),
     (r'^items/prices.pdf$', 'jade.inventory.views.price_report'),

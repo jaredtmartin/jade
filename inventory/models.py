@@ -110,6 +110,10 @@ class ItemManager(models.Manager):
 #        return super(ItemManager, self).get_query_set().filter(Q(name__icontains=q) | Q(bar_code__icontains=q)|Q(description__icontains=q))
     def fetch(self, q):
         return super(ItemManager, self).get_query_set().get(Q(name=q) | Q(bar_code=q))
+    def low_stock(self):
+#        Item.objects.find(q)
+        return list(Item.objects.raw("select id from (select inventory_item.*, sum(quantity) total from inventory_item left join inventory_entry on inventory_item.id=inventory_entry.item_id where (inventory_entry.delivered=True and account_id=%i) or (inventory_entry.id is null) group by inventory_item.id) asd where (total<minimum) or (total is null and minimum>0);" % INVENTORY_ACCOUNT.pk))
+#        select inventory_item.id, name, (quantity) from inventory_item left join inventory_entry on inventory_item.id=inventory_entry.item_id where inventory_entry.active=True and account_id=58;
 class Item(models.Model):
     """
     """
@@ -1293,8 +1297,7 @@ class Purchase(Transaction):
             print "value = " + str(value)
             if self.delivered: stock=self.item.stock-self.quantity
             else: stock=self.item.stock
-            print "stock = " + str(stock)
-            print "value(%f)/stock(%f)*self.quantity(%f) = " % (value,stock,self.quantity)
+            if stock*self.quantity == 0: return 0
             return value/stock*self.quantity
         except NameError: return 0
         except AttributeError: return 0
