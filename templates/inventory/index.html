@@ -5,7 +5,13 @@
 
 {% block top %}
     <h1>{% block heading %}{% endblock %}</h1>
-    {% block search_label %}{% trans 'Document Number' %}{% endblock %}:<input id="search_field" type="text" value="{{q}}" >{% if search_by_date %} {% trans 'From' %}:<input id="start-search" type="text" value="{{start|default:''}}" > {% trans 'Until' %}:<input id="end-search" type="text" value="{{end|default:''}}" >{% endif %}<a onclick="window.location = '{% block search_url %}{% endblock %}?q='+$('#search_field').val()+'&start='+$('#start-search').val()+'&end='+$('#end-search').val(); return false;" href="#"> <img src="/media/img/find.png"/></a></form>
+    {% block search_label %}{% trans 'Document Number' %}{% endblock %}: <input id="search_field" type="text" value="{{q}}" >
+    <a onclick="$('#search_field').val('');$('#search_field').select();" href="#"> <img src="{{MEDIA_URL}}/img/clear.png"/></a>    
+    {% if search_by_date %} 
+        {% trans 'From' %}: <input id="start-search" type="text" value="{{start|default:''}}" > 
+        {% trans 'Until' %}: <input id="end-search" type="text" value="{{end|default:''}}" >
+    {% endif %}
+    <a onclick="window.location = '{% block search_url %}{% endblock %}?q='+$('#search_field').val()+'&start='+$('#start-search').val()+'&end='+$('#end-search').val(); return false;" href="#"> <img src="{{MEDIA_URL}}/img/find.png"/></a>
 {% endblock %}
 {% block content %}
     <script type="text/javascript">

@@ -40,9 +40,6 @@ def clean_bar_code(form, name, model):
     print "data = " + str(data)
     return data
 
-######################################################################################
-# Sale Form
-######################################################################################
 
 class SaleForm(forms.ModelForm):
     class Meta:
@@ -58,7 +55,8 @@ class SaleForm(forms.ModelForm):
         model.tax =         (self.cleaned_data['unit_tax'] or 0)
         model.discount =    (self.cleaned_data['unit_discount'] or 0)
         model.price =       (self.cleaned_data['unit_price'] or model.item.price(model.client))
-        model.cost =        (self.cleaned_data['unit_cost'] or model.item.cost)
+        model.cost =        self.cleaned_data['unit_cost']
+        if model.item and not model.cost: model.cost = model.item.cost
         if self.cleaned_data['quantity']!=0: 
             model.tax=              model.tax            * self.cleaned_data['quantity']
             model.discount=         model.discount       * self.cleaned_data['quantity']
@@ -82,9 +80,6 @@ class SaleForm(forms.ModelForm):
         x=clean_bar_code(self, 'item', Item)
         return x
 
-######################################################################################
-# Garantee Forms
-######################################################################################
 
 class ClientGaranteeForm(forms.ModelForm):
     class Meta:
@@ -113,6 +108,7 @@ class ClientGaranteeForm(forms.ModelForm):
         x=clean_bar_code(self, 'item', Item)
         return x
         
+
 class VendorGaranteeForm(forms.ModelForm):
     class Meta:
         model = VendorGarantee
@@ -139,11 +135,6 @@ class VendorGaranteeForm(forms.ModelForm):
     def clean_item(self):
         x=clean_bar_code(self, 'item', Item)
         return x
-######################################################################################
-# Payment Forms
-######################################################################################
-# Client Payment Form
-######################################################################################
 
 class ClientPaymentForm(forms.ModelForm):
     class Meta:
@@ -162,9 +153,6 @@ class ClientPaymentForm(forms.ModelForm):
     date =              forms.DateField(initial=datetime.now()) #, input_formats=['%Y-%m-%d', '%d/%m/%Y',]) # Uncomment this for spanish dates
     def clean_account(self):
         return clean_lookup(self, 'account', Client)
-######################################################################################
-# Vendor Payment Form
-######################################################################################
 
 class VendorPaymentForm(forms.ModelForm):
     class Meta:
@@ -183,9 +171,7 @@ class VendorPaymentForm(forms.ModelForm):
     date =              forms.DateField(initial=datetime.now()) #, input_formats=['%Y-%m-%d', '%d/%m/%Y',]) # Uncomment this for spanish dates
     def clean_account(self):
         return clean_lookup(self, 'account', Vendor)
-######################################################################################
-# Purchase Forms
-######################################################################################
+
 class PurchaseForm(forms.ModelForm):
     class Meta:
         model = Purchase
@@ -216,16 +202,14 @@ class PurchaseForm(forms.ModelForm):
     def clean_item(self):
         x=clean_bar_code(self, 'item', Item)
         return x
-######################################################################################
-# Transfer Forms
-######################################################################################
+
 class TransferForm(forms.ModelForm):
     class Meta:
         model = Transfer
         fields=('doc_number','date','account','item','quantity','serial','cost')
     def save(self, commit=True):
         model = super(TransferForm, self).save(commit=False)
-        model.branch =      self.cleaned_data['account']
+        model.account =      self.cleaned_data['account']
         model.item =        self.cleaned_data['item']
         model.date =        self.cleaned_data['date']
         model.quantity =    self.cleaned_data['quantity']
@@ -241,13 +225,11 @@ class TransferForm(forms.ModelForm):
     date =              forms.DateField(initial=datetime.now()) #, input_formats=['%Y-%m-%d', '%d/%m/%Y',]) # Uncomment this for spanish dates
     serial =            forms.CharField(required=False)
     def clean_account(self):
-        return clean_lookup(self, 'account', Branch)
+        return clean_lookup(self, 'account', Site)
     def clean_item(self):
         x=clean_bar_code(self, 'item', Item)
         return x
-######################################################################################
-# Count Forms
-######################################################################################
+
 class CountForm(forms.ModelForm):
     class Meta:
         model = Purchase
@@ -270,9 +252,7 @@ class CountForm(forms.ModelForm):
     def clean_item(self):
         x=clean_bar_code(self, 'item', Item)
         return x
-######################################################################################
-# Search Form
-######################################################################################
+
 class SearchForm(forms.Form):
     q =                 forms.CharField(required=False)
     start =             forms.DateField(required=False)
@@ -281,16 +261,16 @@ class SearchForm(forms.Form):
         validate = kwargs.pop('validate','')
         super(SearchForm, self).__init__(*args, **kwargs)
         if validate: self.is_valid()
+
 class BoxForm(forms.Form):
     box = forms.ModelChoiceField(queryset=Item.objects.all(), empty_label="---")
 
-######################################################################################
-# Item Form 
-######################################################################################
+
 class ItemImageForm(forms.ModelForm):
     class Meta:
         model = Item
         fields = ('image',)
+
 
 class ItemForm(forms.ModelForm):
     class Meta:
@@ -298,6 +278,11 @@ class ItemForm(forms.ModelForm):
         exclude = ('tipo',)
     unit=forms.CharField(widget=AutoCompleteInput(url="/inventory/unit_list/"), required=False)
     description=forms.CharField(widget=Textarea(),required=False)
+    def save(self, commit=True, tipo=None):        
+        model = super(ItemForm, self).save(commit=False)
+        if tipo: model.tipo=tipo
+        if commit: model.save()
+        return model
     def __init__(self, *args, **kwargs):
         super(ItemForm, self).__init__(*args, **kwargs)
         if kwargs.has_key('instance'):
@@ -322,31 +307,30 @@ class ItemForm(forms.ModelForm):
             raise forms.ValidationError('Unable to find %s in the list of %ss.' % (data, 'unit'))
         return data
         
-######################################################################################
-# Price Form
-######################################################################################
+
 class PriceForm(forms.ModelForm):
     class Meta:
         model = Price
         fields=('relative','fixed')
 PriceFormSet = modelformset_factory(Price, form=PriceForm, extra=0)
-######################################################################################
-# GaranteeOffer Form
-######################################################################################
+
 class GaranteeOfferForm(forms.ModelForm):
     months=forms.IntegerField(initial=0)
     price=forms.DecimalField(initial=Decimal('0.00'))
     class Meta:
         model = GaranteeOffer
         fields=('item', 'months','price')
-######################################################################################
-# Account Forms
-######################################################################################
+
 class AccountForm(forms.ModelForm):
     class Meta:
         model = Account
         exclude=('tax_group', 'price_group', 'tipo')
+    def __init__(self, *args, **kwargs):
+        super(AccountForm, self).__init__(*args, **kwargs)
+        if not kwargs.has_key('instance'):
+            self.initial['number'] = Account.objects.next_number()
     
+
 class ContactForm(forms.ModelForm):
     class Meta:
         model = Account
@@ -404,6 +388,7 @@ class ContactForm(forms.ModelForm):
         else:
             self.initial['price_group'] = settings.DEFAULT_PRICE_GROUP_NAME
             self.initial['tax_group'] = settings.DEFAULT_TAX_GROUP_NAME
+            self.initial['credit_days'] = settings.DEFAULT_CREDIT_DAYS
     def clean_tax_group(self):
         return clean_lookup(self, 'tax_group', TaxGroup)
     def clean_price_group(self):
@@ -418,8 +403,9 @@ class ContactForm(forms.ModelForm):
         except User.DoesNotExist: 
             raise forms.ValidationError('Unable to find %s in the list of %ss.' % (data, 'user'))
         return data
-    def save(self, commit=True):        
+    def save(self, commit=True, tipo=None):        
         model = super(ContactForm, self).save(commit=False)
+        if tipo: model.tipo=tipo
         model.address =        self.cleaned_data['address']
         model.state_name =        self.cleaned_data['state_name']
         model.country =        self.cleaned_data['country']
@@ -437,7 +423,18 @@ class ContactForm(forms.ModelForm):
         model.credit_days =        self.cleaned_data['credit_days']
         if commit: model.save()
         return model
-
+class ClientForm(ContactForm):
+    def __init__(self, *args, **kwargs):
+        super(ClientForm, self).__init__(*args, **kwargs)
+        if not kwargs.has_key('instance'):
+            self.initial['number'] = Client.objects.next_number()
+            self.initial['multiplier'] = 1
+class VendorForm(ContactForm):
+    def __init__(self, *args, **kwargs):
+        super(VendorForm, self).__init__(*args, **kwargs)
+        if not kwargs.has_key('instance'):
+            self.initial['number'] = Vendor.objects.next_number()
+            self.initial['multiplier'] = -1
 class NewTransactionForm(forms.Form):
     doc_number =            forms.CharField(required=False)
     account =               forms.CharField(required=False)
@@ -453,11 +450,27 @@ class NewTransactionForm(forms.Form):
     def clean_item(self):
         x=clean_bar_code(self, 'item', Item)
         return x
-#    def clean_doc_number(self):
-#        try: 
-#            sample=Transaction.objects.filter(doc_number=self.cleaned_data['doc_number'])[0]
-#            date=sample.date
-#        except:
-#            date=datetime.now()
-#        return self.cleaned_data['doc_number']
 
+class NewTransferForm(NewTransactionForm):
+    source = forms.CharField(required=False)
+    dest = forms.CharField(required=False)
+    def clean_dest(self):
+        data=self.cleaned_data['client']
+        if (not data) and (not self.fields['dest'].required): return None
+        try: data = Site.objects.filter(name=data).get()
+        except Site.MultipleObjectsReturned: 
+                raise forms.ValidationError('There are more than one %ss with the name %s. Resolve this issue and try again.' % ('site', data))
+        except Site.DoesNotExist: 
+            raise forms.ValidationError('Unable to find %s in the list of %ss.' % (data, 'site'))
+        return data
+    def clean_source(self):
+        data=self.cleaned_data['source']
+        if (not data) and (not self.fields['source'].required): return None
+        try: data = Site.objects.filter(name=data).get()
+        except Site.MultipleObjectsReturned: 
+                raise forms.ValidationError('There are more than one %ss with the name %s. Resolve this issue and try again.' % ('site', data))
+        except Site.DoesNotExist: 
+            raise forms.ValidationError('Unable to find %s in the list of %ss.' % (data, 'site'))
+        return data
+        
+    

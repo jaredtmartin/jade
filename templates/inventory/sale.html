@@ -10,8 +10,8 @@
     <td><input id="id_transaction-{{ object.pk }}-unit_price" class="field money" title="{% trans 'Price per unit' %}" value="{{object.subclass.unit_price|floatformat:2}}" type="text"></td>
 {% endblock %}
 {% block other_actions_edit %}
-    <a style="display:none;" class="show" id="id_transaction-{{object.pk}}-return" title="{% trans 'Return Sale' %}" href="#" onclick="newTransaction('/inventory/salereturn/{{object.pk}}/new/'); return false;"><img src="/media/img/return.png"/></a>
-    <a style="display:none;" class="show" id="id_transaction-{{object.pk}}-garantee" title="{% trans 'Add Garantee' %}" href="#" onclick="addGarantee({{object.pk}}); return false;"><img src="/media/img/garantee.png"/></a>
+    <a style="display:none;" class="show" id="id_transaction-{{object.pk}}-return" title="{% trans 'Return Sale' %}" href="#" onclick="newTransaction('/inventory/salereturn/{{object.pk}}/new/'); return false;"><img src="{{MEDIA_URL}}/img/return.png"/></a>
+    <a style="display:none;" class="show" id="id_transaction-{{object.pk}}-garantee" title="{% trans 'Add Garantee' %}" href="#" onclick="addGarantee({{object.pk}}); return false;"><img src="{{MEDIA_URL}}/img/garantee.png"/></a>
 {% endblock %}
 {% block other_fields_show %}
     <td id="id_transaction-{{ object.pk }}-account"  title="{% trans 'Name of client' %}" value="{{object.subclass.client|default:''}}" class="field account lookup client"><a href="{{object.subclass.client.url}}">{{object.subclass.client|default:''}}</a></td>
@@ -22,12 +22,12 @@
     <td id="id_transaction-{{object.pk}}-unit_price" totalvalue="{{object.subclass.price|floatformat:2}}" title="{% trans 'Total price' %}"   value="{{object.subclass.unit_price|floatformat:2}}"    class="price field money">    ${{object.subclass.price|floatformat:2}}</td>
 {% endblock %}
 {% block other_actions_show %}
-    <a class="show" id="id_transaction-{{object.pk}}-return" title="{% trans 'Return Sale' %}" href="#" onclick="newTransaction('/inventory/salereturn/{{object.pk}}/new/'); return false;"><img src="/media/img/return.png"/></a>
-    <a class="show" id="id_transaction-{{object.pk}}-garantee" title="{% trans 'Add Garantee' %}" href="#" onclick="addGarantee({{object.pk}},'clientgarantee'); return false;"><img src="/media/img/garantee.png"/></a>
+    <a class="show" id="id_transaction-{{object.pk}}-return" title="{% trans 'Return Sale' %}" href="#" onclick="newTransaction('/inventory/salereturn/{{object.pk}}/new/'); return false;"><img src="{{MEDIA_URL}}/img/return.png"/></a>
+    <a class="show" id="id_transaction-{{object.pk}}-garantee" title="{% trans 'Add Garantee' %}" href="#" onclick="addGarantee({{object.pk}},'clientgarantee'); return false;"><img src="{{MEDIA_URL}}/img/garantee.png"/></a>
     {% if object.subclass.delivered %}
-        <a class="show" id="id_transaction-{{object.pk}}-undeliver" title="{% trans 'Mark as NOT Delivered' %}" href="#" onclick="markTransaction('/inventory/transaction/{{object.pk}}/undeliver/'); return false;"><img src="/media/img/delivered.png"/></a>
+        <a class="show" id="id_transaction-{{object.pk}}-undeliver" title="{% trans 'Mark as NOT Delivered' %}" href="#" onclick="markTransaction('/inventory/transaction/{{object.pk}}/undeliver/'); return false;"><img src="{{MEDIA_URL}}/img/delivered.png"/></a>
     {% else %}
-        <a class="show" id="id_transaction-{{object.pk}}-deliver" title="{% trans 'Mark as Delivered' %}" href="#" onclick="markTransaction('/inventory/transaction/{{object.pk}}/deliver/'); return false;"><img src="/media/img/undelivered.png"/></a>
+        <a class="show" id="id_transaction-{{object.pk}}-deliver" title="{% trans 'Mark as Delivered' %}" href="#" onclick="markTransaction('/inventory/transaction/{{object.pk}}/deliver/'); return false;"><img src="{{MEDIA_URL}}/img/undelivered.png"/></a>
     {% endif %}
-    <a class="show" id="id_transaction-{{object.pk}}-payment" title="{% trans 'Add a Payment' %}" href="#" onclick="newTransaction('/inventory/sale/{{object.pk}}/pay/'); return false;"><img src="/media/img/money.png"/></a>
+    <a class="show" id="id_transaction-{{object.pk}}-payment" title="{% trans 'Add a Payment' %}" href="#" onclick="newTransaction('/inventory/sale/{{object.pk}}/pay/'); return false;"><img src="{{MEDIA_URL}}/img/money.png"/></a>
 {% endblock %}

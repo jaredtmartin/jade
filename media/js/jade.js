@@ -91,7 +91,6 @@ function newTransaction(url) {
             doc_number:     jQuery('#doc_number').val(),
             client:     jQuery('#client').val(),
             vendor:     jQuery('#vendor').val(),
-            branch:     jQuery('#branch').val(),
             item:     jQuery('#item').val(),
         },
         success: updateAndSelectQuantity

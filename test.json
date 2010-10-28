@@ -1,0 +1,50 @@
+looking for 01 Activos
+couldnt find 
+looking for 0101 Efectivo
+couldnt find 
+looking for 0101 Efectivo
+looking for 0101 Efectivo
+looking for 0102 Inventario
+couldnt find 
+looking for 0103 Clientes
+couldnt find 
+looking for 010301 Anonimo
+couldnt find 
+looking for 02 Pasivos
+couldnt find 
+looking for 0201 Proveedores
+couldnt find 
+looking for 020101 No Specificado
+couldnt find 
+looking for 0202 Impuestos
+couldnt find 
+looking for 020201 Impuestos de Ventas
+couldnt find 
+looking for 02020101 Impuestos de Ventas de Consumidor Final
+couldnt find 
+looking for 020202 Impuestos de Compras
+couldnt find 
+looking for 02020201 Impuestos de Compras de Consumidor Final
+couldnt find 
+looking for 03 Patrocinio
+couldnt find 
+looking for 04 Ingresos
+couldnt find 
+looking for 0401 Ingresos de Consumidor Final
+couldnt find 
+looking for 040101 Ventas de Consumidor Final
+couldnt find 
+looking for 040102 Descuentos de Consumidor Final
+couldnt find 
+looking for 040103 Devoluciones de Consumidor Final
+couldnt find 
+looking for 05 Gastos
+couldnt find 
+looking for 05 Gastos
+looking for 0501 Gastos de Inventario
+couldnt find 
+looking for 0502 Gastos de Cuentas Fisicas
+couldnt find 
+looking for 0501 Gastos de Produccion
+couldnt find 
+[{"pk": 1, "model": "inventory.unit", "fields": {"name": "Cada Uno"}}, {"pk": 1, "model": "inventory.pricegroup", "fields": {"name": "Publico"}}, {"pk": 1, "model": "inventory.account", "fields": {"site": 1, "multiplier": 1, "name": "Activos", "tipo": "", "number": "01"}}, {"pk": 2, "model": "inventory.account", "fields": {"site": 1, "multiplier": 1, "name": "Efectivo", "tipo": "", "number": "0101"}}, {"pk": 3, "model": "inventory.account", "fields": {"site": 1, "multiplier": 1, "name": "Inventario", "tipo": "", "number": "0102"}}, {"pk": 4, "model": "inventory.account", "fields": {"site": 1, "multiplier": 1, "name": "Clientes", "tipo": "", "number": "0103"}}, {"pk": 5, "model": "inventory.account", "fields": {"site": 1, "multiplier": 1, "name": "Anonimo", "tipo": "", "number": "010301"}}, {"pk": 24, "model": "inventory.account", "fields": {"site": 1, "multiplier": 1, "name": "Anonimo", "tipo": "Client", "number": "010301"}}, {"pk": 6, "model": "inventory.account", "fields": {"site": 1, "multiplier": 1, "name": "Pasivos", "tipo": "", "number": "02"}}, {"pk": 7, "model": "inventory.account", "fields": {"site": 1, "multiplier": 1, "name": "Proveedores", "tipo": "", "number": "0201"}}, {"pk": 25, "model": "inventory.account", "fields": {"site": 1, "multiplier": -1, "name": "No Specificado", "tipo": "Vendor", "number": "020101"}}, {"pk": 8, "model": "inventory.account", "fields": {"site": 1, "multiplier": 1, "name": "No Specificado", "tipo": "", "number": "020101"}}, {"pk": 9, "model": "inventory.account", "fields": {"site": 1, "multiplier": 1, "name": "Impuestos", "tipo": "", "number": "0202"}}, {"pk": 10, "model": "inventory.account", "fields": {"site": 1, "multiplier": 1, "name": "Impuestos de Ventas", "tipo": "", "number": "020201"}}, {"pk": 11, "model": "inventory.account", "fields": {"site": 1, "multiplier": 1, "name": "Impuestos de Ventas de Consumidor Final", "tipo": "", "number": "02020101"}}, {"pk": 12, "model": "inventory.account", "fields": {"site": 1, "multiplier": 1, "name": "Impuestos de Compras", "tipo": "", "number": "020202"}}, {"pk": 13, "model": "inventory.account", "fields": {"site": 1, "multiplier": 1, "name": "Impuestos de Compras de Consumidor Final", "tipo": "", "number": "02020201"}}, {"pk": 14, "model": "inventory.account", "fields": {"site": 1, "multiplier": 1, "name": "Patrocinio", "tipo": "", "number": "03"}}, {"pk": 15, "model": "inventory.account", "fields": {"site": 1, "multiplier": 1, "name": "Ingresos", "tipo": "", "number": "04"}}, {"pk": 16, "model": "inventory.account", "fields": {"site": 1, "multiplier": 1, "name": "Ingresos de Consumidor Final", "tipo": "", "number": "0401"}}, {"pk": 17, "model": "inventory.account", "fields": {"site": 1, "multiplier": 1, "name": "Ventas de Consumidor Final", "tipo": "", "number": "040101"}}, {"pk": 18, "model": "inventory.account", "fields": {"site": 1, "multiplier": 1, "name": "Descuentos de Consumidor Final", "tipo": "", "number": "040102"}}, {"pk": 19, "model": "inventory.account", "fields": {"site": 1, "multiplier": 1, "name": "Devoluciones de Consumidor Final", "tipo": "", "number": "040103"}}, {"pk": 20, "model": "inventory.account", "fields": {"site": 1, "multiplier": 1, "name": "Gastos", "tipo": "", "number": "05"}}, {"pk": 23, "model": "inventory.account", "fields": {"site": 1, "multiplier": 1, "name": "Gastos de Produccion", "tipo": "", "number": "0501"}}, {"pk": 21, "model": "inventory.account", "fields": {"site": 1, "multiplier": 1, "name": "Gastos de Inventario", "tipo": "", "number": "0501"}}, {"pk": 22, "model": "inventory.account", "fields": {"site": 1, "multiplier": 1, "name": "Gastos de Cuentas Fisicas", "tipo": "", "number": "0502"}}, {"pk": 1, "model": "inventory.taxgroup", "fields": {"revenue_account": 17, "discounts_account": 18, "returns_account": 19, "purchases_tax_account": 13, "price_includes_tax": true, "value": "0.00", "sales_tax_account": 11, "site": 1, "name": "Consumidor Final"}}, {"pk": 1, "model": "inventory.sitedetail", "fields": {"default_tax_group": 1, "site": 1}}, {"pk": 1, "model": "inventory.contact", "fields": {"fax": "", "tax_number": "", "state_name": "", "price_group": 1, "country": "", "registration": "", "tax_group_name": "Consumidor Final", "work_phone": "", "credit_days": 0, "user": null, "home_phone": "", "address": "", "account": 24, "cell_phone": "", "email": "", "description": ""}}, {"pk": 2, "model": "inventory.contact", "fields": {"fax": "", "tax_number": "", "state_name": "", "price_group": 1, "country": "", "registration": "", "tax_group_name": "Consumidor Final", "work_phone": "", "credit_days": 0, "user": null, "home_phone": "", "address": "", "account": 25, "cell_phone": "", "email": "", "description": ""}}]

@@ -1,15 +1,20 @@
 from django.db import models
-from jade.inventory.models import Transaction, Account, Entry
+from jade.inventory.models import Transaction, Account, Entry, make_default_account
 try: from jade.inventory.models import INVENTORY_ACCOUNT
 except:pass
 from django.db.models.signals import post_save #pre_save, , pre_delete
 from django.db.models import Q
 from datetime import datetime
-import settings
+from jade import settings
 import re
+from django.contrib.sites.models import Site
+from django.contrib.sites.managers import CurrentSiteManager
+from jade.inventory.managers import CurrentMultiSiteManager, AccountManager
 
-try: PRODUCTION_ACCOUNT = Account.objects.get(name=settings.PRODUCTION_ACCOUNT_NAME)
-except:pass
+
+print "settings.PRODUCTION_EXPENSE_ACCOUNT_DATA=%s" % str(settings.PRODUCTION_EXPENSE_ACCOUNT_DATA)
+if settings.PRODUCTION_EXPENSE_ACCOUNT_DATA:
+    PRODUCTION_EXPENSE_ACCOUNT = make_default_account(settings.PRODUCTION_EXPENSE_ACCOUNT_DATA)
 class ProductionManager(models.Manager):
     def get_query_set(self):
         return super(ProductionManager, self).get_query_set().filter(Q(tipo="Process")|Q(tipo="Job"))
@@ -124,8 +129,9 @@ class Process(Production):
 def add_process_entries(sender, **kwargs):
     l=kwargs['instance']
     if kwargs['created']:
+        l.sites.add(Site.objects.get_current())
         l.create_related_entry(
-        account = PRODUCTION_ACCOUNT,
+        account = PRODUCTION_EXPENSE_ACCOUNT,
         tipo = 'Production',
         value = l._cost,
         item = l._item,
@@ -135,7 +141,7 @@ def add_process_entries(sender, **kwargs):
         active=False
         )
         l.create_related_entry(
-        account = models.INVENTORY_ACCOUNT,
+        account = INVENTORY_ACCOUNT,
         tipo = 'Inventory',
         value = - l._cost,
         item = l._item,
@@ -183,6 +189,7 @@ class Job(Production):
 def add_job_entries(sender, **kwargs):
     l=kwargs['instance']
     if kwargs['created']:
+        l.sites.add(Site.objects.get_current())
         l.create_related_entry(
         account = INVENTORY_ACCOUNT,
         tipo = 'Inventory',
@@ -194,7 +201,7 @@ def add_job_entries(sender, **kwargs):
         active=l._active,
         )
         l.create_related_entry(
-        account = PRODUCTION_ACCOUNT,
+        account = PRODUCTION_EXPENSE_ACCOUNT,
         tipo = 'Production',
         value = - l._cost,
         item = l._item,

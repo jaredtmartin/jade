@@ -9,8 +9,8 @@
 {% block pre-table %}
     <div id="design-form" title="{% trans 'Create process' %}">
 	    <form>
-		    {% trans 'Doc Number' %}: <input id="doc_number" value="{{q}}" type="text"> <a href="#" onclick="$(this).prev().val('');return false;"><img id="next_doc_number" src="/media/img/clear.png"/></a>
-		    {% trans 'Item' %}: <input id="item" value="{{page.object_list.1.item}}" type="text"> <a onclick="newTransaction('/production/process/new/'); return false;" href="#"><img src="/media/img/add.png"/></a>
+		    {% trans 'Doc Number' %}: <input id="doc_number" value="{{q}}" type="text"> <a href="#" onclick="$(this).prev().val('');return false;"><img id="next_doc_number" src="{{MEDIA_URL}}/img/clear.png"/></a>
+		    {% trans 'Item' %}: <input id="item" value="{{page.object_list.1.item}}" type="text"> <a onclick="newTransaction('/production/process/new/'); return false;" href="#"><img src="{{MEDIA_URL}}/img/add.png"/></a>
 	    </form>
     </div>
     <div id="plan-form" title="{% trans 'Create job' %}">

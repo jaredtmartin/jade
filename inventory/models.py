@@ -1,6 +1,7 @@
 from django.utils.translation import ugettext_lazy as _
 from django.db import models
 from decimal import *
+from django.db.utils import DatabaseError
 from datetime import datetime, timedelta
 from django.contrib.auth.models import User
 from django.db.models import Q
@@ -12,6 +13,9 @@ import re
 from thumbs import ImageWithThumbsField
 import jade
 import subprocess
+from django.contrib.sites.models import Site
+from django.contrib.sites.managers import CurrentSiteManager
+from jade.inventory.managers import CurrentMultiSiteManager, AccountManager
 
 """
 
@@ -22,13 +26,21 @@ mysqldump -uroot -pThaneM3dia --add-drop-table --no-data simplejade | grep '^DRO
 
 DEBIT=1
 CREDIT=-1
-
+def increment_string_number(number, default='1001', hold_places=True):
+    try:
+        number=re.split("(\d*)", number)
+        if number[-1]=='':
+            number[-2]=str(int(number[-2])+1)
+        return "".join(number)
+    except: return default
+    
 def create_barcode(number, folder=''):
     from jade.inventory.code128 import Code128
     bar = Code128()
     bar.getImage(number,50,"png", folder=settings.BARCODES_FOLDER)
 def in_months(date, months):
     return date+timedelta(months*365/12)
+
 class TransactionTipo(models.Model):
     name = models.CharField('name', max_length=32)
     obj = models.CharField('obj', max_length=64)
@@ -63,29 +75,39 @@ class Category(models.Model):
 ITEM_TYPES=(
     ('Product', _('Product')),
     ('Service', _('Service')),
-)
+    )
 try: DEFAULT_UNIT=Unit.objects.get(name=settings.DEFAULT_UNIT_NAME)
 except:DEFAULT_UNIT=None
-def increment_string_number(number):
-    number=re.split("(\d*)", number)
-    if number[-1]=='':
-        number[-2]=str(int(number[-2])+1)
-    else:
-        number=number[0]+'1'
-    number="".join(number)
-    return number
+def increment_string_number(number, default='1001', zfill=True):
+    import string
+    try:
+        number=re.split("(\d*)", number)
+        if number[-1]=='':
+            if zfill:
+                number[-2]=string.zfill(int(number[-2])+1, len(number[-2]))
+            else:
+                number[-2]=str(int(number[-2])+1)
+        else:
+            number=number[0]+'1'
+        number="".join(number)
+        return number
+    except: return default
 class ItemManager(models.Manager):
     def next_bar_code(self):
         try:
             number=super(ItemManager, self).get_query_set().all().order_by('-bar_code')[0].bar_code
             number=increment_string_number(number)
             while Item.objects.filter(bar_code=number).count()>0:
-#                print "Item.objects.filter(bar_code=number).count()=" + str(Item.objects.filter(bar_code=number).count())
+    #                print "Item.objects.filter(bar_code=number).count()=" + str(Item.objects.filter(bar_code=number).count())
                 number=increment_string_number(number)
             return number
         except: return '1'
     def find(self, q):
-        return super(ItemManager, self).get_query_set().filter(Q(name__icontains=q) | Q(bar_code__icontains=q)|Q(description__icontains=q))
+        query=super(ItemManager, self).get_query_set()
+        for key in q.split():
+            query=query.filter(Q(name__icontains=key) | Q(bar_code__icontains=key)|Q(description__icontains=key))
+        return query
+#        return super(ItemManager, self).get_query_set().filter(Q(name__icontains=q) | Q(bar_code__icontains=q)|Q(description__icontains=q))
     def fetch(self, q):
         return super(ItemManager, self).get_query_set().get(Q(name=q) | Q(bar_code=q))
 class Item(models.Model):
@@ -99,7 +121,7 @@ class Item(models.Model):
     location = models.CharField(_('location'), max_length=32, blank=True, default='')
     description = models.CharField(_('description'), max_length=1024, blank=True, default="")
     unit = models.ForeignKey(Unit, default=DEFAULT_UNIT, blank=True)
-#    cost = models.DecimalField(_('cost'), max_digits=8, decimal_places=2, default=Decimal('0.00'), blank=True)
+    #    cost = models.DecimalField(_('cost'), max_digits=8, decimal_places=2, default=Decimal('0.00'), blank=True)
     auto_bar_code = models.BooleanField(_('automatic bar code'), default=False)
     tipo = models.CharField(_('type'), max_length=16, choices=ITEM_TYPES, default='Product')
     objects=ItemManager()
@@ -118,18 +140,18 @@ class Item(models.Model):
     def barcode_url(self):
         return "/%s%s.png" % (settings.BARCODES_FOLDER, self.bar_code)
     def _get_total_cost(self):
-#        return self.cost*self.stock
+    #        return self.cost*self.stock
         return Entry.objects.filter(item=self, account=INVENTORY_ACCOUNT, active=True).aggregate(total=models.Sum('value'))['total'] or Decimal('0.00')
     total_cost=property(_get_total_cost)
     def price(self, client):
         if type(client)==PriceGroup: group=client
-        elif type(client) in (Account, Client, Vendor, Branch):group=client.price_group
+        elif type(client) in (Account, Client, Vendor):group=client.price_group
         else: group=client.get_profile().price_group
         if not group: return 0
         try:
-            price=Price.objects.get(item=self, group=client)
+            price=Price.objects.get(item=self, group=group)
         except Price.DoesNotExist:
-            price=Price.objects.create(item=self,group=group)
+            price=Price.objects.create(item=self,group=group, site=Site.objects.get_current())
         return Decimal(str(round(self.cost*price.relative + price.fixed,2)))
     def discount(self, client):
         price=Price.objects.get(item=self, group=client.price_group)
@@ -150,7 +172,7 @@ def create_prices_for_product(sender, **kwargs):
             create_barcode(kwargs['instance'].bar_code, settings.BARCODES_FOLDER)
     if kwargs['created']:
         for group in PriceGroup.objects.all():
-            Price.objects.create(item=kwargs['instance'], group=group)
+            Price.objects.create(item=kwargs['instance'], group=group, site=Site.objects.get_current())
 post_save.connect(create_prices_for_product, sender=Item, dispatch_uid="jade.inventory.models")
 
 class PriceGroup(models.Model):
@@ -160,17 +182,22 @@ class PriceGroup(models.Model):
 def create_prices_for_price_group(sender, **kwargs):
     if kwargs['created']:
         for item in Item.objects.all():
-            Price.objects.create(item=item, group=kwargs['instance'])
+            Price.objects.create(item=item, group=kwargs['instance'], site=Site.objects.get_current())
 post_save.connect(create_prices_for_price_group, sender=PriceGroup, dispatch_uid="jade.inventory.models")
 
 class Price(models.Model):
+    def save(self, *args, **kwargs):
+        if not self.site: self.site=Site.objects.get_current()
+        super(Price, self).save(*args, **kwargs)
     group = models.ForeignKey(PriceGroup)
     item = models.ForeignKey(Item)
+    site = models.ForeignKey(Site)#, default=Site.objects.get_current().pk
     fixed_discount = models.DecimalField(_('fixed discount'), max_digits=8, decimal_places=2, default=0)
     relative_discount = models.DecimalField(_('relative discount'), max_digits=8, decimal_places=2, default=0)
     fixed = models.DecimalField(_('fixed'), max_digits=8, decimal_places=2, default=settings.DEFAULT_FIXED_PRICE)
     relative = models.DecimalField(_('relative'), max_digits=8, decimal_places=2, default=settings.DEFAULT_RELATIVE_PRICE)
     
+    objects = CurrentSiteManager()
     def get_tipo_display(self):
         return _("Price")
         
@@ -187,28 +214,33 @@ class Price(models.Model):
     def __unicode__(self):
         return self.item.name + " para " + self.group.name
 
-
+class AccountManager(models.Manager):
+    def next_number(self):
+        number=super(AccountManager, self).get_query_set().all().order_by('-number')[0].number
+        return increment_string_number(number)
 
 class Account(models.Model):
     ACCOUNT_TYPES=(
         ('Client', _('Client')),
         ('Vendor', _('Vendor')),
-        ('Branch', _('Branch')),
-        ('Simple', _('Simple')),
-)
+        ('Account', _('Account')),
+        )
     MULTIPLIER_TYPES=(
         (1, _('Debito')),
         (-1, _('Credito')),
-)
+        )
     name = models.CharField(_('name'), max_length=200)
     number = models.CharField(_('number'), max_length=32)
     multiplier = models.IntegerField(_('multiplier'), default=1, choices=MULTIPLIER_TYPES)
     tipo = models.CharField(_('type'), max_length=16, choices=ACCOUNT_TYPES)
+    site = models.ForeignKey(Site)
+    objects = AccountManager()
+    test = models.Manager()
+
     class Meta:
         ordering = ('number',)
     def __init__(self, *args, **kwargs):
         self.template='inventory/account.html'
-#        self._number =          kwargs.pop('number','')
         self._address =         kwargs.pop('address','')
         self._state_name =           kwargs.pop('state_name', '')
         self._country =         kwargs.pop('country', '')
@@ -223,9 +255,16 @@ class Account(models.Model):
         self._user =            kwargs.pop('user', None)
         self._tax_group =       kwargs.pop('tax_group', None)
         self._price_group =     kwargs.pop('price_group', None)
+        self._credit_days =     kwargs.pop('credit_days', settings.DEFAULT_CREDIT_DAYS)
         self._due = self._overdue = None
         super(Account, self).__init__(*args, **kwargs)
     def save(self, *args, **kwargs):
+        if not self.tipo: self.tipo='Account'
+        try:
+            if not self.site: raise Site.DoesNotExist
+        except Site.DoesNotExist:
+            self.site=Site.objects.get_current()
+            
         super(Account, self).save(*args, **kwargs)
         try: self.contact.save()
         except: pass
@@ -237,14 +276,14 @@ class Account(models.Model):
         return self.tax_group.value
     tax_rate = property(_get_tax_rate)
     def _get_balance(self):
-        b=Entry.objects.filter(active=True, account__number__startswith=self.number).aggregate(total=models.Sum('value'))['total'] or Decimal('0.00')
-#        b=self.entry_set.filter(active=True).aggregate(total=models.Sum('value'))['total'] or Decimal('0.00')
+        b=Entry.objects.filter(site=Site.objects.get_current(), active=True, account__number__startswith=self.number).aggregate(total=models.Sum('value'))['total'] or Decimal('0.00')
+    #        b=self.entry_set.filter(active=True).aggregate(total=models.Sum('value'))['total'] or Decimal('0.00')
         if b!=0:b=b*self.multiplier
         return b
     balance = property(_get_balance)
     def _get_tax_group(self):
         try: return self.contact.tax_group
-        except: return None
+        except: return self._tax_group
     def _set_tax_group(self, value):
         try: self.contact.tax_group = value
         except: self._tax_group= value
@@ -267,13 +306,13 @@ class Account(models.Model):
         try: return self.contact.state_name
         except: return None
     def _set_state_name(self, value):
-#        print "setting state_name to" + value
+    #        print "setting state_name to" + value
         try: 
             self.contact.state_name = value
-#            print "saved to contact"
+    #            print "saved to contact"
         except: 
             self._state_name= value
-#            print "saved to mem"
+    #            print "saved to mem"
     state_name=property(_get_state_name, _set_state_name)
     def _get_country(self):
         try: return self.contact.country
@@ -378,15 +417,12 @@ class Account(models.Model):
     overdue=property(_get_overdue)
             
 def add_contact(sender, **kwargs):
+    print "making contact"
     if kwargs['created'] and kwargs['instance'].tipo in ('Client', 'Vendor'):
         l=kwargs['instance']
-#        print "l.id=" + str(l.id)
-        print "making contact"
-        print "l._address = " + str(l._address)
-        print "l._registration = " + str(l._registration)
-        Contact.objects.create(
+        c=Contact.objects.create(
             account=l, 
-            credit_days=settings.DEFAULT_CREDIT_DAYS,
+            credit_days=l._credit_days,
             address=l._address,
             state_name=l._state_name,
             country=l._country,
@@ -400,10 +436,25 @@ def add_contact(sender, **kwargs):
             registration=l._registration,
             user=l._user,
             price_group=l._price_group,
-            tax_group=l._tax_group,           
+            tax_group=l._tax_group,             
         )
+        print "c = " + str(c)
+        print "c.pk = " + str(c.pk)
 class TaxGroup(models.Model):
-    name = models.CharField(max_length=200)
+    def __init__(self, *args, **kwargs):
+        super(TaxGroup, self).__init__(*args, **kwargs)
+        try:
+            if not self.site: self.site=Site.objects.get_current()
+        except:
+            print "unable to set site on TaxGroup"
+            pass
+    #    def save(self, *args, **kwargs):
+    #        print "SITE_ID=%i"% settings.SITE_ID
+    #        print "self.site=%s"% self.site
+    #        print "SITE=%s" % Site.objects.get(pk=settings.SITE_ID)
+    #        if not self.site: self.site=Site.objects.get(pk=settings.SITE_ID)
+    #        super(TaxGroup, self).save(*args, **kwargs)
+    name = models.CharField(max_length=32)
     value = models.DecimalField(max_digits=3, decimal_places=2, default='0.00')
     revenue_account = models.ForeignKey(Account, related_name = 'revenue_account_id')
     sales_tax_account = models.ForeignKey(Account, related_name = 'sales_tax_account_id')
@@ -411,6 +462,8 @@ class TaxGroup(models.Model):
     discounts_account = models.ForeignKey(Account, related_name = 'discounts_account_id')
     returns_account = models.ForeignKey(Account, related_name = 'returns_account_id')
     price_includes_tax = models.BooleanField(blank=True, default=True)
+    site = models.ForeignKey(Site)#, default=Site.objects.get_current().pk
+    objects = CurrentSiteManager()
     
     def __unicode__(self):
         return self.name
@@ -418,8 +471,10 @@ class TaxGroup(models.Model):
 class ClientManager(models.Manager):
     def default(self):
         return super(ClientManager, self).get_query_set().get(name=settings.DEFAULT_CLIENT_NAME)
+    def next_number(self):
+        number=super(ClientManager, self).get_query_set().filter(tipo="Client").order_by('-number')[0].number
+        return increment_string_number(number)
     def get_or_create_by_name(self, name):
-        
         try:
             return super(ClientManager, self).get_query_set().get(name=name)
         except:
@@ -427,7 +482,8 @@ class ClientManager(models.Manager):
                 if settings.AUTOCREATE_CLIENTS:
                     price_group=PriceGroup.objects.get(name=settings.DEFAULT_PRICE_GROUP_NAME)
                     tax_group=TaxGroup.objects.get(name=settings.DEFAULT_TAX_GROUP_NAME)
-                    return super(ClientManager, self).create(name=name,price_group=price_group,tax_group=tax_group)
+                    number=Client.objects.next_number()
+                    return super(ClientManager, self).create(name=name,price_group=price_group,tax_group=tax_group, number=number)
             else:
                 return super(ClientManager, self).get_query_set().get(name=settings.DEFAULT_CLIENT_NAME)
     def get_query_set(self):
@@ -439,6 +495,7 @@ class Client(Account):
         super(Client, self).save(*args, **kwargs)
     objects = ClientManager()
     class Meta:
+        ordering = ('name',)
         proxy = True
         permissions = (
             ("view_client", "Can view clients"),
@@ -450,9 +507,12 @@ class VendorManager(models.Manager):
         return super(VendorManager, self).get_query_set().get(name=settings.DEFAULT_VENDOR_NAME)
     def get_query_set(self):
         return super(VendorManager, self).get_query_set().filter(tipo="Vendor")
+    def next_number(self):
+        number=super(VendorManager, self).get_query_set().filter(tipo="Vendor").order_by('-number')[0].number
+        return increment_string_number(number)
     def get_or_create_by_name(self, name):        
-#        print "geting and creating"
-#        print "name=" + str(name)
+    #        print "geting and creating"
+    #        print "name=" + str(name)
         try:
             return super(VendorManager, self).get_query_set().get(name=name)
         except:
@@ -470,27 +530,97 @@ class Vendor(Account):
         super(Vendor, self).save(*args, **kwargs)
     objects = VendorManager()
     class Meta:
+        ordering = ('name',)
         proxy = True
         permissions = (
             ("view_vendor", "Can view vendors"),
         )
 post_save.connect(add_contact, sender=Vendor, dispatch_uid="jade.inventory.models")
-class BranchManager(models.Manager):
-    def get_query_set(self):
-        return super(BranchManager, self).get_query_set().filter(tipo="Branch")
-class Branch(Account):
-    def save(self, *args, **kwargs):
-        self.tipo="Branch"
-        self.multiplier=DEBIT
-        super(Branch, self).save(*args, **kwargs)
-    objects = BranchManager()
-    class Meta:
-        proxy = True
-        permissions = (
-            ("view_branch", "Can view branches"),
-        )
+
+#class SiteDetail(models.Model):
+#    site = models.OneToOneField(Site)
+#    inventory = models.ForeignKey(Account)
+#    default_tax_group = models.ForeignKey(TaxGroup)
+#    def __unicode__(self):
+#        return self.site.name
+#def add_sitedetail(sender, **kwargs):
+#    if kwargs['created']:
+#        try:
+#            SiteDetail.objects.create(site=kwargs['instance'], default_tax_group=Site.objects.get_current().sitedetail.default_tax_group)
+#        except:
+#            print "Unable to create SiteDetail for New Site"
+#post_save.connect(add_sitedetail, sender=Site, dispatch_uid="jade.inventory.models")
+
+def make_default_account(data, model=Account):
+    try: return model.objects.get(name=data[0])
+    except model.DoesNotExist: 
+        print "couldnt find "+data[0]
+        try:
+            return model.objects.create(name=data[0], number=data[1], multiplier=data[2], site_id=settings.SITE_ID)
+        except Site.DoesNotExist:
+            print "Unable to create account because a site with id=%i does not exist" % settings.SITE_ID
+    except model.MultipleObjectsReturned:
+        print "We have %i %ss" % (model.objects.filter(name=data[0]).count(), data[0])
+        return model.objects.filter(name=data[0])[0]
+    except DatabaseError: print "pass"
+
+try:
+    try: Site.objects.filter(pk=settings.SITE_ID)
+    except: Site.objects.create(name='Default', id=settings.SITE_ID)
+except:
+    print "Unable to create a site to match the current site_id"
+ASSETS_ACCOUNT = make_default_account(settings.ASSETS_ACCOUNT_DATA)
+CASH_ACCOUNT = make_default_account(settings.CASH_ACCOUNT_DATA)
+PAYMENTS_RECEIVED_ACCOUNT = make_default_account(settings.PAYMENTS_RECEIVED_ACCOUNT_DATA)
+PAYMENTS_MADE_ACCOUNT = make_default_account(settings.PAYMENTS_MADE_ACCOUNT_DATA)
+INVENTORY_ACCOUNT = make_default_account(settings.INVENTORY_ACCOUNT_DATA)
+CLIENTS_ACCOUNT = make_default_account(settings.CLIENTS_ACCOUNT_DATA)
+TRANSFER_ACCOUNT = make_default_account(settings.TRANSFER_ACCOUNT_DATA)
+LIABILITIES_ACCOUNT = make_default_account(settings.LIABILITIES_ACCOUNT_DATA)
+VENDORS_ACCOUNT = make_default_account(settings.VENDORS_ACCOUNT_DATA)
+TAX_ACCOUNT = make_default_account(settings.TAX_ACCOUNT_DATA)
+SALES_TAX_ACCOUNT = make_default_account(settings.SALES_TAX_ACCOUNT_DATA)
+DEFAULT_SALES_TAX_ACCOUNT = make_default_account(settings.DEFAULT_SALES_TAX_ACCOUNT_DATA)
+PURCHASES_TAX_ACCOUNT = make_default_account(settings.PURCHASES_TAX_ACCOUNT_DATA)
+DEFAULT_PURCHASES_TAX_ACCOUNT = make_default_account(settings.DEFAULT_PURCHASES_TAX_ACCOUNT_DATA)
+EQUITY_ACCOUNT = make_default_account(settings.EQUITY_ACCOUNT_DATA)
+REVENUE_ACCOUNT = make_default_account(settings.REVENUE_ACCOUNT_DATA)
+SUB_REVENUE_ACCOUNT = make_default_account(settings.SUB_REVENUE_ACCOUNT_DATA)
+DEFAULT_REVENUE_ACCOUNT = make_default_account(settings.DEFAULT_REVENUE_ACCOUNT_DATA)
+DEFAULT_DISCOUNTS_ACCOUNT = make_default_account(settings.DEFAULT_DISCOUNTS_ACCOUNT_DATA)
+DEFAULT_RETURNS_ACCOUNT = make_default_account(settings.DEFAULT_RETURNS_ACCOUNT_DATA)
+EXPENSE_ACCOUNT = make_default_account(settings.EXPENSE_ACCOUNT_DATA)
+EXPENSE_ACCOUNT = make_default_account(settings.EXPENSE_ACCOUNT_DATA)
+INVENTORY_EXPENSE_ACCOUNT = make_default_account(settings.INVENTORY_EXPENSE_ACCOUNT_DATA)
+COUNTS_EXPENSE_ACCOUNT = make_default_account(settings.COUNTS_EXPENSE_ACCOUNT_DATA)
+
+try: DEFAULT_UNIT = Unit.objects.get_or_create(name=settings.DEFAULT_UNIT_NAME)[0]
+except DatabaseError: pass
+
+try: DEFAULT_PRICE_GROUP = PriceGroup.objects.get_or_create(name=settings.DEFAULT_PRICE_GROUP_NAME)[0]
+except DatabaseError: pass
+    #try:
+try: 
+    DEFAULT_TAX_GROUP = TaxGroup.objects.get(name=settings.DEFAULT_TAX_GROUP_NAME)
+except TaxGroup.DoesNotExist:
+    DEFAULT_TAX_GROUP=TaxGroup(
+    name=settings.DEFAULT_TAX_GROUP_NAME,
+    revenue_account=DEFAULT_REVENUE_ACCOUNT,
+    sales_tax_account=DEFAULT_SALES_TAX_ACCOUNT,
+    purchases_tax_account=DEFAULT_PURCHASES_TAX_ACCOUNT,
+    discounts_account=DEFAULT_DISCOUNTS_ACCOUNT,
+    returns_account=DEFAULT_RETURNS_ACCOUNT, 
+    price_includes_tax=settings.DEFAULT_TAX_INCLUDED,
+    site=Site.objects.get_current())
+    DEFAULT_TAX_GROUP.save()
+except DatabaseError: pass
+try: SiteDetail.objects.get_or_create(site=Site.objects.get_current(), default_tax_group=DEFAULT_TAX_GROUP, inventory=INVENTORY_ACCOUNT)
+except: print "Unable to establish SiteDetail for current site"
 class Contact(models.Model):
-    tax_group = models.ForeignKey(TaxGroup, blank=True, null=True)
+    def save(self, *args, **kwargs):
+        if not self.tax_group_name: tax_group_name=settings.DEFAULT_TAX_GROUP_NAME
+        super(Contact, self).save(*args, **kwargs)
+    tax_group_name = models.CharField(max_length=32)#, default=Site.objects.get_current().sitedetail.default_tax_group.name
     price_group = models.ForeignKey(PriceGroup, blank=True, null=True)
     address = models.CharField(max_length=32, blank=True, default="")
     state_name = models.CharField(max_length=32, blank=True, default="")
@@ -506,23 +636,34 @@ class Contact(models.Model):
     user = models.ForeignKey(User, blank=True, null=True)
     account = models.OneToOneField(Account)
     credit_days=models.IntegerField(default=settings.DEFAULT_CREDIT_DAYS)
+    
+    def _get_tax_group(self):
+        return TaxGroup.objects.get(name=self.tax_group_name)
+    def _set_tax_group(self, value):
+        self.tax_group_name=value.name
+    tax_group=property(_get_tax_group, _set_tax_group)    
     def __unicode__(self):
         return self.account.name
 try:
-#    DEFAULT_SALES_TAX_ACCOUNT=Account.objects.get(name=settings.DEFAULT_SALES_TAX_ACCOUNT_NAME)
-    INVENTORY_ACCOUNT = Account.objects.get(name=settings.INVENTORY_ACCOUNT_NAME)
-    EXPENSE_ACCOUNT = Account.objects.get(name=settings.EXPENSE_ACCOUNT_NAME)
-    CASH_ACCOUNT = Account.objects.get(name=settings.CASH_ACCOUNT_NAME)
-#    DEFAULT_REVENUE_ACCOUNT = Account.objects.get(name=settings.DEFAULT_REVENUE_ACCOUNT_NAME)
-#    DEFAULT_RETURNS_ACCOUNT = Account.objects.get(name=settings.DEFAULT_RETURNS_ACCOUNT_NAME)
-#    DEFAULT_DISCOUNTS_ACCOUNT = Account.objects.get(name=settings.DEFAULT_DISCOUNTS_ACCOUNT_NAME)
-    PAYMENTS_RECEIVED_ACCOUNT = Account.objects.get(name=settings.PAYMENTS_RECEIVED_ACCOUNT_NAME)
-    PAYMENTS_MADE_ACCOUNT = Account.objects.get(name=settings.PAYMENTS_MADE_ACCOUNT_NAME)
-    DEFAULT_CLIENT = Account.objects.get(name=settings.DEFAULT_CLIENT_NAME)
-    DEFAULT_VENDOR = Account.objects.get(name=settings.DEFAULT_VENDOR_NAME)
+    DEFAULT_CLIENT = Client.objects.get(name=settings.DEFAULT_CLIENT_NAME)
 except:
-    print " ####################### Not Creating Constants ####################### "##################################################
-# Transaction##################################################
+    try:
+        DEFAULT_CLIENT = Client.objects.create(name=settings.DEFAULT_CLIENT_DATA[0], number=settings.DEFAULT_CLIENT_DATA[1])
+        DEFAULT_CLIENT.price_group=DEFAULT_PRICE_GROUP
+        DEFAULT_CLIENT.tax_group=DEFAULT_TAX_GROUP
+        DEFAULT_CLIENT.save()
+    except:
+        pass
+try:
+    DEFAULT_VENDOR = Vendor.objects.get(name=settings.DEFAULT_VENDOR_DATA[0])
+except:
+    try:
+        DEFAULT_VENDOR = Vendor.objects.create(name=settings.DEFAULT_VENDOR_DATA[0], number=settings.DEFAULT_VENDOR_DATA[1])
+        DEFAULT_VENDOR.price_group=DEFAULT_PRICE_GROUP
+        DEFAULT_VENDOR.tax_group=DEFAULT_TAX_GROUP
+        DEFAULT_VENDOR.save()
+    except:
+        pass
 
 TRANSACTION_TYPES=(
         ('Sale', 'Sale'),
@@ -539,8 +680,8 @@ TRANSACTION_TYPES=(
         ('PurchaseReturn', 'Return.'),
         ('Process', 'Process'),
         ('Job', 'Job'),
-)
-class TransactionManager(models.Manager):
+        )
+class TransactionManager(CurrentMultiSiteManager):
     def unbalanced(self):
         # TODO: Find a way to make a sql query to return all unbalanced transactions
         """
@@ -549,12 +690,14 @@ class TransactionManager(models.Manager):
         return []
 
 class Transaction(models.Model):
-    objects = TransactionManager()
+#    objects = CurrentMultiSiteManager()
+    
     _date = models.DateTimeField(default=datetime.now())
     doc_number = models.CharField(max_length=32, default='', blank=True)
     comments = models.CharField(max_length=200, blank=True, default='')
+    sites = models.ManyToManyField(Site)
     tipo = models.CharField(max_length=16, choices=TRANSACTION_TYPES)
- ################ ################ ################  Date   ################ ################ ################
+    
     def _get_date(self):
         return self._date
     def _set_date(self, value):
@@ -568,25 +711,28 @@ class Transaction(models.Model):
         return False
     def __unicode__(self):
         return self.doc_number
-    def create_related_entry(self, account, tipo, value=0, item=None, quantity=0, delivered=True, serial=None, count=0, cost=0, active=True):#cost_left=0, quantity_left=0, 
+    def create_related_entry(self, account, tipo, value=0, item=None, quantity=0, delivered=True, serial=None, count=0, cost=0, active=True, site=None):
+        try: 
+            if not site: site = Site.objects.get_current()
+        except DatabaseError:
+            print "pass"
         e=self.entry_set.create(
-        account=account,
-        tipo=tipo,
-        value=value,
-        item=item,
-        quantity=quantity,
-        serial=serial,
-        active=active,
-        delivered=delivered,
-#        cost_left=cost_left,
-#        quantity_left=quantity_left
-        )
+            account=account,
+            tipo=tipo,
+            value=value,
+            item=item,
+            quantity=quantity,
+            serial=serial,
+            active=active,
+            delivered=delivered,
+            site=site,
+            )
     def _get_subclass(self):
         try:
             if self._subclass: return self._subclass
         except: pass
         if not self.pk: return None
-        print "self.tipo = " + str(self.tipo)
+#        print "self.tipo = " + str(self.tipo)
         
         self._subclass=eval(TransactionTipo.objects.get(name=self.tipo).obj).objects.get(pk=self.id)
         return self._subclass
@@ -608,7 +754,6 @@ class Transaction(models.Model):
             
     def url(self):
         return '/inventory/transactions/?q='+self.doc_number
- ################ ################ ################  Garantee   ################ ################ ################
     def _get_garantee_expires(self):
         try: return self.garantee.expires
         except ObjectDoesNotExist: return None
@@ -629,6 +774,9 @@ class Transaction(models.Model):
             self.garantee.save()
     garantee_months = property(_get_garantee_months, _set_garantee_months)
 
+class EntryManager(models.Manager):
+    def get_query_set(self):
+        return super(EntryManager, self).get_query_set().filter(site=Site.objects.get_current())
 class Entry(models.Model):
     """
     """
@@ -657,12 +805,14 @@ class Entry(models.Model):
         
         
         ('Production', 'Production'), # Credit
-    )
+        )
     class Meta:
         permissions = (
             ("view_entry", "Can view entries"),
-        )
+            )
         ordering = ('-date',)
+    objects=EntryManager()
+    offsite_objects=models.Manager()
     transaction = models.ForeignKey(Transaction)
     value = models.DecimalField(max_digits=8, decimal_places=2, default='0.00')
     account = models.ForeignKey(Account)
@@ -673,6 +823,9 @@ class Entry(models.Model):
     tipo = models.CharField(max_length=16, choices=ENTRY_TYPES)
     serial = models.CharField(max_length=32, null=True, blank=True)
     date = models.DateTimeField(default=datetime.now())
+    #    sites = models.ManyToManyField(Site)
+    site = models.ForeignKey(Site)
+    #    objects = CurrentMultiSiteManager()
     
     def update(self, attribute, value):
         setattr(self, attribute, value)
@@ -681,6 +834,10 @@ class Entry(models.Model):
     def __unicode__(self):
         return str(self.account.name) +"($" + str(self.value)+") " + str(self.tipo)
         
+class ExtraValue(models.Model):
+    name = models.CharField(max_length=32, blank=True, default="")
+    value = models.DecimalField(max_digits=8, decimal_places=2, null=True, blank=True)
+    transaction = models.ForeignKey(Transaction)
 
  ######################################################################################
  # Sales
@@ -730,7 +887,7 @@ class Sale(Transaction):
         super(Sale, self).__init__(*args, **kwargs)
         self.tipo='Sale'
         
- ################ ################ ################  Active   ################ ################ ################
+    ################ ################ ################  Active   ################ ################ ################
     def _get_active(self):
         try: return self.entry('Client').active
         except AttributeError: return self._active
@@ -738,7 +895,7 @@ class Sale(Transaction):
         self._active=value
         [e.update('active',value) for e in self.entry_set.all()]
     active = property(_get_active, _set_active)
- ################ ################ ################  Delivered   ################ ################ ################
+    ################ ################ ################  Delivered   ################ ################ ################
     def _get_delivered(self):
         try: return self.entry('Client').delivered
         except AttributeError: return self._delivered
@@ -746,18 +903,18 @@ class Sale(Transaction):
         try: return [self.entry(e).update('delivered',value) for e in ['Inventory','Client']]
         except AttributeError: self._delivered=value
     delivered = property(_get_delivered, _set_delivered)
- ################ ################ ################  Account   ################ ################ ################
+    ################ ################ ################  Account   ################ ################ ################
 
     def _get_account(self):
         return self.client
     account=property(_get_account)
- ################ ################ ################  Value   ################ ################ ################
+    ################ ################ ################  Value   ################ ################ ################
 
     def _get_value(self):
         return self.charge
     value=property(_get_value)
 
- ################ ################ ################  Item   ################ ################ ################
+    ################ ################ ################  Item   ################ ################ ################
 
     def _get_item(self):
         try: return self.entry('Client').item
@@ -767,7 +924,7 @@ class Sale(Transaction):
         except AttributeError: self._item=value
     item = property(_get_item, _set_item)
 
- ################ ################ ################  Quantity   ################ ################ ################
+    ################ ################ ################  Quantity   ################ ################ ################
     def _get_quantity(self):
         try: return self.entry('Client').quantity
         except AttributeError: return self._quantity
@@ -791,7 +948,7 @@ class Sale(Transaction):
                     self._quantity=0
         except AttributeError: self._quantity=value
     quantity = property(_get_quantity, _set_quantity)
- ################ ################ ################  Serial  ################ ################ ################
+    ################ ################ ################  Serial  ################ ################ ################
     def _get_serial(self):
         try: return self.entry('Client').serial
         except AttributeError: return self._serial
@@ -799,7 +956,7 @@ class Sale(Transaction):
         try: return [self.entry(e).update('serial',value) for e in ['Inventory','Client']]
         except AttributeError: self._serial=value
     serial = property(_get_serial, _set_serial)
- ################ ################ ################  Client  ################ ################ ################
+    ################ ################ ################  Client  ################ ################ ################
     def _get_client(self):
         try: return self.entry('Client').account
         except AttributeError: return self._client
@@ -807,7 +964,7 @@ class Sale(Transaction):
         try: self.entry('Client').update('account', value)
         except AttributeError: self._client = value
     client = property(_get_client, _set_client)
- ################ ################ ################  Cost  ################ ################ ################
+    ################ ################ ################  Cost  ################ ################ ################
     def _get_cost(self):
         try: return self.entry('Expense').value
         except AttributeError: return self._cost
@@ -832,7 +989,7 @@ class Sale(Transaction):
         except AttributeError: self._cost=value
     cost=property(_get_cost, _set_cost)
 
- ################ ################ ################  Price   ################ ################ ################
+    ################ ################ ################  Price   ################ ################ ################
     def _get_price(self):
         try: return -self.entry('Revenue').value
         except AttributeError: return self._price
@@ -844,39 +1001,39 @@ class Sale(Transaction):
         except: self._price = value
     price=property(_get_price, _set_price)
 
- ################ ################ ################  Charge   ################ ################ ################
+    ################ ################ ################  Charge   ################ ################ ################
     def _get_charge(self):
         try: return -self.entry(self.client.name).value
         except AttributeError:
             return self._price-l._discount+l._tax
     charge=property(_get_charge)
- ################ ################ ################  Charge_before_tax   ################ ################ ################
+    ################ ################ ################  Charge_before_tax   ################ ################ ################
     def _get_charge_before_tax(self):
         return self.charge-self.tax
     charge_before_tax=property(_get_charge_before_tax)
- ################ ################ ################  Price_after discount   ################ ################ ################
+    ################ ################ ################  Price_after discount   ################ ################ ################
     def _get_price_after_discount(self):
         return self.price-self.discount
     price_after_discount=property(_get_price_after_discount)
- ################ ################ ################  Price_after discount   ################ ################ ################
+    ################ ################ ################  Price_after discount   ################ ################ ################
     def _get_unit_price_after_discount(self):
         p=self.price_after_discount
         if self.quantity != 0 and p !=0: return p / self.quantity
         else: return p
     unit_price_after_discount=property(_get_unit_price_after_discount)
- ################ ################ ################  Unit Charge   ################ ################ ################
+    ################ ################ ################  Unit Charge   ################ ################ ################
     def _get_unit_charge(self):
         p=self.charge
         if self.quantity != 0 and p !=0: return p / self.quantity
         else: return p
     unit_charge=property(_get_unit_charge)
- ################ ################ ################  Unit Charge   ################ ################ ################
+    ################ ################ ################  Unit Charge   ################ ################ ################
     def _get_unit_cost(self):
         p=self.cost
         if self.quantity != 0 and p !=0: return p / self.quantity
         else: return p
     unit_cost=property(_get_unit_cost)
- ################ ################ ################  Tax   ################ ################ ################
+    ################ ################ ################  Tax   ################ ################ ################
     def _get_tax(self):
         try:
             return - self.entry('Tax').value
@@ -891,7 +1048,7 @@ class Sale(Transaction):
             self._tax=0
         except: self._tax = value
     tax = property(_get_tax, _set_tax)
- ################ ################ ################  Discount   ################ ################ ################
+    ################ ################ ################  Discount   ################ ################ ################
     def _get_discount(self):
         try:
             return self.entry('Discount').value
@@ -923,34 +1080,33 @@ class Sale(Transaction):
         print "self.date+timedelta(days=self.client.contact.credit_days) > datetime.now() = " + str(self.date+timedelta(days=self.client.contact.credit_days) > datetime.now())
         return self.date+timedelta(days=self.client.contact.credit_days) < datetime.now()
     overdue=property(_get_overdue)
- ################ ################ ################  (Unit Price)   ################ ################ ################
+    ################ ################ ################  (Unit Price)   ################ ################ ################
     def _get_unit_price(self):
         if self.quantity != 0 and self.price !=0: return self.price / self.quantity
         else: return self.price
     unit_price = property(_get_unit_price)
- ################ ################ ################  (Unit Discount)   ################ ################ ################
+    ################ ################ ################  (Unit Discount)   ################ ################ ################
     def _get_unit_discount(self):
         if self.quantity != 0 and self.discount !=0: return self.discount / self.quantity
         else: return self.discount
     unit_discount = property(_get_unit_discount)
- ################ ################ ################  (Unit Tax)   ################ ################ ################
+    ################ ################ ################  (Unit Tax)   ################ ################ ################
     def _get_unit_tax(self):
         if self.quantity != 0 and self.tax !=0: return self.tax / self.quantity
         else: return self.tax
     unit_tax = property(_get_unit_tax)
- ################ ################ ################  Total   ################ ################ ################
+    ################ ################ ################  Total   ################ ################ ################
     def _get_total(self):
         return Decimal(str(round(self.price-self.discount+self.tax,2)))
     total=property(_get_total)
     
- ################ ################ ################  Create Entries   ################ ################ ################
+    ################ ################ ################  Create Entries   ################ ################ ################
 def add_sale_entries(sender, **kwargs):
-#    print "Sale:add_sale_entries"
+    #    print "Sale:add_sale_entries"
     if kwargs['created']:
         l=kwargs['instance']
+        l.sites.add(Site.objects.get_current())
         if l.tipo=='Sale':
-            print "l._client = " + str(l._client)
-            print "l._client.tax_group = " + str(l._client.tax_group)
             account=l._client.tax_group.revenue_account
             tipo='Revenue'
         else:
@@ -985,8 +1141,8 @@ def add_sale_entries(sender, **kwargs):
                 tipo        = 'Discount',
                 value       = l._discount)
         if (l._quantity!=0 or l._cost!=0) and l._delivered:
-#            print "creating inventory entry"
-#            print "l.item = " + str(l.item)
+    #            print "creating inventory entry"
+    #            print "l.item = " + str(l.item)
             l.create_related_entry(
                 account     = INVENTORY_ACCOUNT,
                 tipo        = 'Inventory',
@@ -1026,6 +1182,7 @@ class Purchase(Transaction):
         self.template='inventory/purchase.html'
         self._cost = kwargs.pop('cost', 0)
         self._tax = kwargs.pop('tax', 0)
+        self._taxbackup = self._tax
         self._date = kwargs.pop('date', datetime.now())
         self._delivered = kwargs.pop('delivered', True)
         self._active = kwargs.pop('active', True)
@@ -1036,7 +1193,32 @@ class Purchase(Transaction):
         super(Purchase, self).__init__(*args, **kwargs)
         self._initial_cost=self.cost
         self._initial_quantity=self.quantity
-        self.tipo='Purchase'
+        self.tipo='Purchase'    
+    def save(self, *args, **kwargs):
+        try: 
+            cc=self.extravalue_set.get(name='CalculatedCost')
+            if cc.value==self.cost and self._initial_quantity != self.quantity:
+                    self.cost = cc.value = self.calculate_cost()
+                    cc.save()
+        except ExtraValue.DoesNotExist: pass
+        
+        
+        try: 
+            ct=self.extravalue_set.get(name='CalculatedTax')
+            print "-ct.value = " + str(-ct.value)
+            print "self.tax = " + str(self.tax)
+            print "-ct.value==self.tax = " + str(-ct.value==self.tax)
+            print "self._cost = " + str(self._cost)
+            print "self.cost = " + str(self.cost)
+            print "self._cost != self.cost = " + str(self._cost != self.cost)
+            print "-ct.value==self.tax and self._cost != self.cost = " + str(-ct.value==self.tax and self._cost != self.cost)
+            if -ct.value==self.tax and self._cost != self.cost:
+                    self.tax = ct.value = self.calculate_tax()
+                    print "ct.value = " + str(ct.value)
+                    print "self.tax = " + str(self.tax)
+                    ct.save()
+        except ExtraValue.DoesNotExist: pass
+        super(Purchase, self).save(*args, **kwargs)
     def _get_item(self):
         try: return self.entry('Inventory').item
         except AttributeError: return self._item
@@ -1044,7 +1226,7 @@ class Purchase(Transaction):
         try: return [self.entry(e).update('item',value) for e in ['Inventory','Vendor']]
         except AttributeError: self._item=value
     item = property(_get_item, _set_item)
- ################ ################ ################  Active   ################ ################ ################
+    ################ ################ ################  Active   ################ ################ ################
     def _get_active(self):
         try: return self.entry('Vendor').active
         except AttributeError: return self._active
@@ -1052,7 +1234,7 @@ class Purchase(Transaction):
         self._active=value
         [e.update('active',value) for e in self.entry_set.all()]
     active = property(_get_active, _set_active)
- ################ ################ ################  Delivered   ################ ################ ################
+    ################ ################ ################  Delivered   ################ ################ ################
     def _get_delivered(self):
         try: return self.entry('Vendor').delivered
         except AttributeError: return self._delivered
@@ -1060,11 +1242,11 @@ class Purchase(Transaction):
         try: return [self.entry(e).update('delivered',value) for e in ['Inventory','Vendor']]
         except AttributeError: self._delivered=value
     delivered = property(_get_delivered, _set_delivered)
- ################ ################ ################  Value   ################ ################ ################
+    ################ ################ ################  Value   ################ ################ ################
     def _get_value(self):
         return self.cost
     value=property(_get_value)
- ################ ################ ################  Quantity   ################ ################ ################
+    ################ ################ ################  Quantity   ################ ################ ################
     def _get_quantity(self):
         try: return self.entry('Inventory').quantity
         except AttributeError: return self._quantity
@@ -1076,11 +1258,11 @@ class Purchase(Transaction):
             self.entry('Vendor').update('quantity', -value)
             i=self.entry('Inventory')
             i.quantity=value
-##            i.quantity_left+=dif
+    ##            i.quantity_left+=dif
             i.save()
         except AttributeError: self._quantity=value
     quantity = property(_get_quantity, _set_quantity)
- ################ ################ ################  Serial   ################ ################ ################
+    ################ ################ ################  Serial   ################ ################ ################
     def _get_serial(self):
         try: return self.entry('Inventory').serial
         except AttributeError: return self._serial
@@ -1088,7 +1270,7 @@ class Purchase(Transaction):
         try: return [self.entry(e).update('serial',value) for e in ['Inventory','Vendor']]
         except AttributeError: self._serial=value
     serial = property(_get_serial, _set_serial)
- ################ ################ ################  Vendor   ################ ################ ################
+    ################ ################ ################  Vendor   ################ ################ ################
     def _get_vendor(self):
         try: return self.entry('Vendor').account
         except AttributeError: return self._vendor
@@ -1096,6 +1278,27 @@ class Purchase(Transaction):
         try: self.entry('Vendor').update('account', value)
         except AttributeError: self._vendor = value
     vendor = property(_get_vendor, _set_vendor)
+    
+    def calculate_tax(self):
+        print "self.cost = " + str(self.cost)
+        print "self.vendor.tax_group.value = " + str(self.vendor.tax_group.value)
+        try: return self.cost * self.vendor.tax_group.value
+        except NameError: return 0
+        except AttributeError: return 0
+        
+    def calculate_cost(self):
+        try:
+            if self.active: value=self.item.total_cost-self.cost
+            else: value=self.item.total_cost
+            print "value = " + str(value)
+            if self.delivered: stock=self.item.stock-self.quantity
+            else: stock=self.item.stock
+            print "stock = " + str(stock)
+            print "value(%f)/stock(%f)*self.quantity(%f) = " % (value,stock,self.quantity)
+            return value/stock*self.quantity
+        except NameError: return 0
+        except AttributeError: return 0
+            
  ################ ################ ################  Cost   ################ ################ ################
     def _get_cost(self):
         try: return self.entry('Inventory').value
@@ -1106,7 +1309,7 @@ class Purchase(Transaction):
             self.entry('Vendor').update('value', -value+self.tax)
             i=self.entry('Inventory')
             i.value=value
-#            i.cost_left+=dif
+    #            i.cost_left+=dif
             i.save()
         except AttributeError:
             self._cost=value
@@ -1118,22 +1321,15 @@ class Purchase(Transaction):
             return self._tax
     def _set_tax(self, value):
         value=(value or 0)
-        print "value = " + str(value)
-        try:
-#        vendor=self.vendor
-#        vendor=self.entry('Vendor').account
-#        print "vendor = " + str(vendor)
-#        print "vendor.tax_group.purchase_tax_account = " + str(vendor.tax_group.purchases_tax_account)
-            self.update_possible_entry('Tax', vendor.tax_group.purchases_tax_account, value)
-            self.entry('Vendor').update('value', self.cost + value)
-        except:
-            self._tax=value
-#        except: self._tax = value
+        self.update_possible_entry('Tax', self.vendor.tax_group.purchases_tax_account, value)
+        self.entry('Vendor').update('value', -(self.cost + value))
     tax = property(_get_tax, _set_tax)
- ################ ################ ################  Create Entries   ################ ################ ################
+    ################ ################ ################  Create Entries   ################ ################ ################
 def add_purchase_entries(sender, **kwargs):
     l=kwargs['instance']
     if kwargs['created']:
+        l.sites.add(Site.objects.get_current())
+        
         l.create_related_entry(
         account = INVENTORY_ACCOUNT,
         tipo = 'Inventory',
@@ -1143,7 +1339,7 @@ def add_purchase_entries(sender, **kwargs):
         serial=l._serial,
         delivered=l._delivered,
         )
-        l.create_related_entry(
+        e=l.create_related_entry(
         account = l._vendor,
         tipo = 'Vendor',
         value = - l._cost,
@@ -1152,28 +1348,17 @@ def add_purchase_entries(sender, **kwargs):
         serial=l._serial,
         delivered=l._delivered,
         )   
+        ExtraValue.objects.create(transaction = l, name = 'CalculatedCost', value = l._cost)
+        ExtraValue.objects.create(transaction = l, name = 'CalculatedTax', value = l.tax)
         if l.tax!=0:
-            l.create_related_entry(
+            e=l.create_related_entry(
                 account = l._vendor.tax_group.purchases_tax_account,
                 tipo = 'Tax',
                 value = l._tax)
-#    if l.cost!=l._initial_cost and l.item:
-#        item = l.entry("Inventory").item
-#        # remove our old data from the equation
-#        qty=item.stock-l.quantity
-#        if l._initial_quantity!=0: cost=item.cost*item.stock-l._initial_cost
-#        else: cost=item.cost*qty        
-
-#        #calculate new cost
-#        cost = (cost+l.cost)/(qty+l.quantity)
-#        # save it if its new
-#        if cost!=item.cost: 
-#            item.cost=cost
-#            item.save()
 
 post_save.connect(add_purchase_entries, sender=Purchase, dispatch_uid="jade.inventory.models")
-#post_save.connect(update_entry_costs, sender=Purchase, dispatch_uid="jade.inventory.models:update_entry_costs_for_purchases")##################################################
-# Returns##################################################
+    #post_save.connect(update_entry_costs, sender=Purchase, dispatch_uid="jade.inventory.models:update_entry_costs_for_purchases")##################################################
+    # Returns##################################################
 class SaleReturnManager(models.Manager):
   def get_query_set(self):
     return super(SaleReturnManager, self).get_query_set().filter(tipo="SaleReturn")
@@ -1211,7 +1396,6 @@ class PurchaseReturn(Purchase):
         self.template='inventory/purchase_return.html'
         self.tipo='PurchaseReturn'
 post_save.connect(add_purchase_entries, sender=PurchaseReturn, dispatch_uid="jade.inventory.models")##################################################
-# Payments##################################################
 class ClientPaymentManager(models.Manager):
   def get_query_set(self):
     return super(ClientPaymentManager, self).get_query_set().filter(tipo="ClientPayment")
@@ -1228,7 +1412,7 @@ class Payment(Transaction):
         self._value = kwargs.pop('value', Decimal('0.00'))
         super(Payment, self).__init__(*args, **kwargs)
         self.tipo='Payment'
- ################ ################ ################  Active   ################ ################ ################
+    ################ ################ ################  Active   ################ ################ ################
     def _get_active(self):
         try: return self.entry('Debit').active
         except AttributeError: return self._active
@@ -1246,7 +1430,7 @@ class Payment(Transaction):
             self.entry('Credit').update('value', -value)
         except: self._value = value
     value=property(_get_value, _set_value)
- ################ ################ ################  Source   ################ ################ ################
+    ################ ################ ################  Source   ################ ################ ################
     def _get_source(self):
         try: return self.entry('Credit').account
         except AttributeError: 
@@ -1258,7 +1442,7 @@ class Payment(Transaction):
             print "setting cached source"
             self._source = value
     source = property(_get_source, _set_source)
- ################ ################ ################  Destintation   ################ ################ ################
+    ################ ################ ################  Destintation   ################ ################ ################
     def _get_dest(self):
         try: return self.entry('Debit').account
         except AttributeError: return self._dest
@@ -1267,10 +1451,11 @@ class Payment(Transaction):
         except AttributeError: self._dest = value
     dest = property(_get_dest, _set_dest)
 
- ################ ################ ################  Create Entries   ################ ################ ################
+    ################ ################ ################  Create Entries   ################ ################ ################
 def add_payment_entries(sender, **kwargs):
     if kwargs['created']:
         l=kwargs['instance']
+        l.sites.add(Site.objects.get_current())
         l.create_related_entry(
             account = l._dest,
             tipo = 'Debit',
@@ -1317,7 +1502,6 @@ class VendorPayment(Payment):
         self.tipo='VendorPayment'
 
 post_save.connect(add_payment_entries, sender=VendorPayment, dispatch_uid="jade.inventory.models")
-
 class VendorRefundManager(models.Manager):
   def get_query_set(self):
     return super(VendorRefundManager, self).get_query_set().filter(tipo="VendorRefund")
@@ -1331,22 +1515,28 @@ class VendorRefund(Payment):
         self.template='inventory/vendor_payment.html'
         self.tipo='VendorRefund'
 post_save.connect(add_payment_entries, sender=VendorRefund, dispatch_uid="jade.inventory.models")
-##################################################
-# Garantees##################################################
 
 class GaranteeOffer(models.Model):
+    def save(self, *args, **kwargs):
+        print "Site.objects.get_current() = " + str(Site.objects.get_current())
+        try:self.site
+        except Site.DoesNotExist: self.site=Site.objects.get_current()
+        super(GaranteeOffer, self).save(*args, **kwargs)
     months = models.IntegerField(default=0, blank=True)
     price = models.DecimalField(max_digits=8, decimal_places=2, default=Decimal('0.00'), blank=True)
     item = models.ForeignKey(Item)
+    site = models.ForeignKey(Site)#, default=Site.objects.get_current().pk
+    objects = CurrentSiteManager()
+
     def __init__(self, *args, **kwargs):
         self.template='inventory/garantee_offer.html'
         super(GaranteeOffer, self).__init__(*args, **kwargs)
     def __unicode__(self):
         return 'Garantee for %i months on %s(%s)'%(self.months, self.item, str(self.price))
 
-#class GaranteeDetail(models.Model):
-#    months = models.IntegerField(default=0, blank=True)
-#    transaction = models.OneToOneField(Transaction)
+    #class GaranteeDetail(models.Model):
+    #    months = models.IntegerField(default=0, blank=True)
+    #    transaction = models.OneToOneField(Transaction)
 
 class Garantee(Transaction):
     # Quantity is the number of months the Garantee will be active
@@ -1362,7 +1552,7 @@ class Garantee(Transaction):
         self._price = kwargs.pop('price', Decimal('0.00'))
         super(Garantee, self).__init__(*args, **kwargs)
         self.tipo='Garantee'
- ################ ################ ################  Active   ################ ################ ################
+    ################ ################ ################  Active   ################ ################ ################
     def _get_active(self):
         try: return self.entry('Garanteed').active
         except AttributeError: return self._active
@@ -1371,12 +1561,12 @@ class Garantee(Transaction):
         [e.update('active',value) for e in self.entry_set.all()]
     active = property(_get_active, _set_active)
 
-################ ################ ################  (Unit Price)   ################ ################ ################
+    ################ ################ ################  (Unit Price)   ################ ################ ################
     def _get_unit_price(self):
         if self.quantity != 0 and self.price !=0: return self.price / self.quantity
         else: return self.price
     unit_price = property(_get_unit_price)
-################ ################ ################  Item   ################ ################ ################
+    ################ ################ ################  Item   ################ ################ ################
     def _get_item(self):
         try: return self.entry('Garanteed').item
         except AttributeError: return self._item
@@ -1384,7 +1574,7 @@ class Garantee(Transaction):
         try: return [self.entry(e).update('item',value) for e in ['Garanteed','Garanteer']]
         except AttributeError: self._item=value
     item = property(_get_item, _set_item)
- ################ ################ ################  Quantity   ################ ################ ################
+    ################ ################ ################  Quantity   ################ ################ ################
     def _get_quantity(self):
         try: return self.entry('Garanteed').quantity
         except AttributeError: return self._quantity
@@ -1396,7 +1586,7 @@ class Garantee(Transaction):
 
         except AttributeError: self._quantity=value
     quantity = property(_get_quantity, _set_quantity)
- ################ ################ ################  Serial  ################ ################ ################
+    ################ ################ ################  Serial  ################ ################ ################
     def _get_serial(self):
         try: return self.entry('Garanteed').serial
         except AttributeError: return self._serial
@@ -1407,7 +1597,7 @@ class Garantee(Transaction):
             print "setting cache serial!!!!!!"
             self._serial=value
     serial = property(_get_serial, _set_serial)
- ################ ################ ################  Price  ################ ################ ################
+    ################ ################ ################  Price  ################ ################ ################
     def _get_price(self):
         try: return self.entry('Garanteed').value
         except AttributeError: return self._price
@@ -1417,14 +1607,15 @@ class Garantee(Transaction):
             self.entry('Garanteer').update('value', -value)
         except: self._price = value
     price=property(_get_price, _set_price)
- ################ ################ ################  Expires  ################ ################ ################
+    ################ ################ ################  Expires  ################ ################ ################
     def _get_expires(self):
         return in_months(self.date, self.garanteedetails.months)
     expires=property(_get_expires)
- ################ ################ ################  Create Entries   ################ ################ ################
+    ################ ################ ################  Create Entries   ################ ################ ################
 def add_garantee_entries(sender, **kwargs):
     if kwargs['created']:
         l=kwargs['instance']
+        l.sites.add(Site.objects.get_current())
         if not l._price: l.price=0
         if not l._quantity: l._quantity=0
         l.create_related_entry(
@@ -1459,7 +1650,7 @@ class ClientGarantee(Garantee):
         if self.client: kwargs['garanteer']=self.client.tax_group.revenue_account
         super(ClientGarantee, self).__init__(*args, **kwargs)
         self.tipo='ClientGarantee'
- ################ ################ ################  Client  ################ ################ ################
+    ################ ################ ################  Client  ################ ################ ################
     def _get_client(self):
         try: return self.entry('Garanteed').account
         except AttributeError: return self._client
@@ -1488,7 +1679,7 @@ class VendorGarantee(Garantee):
         })
         super(VendorGarantee, self).__init__(*args, **kwargs)
         self.tipo='VendorGarantee'
- ################ ################ ################  Vendor   ################ ################ ################
+    ################ ################ ################  Vendor   ################ ################ ################
     def _get_vendor(self):
         try: return self.entry('Garanteer').account
         except AttributeError: return self._vendor
@@ -1530,14 +1721,14 @@ class Count(Transaction):
     objects = CountManager()
     def __init__(self, *args, **kwargs):
         self.template='inventory/count.html'
-#        print "kwargs=" + str(kwargs)
+    #        print "kwargs=" + str(kwargs)
         self._cost = kwargs.pop('cost', 0)
         self._unit_cost = kwargs.pop('unit_cost', 0)
         self._date = kwargs.pop('date', datetime.now())
         self._delivered = kwargs.pop('delivered', True)
         self._active = kwargs.pop('active', True)
         self._item = kwargs.pop('item', None)
-#        print "self._item=" + str(self._item)
+    #        print "self._item=" + str(self._item)
         self._quantity = kwargs.pop('quantity', 0)
         self._count = kwargs.pop('count', None)
         self._serial = kwargs.pop('serial', None)
@@ -1551,13 +1742,13 @@ class Count(Transaction):
         except:
             pass
         return msg
- ################ ################ ################  Value   ################ ################ ################
+    ################ ################ ################  Value   ################ ################ ################
     def _get_value(self):
         return self.cost
     def _set_value(self, value):
         self.cost=value
     value=property(_get_value, _set_value)
- ################ ################ ################  Active   ################ ################ ################
+    ################ ################ ################  Active   ################ ################ ################
     def _get_active(self):
         try: return self.entry('Inventory').active
         except AttributeError: return self._active
@@ -1565,7 +1756,7 @@ class Count(Transaction):
         self._active=value
         [e.update('active',value) for e in self.entry_set.all()]
     active = property(_get_active, _set_active)
- ################ ################ ################  Delivered   ################ ################ ################
+    ################ ################ ################  Delivered   ################ ################ ################
     def _get_delivered(self):
         try: return self.entry('Inventory').delivered
         except AttributeError: return self._delivered
@@ -1573,7 +1764,7 @@ class Count(Transaction):
         try: return [self.entry(e).update('delivered',value) for e in ['Inventory','Expense']]
         except AttributeError: self._delivered=value
     delivered = property(_get_delivered, _set_delivered)
- ################ ################ ################  Item   ################ ################ ################
+    ################ ################ ################  Item   ################ ################ ################
     def _get_item(self):
         try: return self.entry('Inventory').item
         except AttributeError: return self._item
@@ -1581,7 +1772,7 @@ class Count(Transaction):
         try: return [self.entry(e).update('item',value) for e in ['Inventory','Expense']]
         except AttributeError: self._item=value
     item = property(_get_item, _set_item)
- ################ ################ ################  Quantity   ################ ################ ################
+    ################ ################ ################  Quantity   ################ ################ ################
     def _get_quantity(self):
         try: return self.entry('Inventory').quantity
         except AttributeError: return self._quantity
@@ -1593,15 +1784,15 @@ class Count(Transaction):
             self.entry('Expense').update('quantity', -value)
             i=self.entry('Inventory')
             i.quantity=value
-#            if i.quantity_left+dif > 0: i.quantity_left+=dif
-#            else: i.quantity_left=0
+    #            if i.quantity_left+dif > 0: i.quantity_left+=dif
+    #            else: i.quantity_left=0
             i.save()
             # Update total cost
             try: self.cost = self.countdetail.unit_cost*value
             except ObjectDoesNotExist: self.cost = self._unit_cost*value
         except AttributeError: self._quantity=value
     quantity = property(_get_quantity, _set_quantity)
- ################ ################ ################  Serial   ################ ################ ################
+    ################ ################ ################  Serial   ################ ################ ################
     def _get_serial(self):
         try: return self.entry('Inventory').serial
         except AttributeError: return self._serial
@@ -1609,20 +1800,20 @@ class Count(Transaction):
         try: return [self.entry(e).update('serial',value) for e in ['Inventory','Expense']]
         except AttributeError: self._serial=value
     serial = property(_get_serial, _set_serial)
- ################ ################ ################  Cost   ################ ################ ################
+    ################ ################ ################  Cost   ################ ################ ################
     def _get_cost(self):
         try: return self.entry('Inventory').value
         except AttributeError: return self._cost
     def _set_cost(self, value):
         #Careful!! we have to be delicate with the cost_left value it may have been already used!
         #TODO: What if they give us a negative cost?
-#        dif=value-self.cost
+    #        dif=value-self.cost
         try:
             self.entry('Expense').update('value', -value)
             i=self.entry('Inventory')
             i.value=value
-#            if i.cost_left+dif>0: i.cost_left+=dif
-#            else: i.cost_left=0
+    #            if i.cost_left+dif>0: i.cost_left+=dif
+    #            else: i.cost_left=0
             i.save()
         except AttributeError:
             self._cost=value
@@ -1633,7 +1824,10 @@ class Count(Transaction):
         except ObjectDoesNotExist: return self._unit_cost
     def _set_unit_cost(self, value):
         try:
-            self.countdetail.unit_cost = value
+            if self.countdetail.unit_cost != value:
+                c=self.countdetail
+                c.unit_cost = value
+                c.save()
             if self.quantity: self.cost=value*self.quantity
         except: self._unit_cost = value
     unit_cost = property(_get_unit_cost, _set_unit_cost)
@@ -1689,6 +1883,7 @@ def add_count_entry(sender, **kwargs):
     if kwargs['created']:
         print "creating entries"
         l=kwargs['instance']
+        l.sites.add(Site.objects.get_current())
         if l._quantity > 0 :
             # if the value is greater than 0 then be sure to include cost_left
             print "here"
@@ -1702,7 +1897,7 @@ def add_count_entry(sender, **kwargs):
                 serial = l._serial,
                 delivered = l._delivered,
                 cost_left = l._cost,
-#                quantity_left = l._quantity,
+    #                quantity_left = l._quantity,
             )
         else:
             l.create_related_entry(
@@ -1731,6 +1926,8 @@ post_save.connect(add_count_entry, sender=Count, dispatch_uid="jade.inventory.mo
 class UserProfile(models.Model):
     user = models.ForeignKey(User, unique=True)
     price_group = models.ForeignKey(PriceGroup)
+    def __unicode__(self):
+        return self.user.username
     def _get_tabs(self):
         try: t=self._tabs
         except:
@@ -1757,25 +1954,6 @@ def add_user_profile(sender, **kwargs):
             UserProfile.objects.create(user=l, price_group=pg)
         except:pass
 post_save.connect(add_user_profile, sender=User, dispatch_uid="jade.inventory.moddels")
-class BranchDetail(models.Model):
-    account = models.OneToOneField(Account)
-    db_name = models.CharField(max_length=32)
-    foreign_account_name = models.CharField(_('name'), max_length=200)
-    immediate = models.BooleanField(_('transfers are immediate'), default=True)
-    def __unicode__(self):
-        return self.account.name
-    def _get_foreign_account(self):
-        return Branch.objects.using(self.db_name).get(name=self.foreign_account_name)
-    foreign_account=property(_get_foreign_account)
-
-class TransferDetail(models.Model):
-    remote_id = models.IntegerField()
-    db_name = models.CharField(max_length=32)
-    transaction = models.OneToOneField(Transaction)
-    def _get_remote(self):
-        try: return Transfer.objects.using(self.db_name).get(pk=self.remote_id)
-        except: return None
-    remote=property(_get_remote)
 
 class TransferManager(models.Manager):
     def get_query_set(self):
@@ -1790,9 +1968,15 @@ class TransferManager(models.Manager):
         except: number='1001'
         return number
 class Transfer(Transaction):
+    objects = TransferManager()
+    #    Entry Name             Account     Site
+    #    SourceInventory        Inventory   A
+    #    SourceTransfer         Transfer    A
+    #    DestInventory          Inventory   B
+    #    DestTransfer           Transfer    B
     class Meta:
         proxy = True
-    objects = TransferManager()
+    
     def __init__(self, *args, **kwargs):
         self.template='inventory/transfer.html'
         self._cost = kwargs.pop('cost', 0)
@@ -1800,208 +1984,199 @@ class Transfer(Transaction):
         self._date = kwargs.pop('date', datetime.now())
         self._delivered = kwargs.pop('delivered', True)
         self._active = kwargs.pop('active', True)
-        self._branch = kwargs.pop('branch',None)
         self._item = kwargs.pop('item', None)
         self._quantity = kwargs.pop('quantity', 0)
         self._serial = kwargs.pop('serial', None)
+        self._account = kwargs.pop('account', None)
         super(Transfer, self).__init__(*args, **kwargs)
         self.tipo='Transfer'
+    
     def __unicode__(self):
         msg='Transfer'
         if str(self.doc_number)!='': msg+=" #"+self.doc_number
         return msg
-    def update_remote_entry(self, attr, value, tipo=None):
-        entries=Entry.objects.using(self.detail.db_name).filter(transaction=self.detail.remote)
-        if tipo: entries=entries.filter(tipo=tipo)
-        for entry in entries:
-            setattr(entry, attr, value)
-            entry.save()
-    def _get_detail(self):
-        try: return self.transferdetail
-        except: return None
-    def _set_detail(self, value):
-        self.transferdetail=value
-    detail=property(_get_detail, _set_detail)
- ################ ################ ################  Value   ################ ################ ################
+    
+    def entry(self, tipo):
+        try: return Entry.offsite_objects.filter(transaction=self, tipo=tipo)[0]
+        except: return None        
     def _get_value(self):
         return self.cost
     def _set_value(self, value):
         self.cost=value
-    value=property(_get_value, _set_value)
- ################ ################ ################  Active   ################ ################ ################
     def _get_active(self):
-        try: return self.entry('Inventory').active
-        except AttributeError: return self._active
+        try: return self.local_inventory_entry.active
+        except Entry.DoesNotExist: return self._active
     def _set_active(self, value):
         self._active=value
-        [e.update('active',value) for e in self.entry_set.all()]
-        try: 
-            if self.branch.branchdetail.immediate: self.update_remote_entry('active', value)
-        except:pass
-            
-    active = property(_get_active, _set_active)
- ################ ################ ################  Delivered   ################ ################ ################
+        [e.update('active',value) for e in Entry.offsite_objects.filter(transaction=self)]
     def _get_delivered(self):
-        try: return self.entry('Inventory').delivered
-        except AttributeError: return self._delivered
+        try: return self.local_inventory_entry.delivered
+        except Entry.DoesNotExist: return self._delivered
     def _set_delivered(self, value):
         try: 
-            x= [self.entry(e).update('delivered',value) for e in ['Inventory','Branch']]
-            if self.branch.branchdetail.immediate: self.update_remote_entry('delivered', value)
+            [e.update('delivered',value) for e in self.entry_set.all()]
         except AttributeError: self._delivered=value
         
-    delivered = property(_get_delivered, _set_delivered)
- ################ ################ ################  Item   ################ ################ ################
     def _get_item(self):
-        try: return self.entry('Inventory').item
-        except AttributeError: return self._item
+        try: return self.local_inventory_entry.item
+        except Entry.DoesNotExist: return self._item
     def _set_item(self, value):
         try: 
-            x= [self.entry(e).update('item',value) for e in ['Inventory','Branch']]
-            try: self.update_remote_entry('item', value)
-            except:pass
+            [e.update('item',value) for e in Entry.offsite_objects.filter(transaction=self)]
         except AttributeError: self._item=value
         
-    item = property(_get_item, _set_item)
- ################ ################ ################  Quantity   ################ ################ ################
     def _get_quantity(self):
-        try: return self.entry('Inventory').quantity
-        except AttributeError: return self._quantity
+        try: 
+            v = self.local_inventory_entry.quantity
+            #if self.source != Site.objects.get_current(): v=-v
+            return v
+        except Entry.DoesNotExist: return self._quantity
     def _set_quantity(self, value):
-        dif=value-self.quantity
+        #if self.source != Site.objects.get_current(): value=-value
         try:
-            self.entry('Branch').update('quantity', value)
-            self.entry('Inventory').update('quantity', -value)
-            try:
-                self.update_remote_entry('quantity', -value, 'Branch')
-                self.update_remote_entry('quantity', value, 'Inventory')
-            except:pass
+            
+            self.local_inventory_entry.update('quantity', value)
+            self.local_transfer_entry.update('quantity', -value)
+            self.remote_inventory_entry.update('quantity', -value)
+            self.remote_transfer_entry.update('quantity', value)
+            
+#            self.entry('SourceInventory').update('quantity', value)
+#            self.entry('SourceTransfer').update('quantity', -value)
+#            self.entry('DestInventory').update('quantity', -value)
+#            self.entry('DestTransfer').update('quantity', value)
         except AttributeError: self._quantity=value
-    quantity = property(_get_quantity, _set_quantity)
- ################ ################ ################  Serial   ################ ################ ################
     def _get_serial(self):
-        try: return self.entry('Inventory').serial
-        except AttributeError: return self._serial
+        try: return self.local_inventory_entry.serial
+        except Entry.DoesNotExist: return self._serial
     def _set_serial(self, value):
         try: 
-            x= [self.entry(e).update('serial',value) for e in ['Inventory','Branch']]
-            try:self.update_remote_entry('serial', value)
-            except:pass
+            [e.update('serial',value) for e in Entry.offsite_objects.filter(transaction=self)]
         except AttributeError: self._serial=value
-    serial = property(_get_serial, _set_serial)
-    ################ ################ ################  branch   ################ ################ ################
-    def _get_branch(self):
-        try: return self.entry('Branch').account
-        except AttributeError: return self._branchv
-    def _set_branch(self, value):
-        try: 
-            if value!=self.entry('Branch').value:
-                self.entry('Branch').update('account', value)
-                self.delete_remote_transaction()
-#                try:
-#                    #Delete all entries on the other side
-#                    for entry in Entry.objects.using(self.transferdetail.db_name).filter(transaction=self.transferdetail.remote): entry.delete()
-#                    # Delete the transfer on the remote side
-#                    self.transferdetail.remote.delete()
-#                    # Also zap the transferdetail, since this will be recreated
-#                    self.transferdetail.delete()
-#                except:pass
-                # Now rebuild using the new current branch
-                self.create_remote_copy()
-        except AttributeError: self._branch = value
-    branch = property(_get_branch, _set_branch)
- ################ ################ ################  Cost   ################ ################ ################
-    def _get_cost(self):
-        try: return self.entry('Inventory').value
-        except AttributeError: return self._cost
-    def _set_cost(self, value):
+    def _get_account(self):
+        return self._get_remote_inventory_entry().site
+    def _set_account(self, value):
         try:
-            self.entry('Branch').update('value', value)
-            i=self.entry('Inventory').update('value', -value)
-            try:
-                self.update_remote_entry('value', -value, 'Branch')
-                self.update_remote_entry('value', value, 'Inventory')
-            except:pass
+            remote=self._get_remote_inventory_entry()
+            if value!=remote.site:
+                remote.site=value
+                remote.save()
+        except Entry.DoesNotExist:
+            self._account=value
+    def _get_source(self):
+        try: return self.entry('SourceInventory').site
+        except AttributeError: return self._source
+    def _set_source(self, value):
+        try: 
+            if value!=self.entry('SourceInventory').site:
+                self.entry('SourceInventory').update('site', value)
+                self.entry('SourceTransfer').update('site', value)
+        except AttributeError: self._source = value
+    def _get_dest(self):
+        try: return self.entry('DestInventory').site
+        except AttributeError: return self._dest
+    def _set_dest(self, value):
+        try: 
+            if value!=self.entry('DestInventory').site:
+                self.entry('DestInventory').update('site', value)
+                self.entry('DestTransfer').update('site', value)
+        except AttributeError: self._dest = value
+    
+    def _get_local_inventory_entry(self):
+        return Entry.offsite_objects.filter(transaction=self, site=Site.objects.get_current(), account=INVENTORY_ACCOUNT).get()
+    local_inventory_entry=property(_get_local_inventory_entry)
+    
+    def _get_local_transfer_entry(self):
+        return Entry.offsite_objects.filter(transaction=self, site=Site.objects.get_current(), account=TRANSFER_ACCOUNT).get()
+    local_transfer_entry=property(_get_local_transfer_entry)
+    
+    def _get_remote_inventory_entry(self):
+        return Entry.offsite_objects.filter(transaction=self, account=INVENTORY_ACCOUNT).exclude(site=Site.objects.get_current()).get()
+    remote_inventory_entry=property(_get_remote_inventory_entry)
+    
+    def _get_remote_transfer_entry(self):
+        return Entry.offsite_objects.filter(transaction=self, account=TRANSFER_ACCOUNT).exclude(site=Site.objects.get_current()).get()
+    remote_transfer_entry=property(_get_remote_transfer_entry)
+    
+    def _get_cost(self):
+        try: 
+            return self.local_inventory_entry.value
+            #if self.source != Site.objects.get_current(): v=-v
+            #return v
+        except Entry.DoesNotExist: return self._cost
+    def _set_cost(self, value):
+        #if self.source != Site.objects.get_current(): value=-value
+        try:
+            self.local_inventory_entry.update('value', value)
+            self.local_transfer_entry.update('value', -value)
+            self.remote_inventory_entry.update('value', -value)
+            self.remote_transfer_entry.update('value', value)
+            
+#            self.entry('SourceInventory').update('value', value)
+#            self.entry('SourceTransfer').update('value', -value)
+#            self.entry('DestInventory').update('value', -value)
+#            self.entry('DestTransfer').update('value', value)
         except AttributeError:
             self._cost=value
-    cost=property(_get_cost, _set_cost)
     def _get_unit_cost(self):
         p=self.cost
         if self.quantity != 0 and p !=0: return p / self.quantity
         else: return p
+    delivered = property(_get_delivered, _set_delivered)
+    item = property(_get_item, _set_item)
+    active = property(_get_active, _set_active)
+    value=property(_get_value, _set_value)
+    quantity = property(_get_quantity, _set_quantity)
+    serial = property(_get_serial, _set_serial)
+    account = property(_get_account, _set_account)
+    source = property(_get_source, _set_source)
+    dest = property(_get_dest, _set_dest)
+    cost=property(_get_cost, _set_cost)
     unit_cost=property(_get_unit_cost)
-    def delete_remote_transaction(self):
-        if self.detail:
-            if self.detail.remote:
-                for entry in Entry.objects.using(self.detail.db_name).filter(transaction=self.detail.remote): entry.delete()
-                # Delete the transfer on the remote side
-                self.detail.remote.delete()
-            self.detail.delete()
-    def create_remote_copy(self):
-        remote_db=self.branch.branchdetail.db_name
-        remote_account=self.branch.branchdetail.foreign_account
-        foreign=RemoteTransfer()
-        foreign.save(using=self.branch.branchdetail.db_name)
-        # Make sure the item exists in the remote branchs db
-        remote_item=Item.objects.using(remote_db).get(name=self._item.name, bar_code=self._item.bar_code)
-        # Create the entries
-        Entry.objects.using(remote_db).create(
-            account = remote_account,
-            transaction = foreign,
-            tipo = 'Branch',
-            value = self.cost,
-            item = remote_item,
-            quantity = self._quantity,
-            serial = self._serial,
-            delivered = self._delivered,
-        )
-        Entry.objects.using(remote_db).create(
-            account = Account.objects.using(remote_db).get(name=settings.INVENTORY_ACCOUNT_NAME),
-            transaction = foreign,
-            tipo = 'Inventory',
-            value = -self.cost,
-            item = remote_item,
-            quantity = -self._quantity,
-            serial = self._serial,
-            delivered = self._delivered,
-        )
-        self.detail=TransferDetail.objects.create(transaction=self, remote_id=foreign.pk, db_name=remote_db)
-        remote=self.detail.remote
-        TransferDetail(transaction=remote, remote_id=self.pk, db_name=remote.branch.branchdetail.db_name)
-def delete_remote_transfer(sender, **kwargs):
-    kwargs['instance'].delete_remote_transaction()
-pre_delete.connect(delete_remote_transfer, sender=Transfer, dispatch_uid="jade.inventory.models")
-class RemoteTransfer(Transfer):
-    class Meta:
-        proxy = True
-    def update_remote(self, attr, value):
-        # To avoid repeating myself
-        pass
-class RemoteItem(Item):
-    class Meta:
-        proxy = True
-
+            
 def add_transfer_entry(sender, **kwargs):
     if kwargs['created']:
         l=kwargs['instance']
+        l.sites.add(l._account)
+        l.sites.add(Site.objects.get_current())
+      
         l.create_related_entry(
             account = INVENTORY_ACCOUNT,
-            tipo = 'Inventory',
-            value = -l.cost,
+            tipo = 'SourceInventory',
+            value = l._cost,
+            item = l._item,
+            quantity = l._quantity,
+            serial = l._serial,
+            delivered = l._delivered,
+            site = Site.objects.get_current(),
+        )
+        l.create_related_entry(
+            account = TRANSFER_ACCOUNT,
+            tipo = 'SourceTransfer',
+            value = -l._cost,
             item = l._item,
             quantity = -l._quantity,
             serial = l._serial,
             delivered = l._delivered,
+            site = Site.objects.get_current(),
         )
         l.create_related_entry(
-            account = l._branch,
-            tipo = 'Branch',
-            value = l.cost,
+            account = INVENTORY_ACCOUNT,
+            tipo = 'DestInventory',
+            value = -l._cost,
+            item = l._item,
+            quantity = -l._quantity,
+            serial = l._serial,
+            delivered = l._delivered,
+            site = l._account,
+        )
+        l.create_related_entry(
+            account = TRANSFER_ACCOUNT,
+            tipo = 'DestTransfer',
+            value = l._cost,
             item = l._item,
             quantity=l._quantity,
             serial=l._serial,
             delivered=l._delivered,
-        )
-        l.create_remote_copy()
-    
+            site = l._account,
+        )    
 post_save.connect(add_transfer_entry, sender=Transfer, dispatch_uid="jade.inventory.moddels")

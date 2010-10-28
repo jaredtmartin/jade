@@ -6,6 +6,7 @@ from django.forms.models import modelformset_factory
 from django.core.paginator import Paginator, InvalidPage, EmptyPage
 from django import http
 
+from django.contrib.sites.models import Site
 import os
 from django.db.models import Q
 from django.shortcuts import get_object_or_404, render_to_response, HttpResponseRedirect
@@ -39,7 +40,6 @@ def _r2r(request, template, context={}):
 
 def edit_object(request, object_id, model, form, prefix, tipo=None, extra_context={}):
     obj = get_object_or_404(model, pk=object_id)
-    print "extra_context = " + str(extra_context)
     if not request.user.has_perms('inventory.change_'+obj.tipo.lower()): return http.HttpResponseRedirect("/blocked/")
     f = form(request.POST, instance=obj)
     if not tipo: tipo=obj.get_tipo_display()
@@ -68,17 +68,20 @@ def new_object(request, form, prefix, template='', tipo=None, extra_context={}):
     if tipo and not request.user.has_perms('inventory.change_'+tipo.lower()): return http.HttpResponseRedirect("/blocked/")
     if request.POST:
         f = form(request.POST)
-        if f.is_valid():            
-            if tipo:
-                obj=f.save(commit=False)
-                obj.tipo=tipo
-            obj=f.save()
+        print "adadad"
+        if f.is_valid():      
+            print "valid"
+            print "tipo = " + str(tipo)
+            if tipo:obj=f.save(tipo=tipo)
+            else:obj=f.save()
             updated_form=form(instance=obj, prefix=prefix+'-'+str(obj.pk))
-            info_list=['The '+tipo+' has been created successfully.',]
+            info_list=['The %s has been created successfully.'% tipo, ]
             error_list={}
         else:
+            print "invalid"      
             info_list=[]
             obj=None
+            print "f.errors = " + str(f.errors)
             error_list=f.errors
             updated_form=None
         if not tipo: tipo=prefix
@@ -98,8 +101,7 @@ def search_entries(user, form, tipo=None):
     if form.cleaned_data['end']: entries=entries.filter(date__lt=form.cleaned_data['end']+timedelta(days=1))
     return entries
 
-def search_transactions(user, form, model):
-    transactions = model.objects.all().order_by('-_date')
+def search_transactions(user, form, transactions):
     if not user.has_perm('inventory.view_sale'):transactions=transactions.exclude(tipo='Sale')
     if not user.has_perm('inventory.view_purchase'):transactions=transactions.exclude(tipo='Purchase')
     if not user.has_perm('inventory.view_count'):transactions=transactions.exclude(tipo='Count')
@@ -153,7 +155,8 @@ def search_and_paginate_transactions(request, model, template='inventory/transac
     q=form.cleaned_data['q']
     start=form.cleaned_data['start']
     end=form.cleaned_data['end']
-    transactions=search_transactions(request.user, form, model)
+    if q: transactions=search_transactions(request.user, form, model.objects.all())
+    else: transactions=search_transactions(request.user, form, model.objects.filter(sites__id__exact=settings.SITE_ID))
     for k,v in errors.items(): form.errors[k]=v
     return paginate_transactions(request, form, transactions, template)
 
@@ -221,8 +224,6 @@ def delete_purchase(request, object_id):
 ######################################################################################
 # Ajax Views
 ######################################################################################
-
-
 @login_required
 def serial_history(request, serial):
     return _r2r(request,'inventory/entry_list.html', {'page':_paginate(request, Entry.objects.filter(serial=serial)), 'q':''})
@@ -241,11 +242,11 @@ def ajax_client_list(request):
     return _r2r(request,'inventory/ajax_list.html', {'object_list':Client.objects.filter(name__icontains=q),'q':q})
 
 @login_required
-@permission_required('inventory.view_branch', login_url="/blocked/")
-def ajax_branch_list(request):
+@permission_required('inventory.view_site', login_url="/blocked/")
+def ajax_site_list(request):
     try: q=request.GET['q']
     except KeyError: q=''
-    return _r2r(request,'inventory/ajax_list.html', {'object_list':Branch.objects.filter(name__icontains=q),'q':q})
+    return _r2r(request,'inventory/ajax_list.html', {'object_list':Site.objects.filter(name__icontains=q),'q':q})
 
 @login_required
 @permission_required('inventory.view_unit', login_url="/blocked/")
@@ -331,7 +332,6 @@ def render_report(request, name, context={}):
     try:report=Report.objects.get(name=name)
     except Report.DoesNotExist: 
         return account_show(request, context['account'].pk, errors={'Report':[unicode(_('Unable to find a report template with the name "%s"') % (name,)  ),]})
-#       return fallback_to_transactions(request, doc_number, _('Unable to find a report template with the name"%s"') % (name,))
     return render_string_to_pdf(Template(report.body), context)
     
 @login_required
@@ -397,7 +397,6 @@ def labels(request, doc_number):
             if x>=settings.LABELS_PER_PAGE:
                 p.showPage()
                 x-=settings.LABELS_PER_PAGE
-#            print "x=%i ->  %i,%i" % (x, int(x%settings.LABELS_PER_LINE), int(x/settings.LABELS_PER_LINE+1))
             p.drawImage(filepath, x%settings.LABELS_PER_LINE*150, p._pagesize[1]-(x/settings.LABELS_PER_LINE+1)*75)
             x+=1
     p.showPage()
@@ -502,7 +501,10 @@ def branch_list(request):
 @login_required
 def account_show(request, object_id, errors={}):
     if request.POST:
-        return edit_object(request, object_id, Account, ContactForm, "account")
+        obj = get_object_or_404(Account, pk=object_id)
+        if obj.tipo=='Account': return edit_object(request, object_id, Account, AccountForm, "account")
+        else: return edit_object(request, object_id, Account, ContactForm, "account")
+#        return edit_object(request, object_id, Account, ContactForm, "account")
     else:
         account = get_object_or_404(Account, pk=object_id)
         if not request.user.has_perm('inventory.view_client') and account.tipo=="Client": return http.HttpResponseRedirect("/blocked/")
@@ -514,7 +516,7 @@ def account_show(request, object_id, errors={}):
             object_id=object_id,
             template_name = 'inventory/account_show.html',
             extra_context = {
-                'entry_page': _paginate(request, Entry.objects.filter(account=account, active=True)),
+                'entry_page': _paginate(request, Entry.objects.filter(account__number__startswith=account.number, active=True)),
                 'form': form,
                 'prefix': 'account',
                 'error_list':errors,
@@ -540,20 +542,16 @@ def new_client(request):
         if not request.POST['user'] or request.POST['user']=='':
             request.POST=request.POST.copy()
             request.POST['user']=unicode(request.user.username)
-    return new_object(request, ContactForm, "account", 'inventory/account_show.html', tipo='Client', extra_context={'tipo':'client'})
+    return new_object(request, ClientForm, "account", 'inventory/account_show.html', tipo='Client', extra_context={'tipo':'client'})
 @login_required
 @permission_required('inventory.change_vendor', login_url="/blocked/")
 def new_vendor(request):
     
-    return new_object(request, ContactForm, "account", 'inventory/account_show.html', tipo='Vendor', extra_context={'tipo':'vendor'})
-@login_required
-@permission_required('inventory.change_branch', login_url="/blocked/")
-def new_branch(request):
-    return new_object(request, ContactForm, "account", 'inventory/account_show.html', tipo='Branch', extra_context={'tipo':'branch'})
-
+    return new_object(request, VendorForm, "account", 'inventory/account_show.html', tipo='Vendor', extra_context={'tipo':'vendor'})
 @login_required
 @permission_required('inventory.change_account', login_url="/blocked/")
 def new_account(request):
+    print "asdjhaskdjhaskjdh"
     return new_object(request, AccountForm, "account", 'inventory/account_show.html', tipo='Account', extra_context={'tipo':'account'})
 
 ######################################################################################
@@ -581,9 +579,7 @@ def price_report(request):
     items=Item.objects.find(q)
     print "items = " + str(items)
     try:report=Report.objects.get(name=settings.PRICE_REPORT_NAME)
-    except Report.DoesNotExist: 
-        request.GET=request.GET.copy()
-#        request.GET['q']=doc_number
+    except Report.DoesNotExist:
         errors={'Report':[unicode(_('Unable to find a report template with the name "%s"') % (settings.PRICE_REPORT_NAME,))]}
         return item_list(request, errors=errors)
     return render_string_to_pdf(Template(report.body), {'items':items, 'user':request.user})
@@ -597,7 +593,6 @@ def inventory_report(request):
     try:report=Report.objects.get(name=settings.INVENTORY_REPORT_NAME)
     except Report.DoesNotExist: 
         request.GET=request.GET.copy()
-#        request.GET['q']=doc_number
         errors={'Report':[unicode(_('Unable to find a report template with the name "%s"') % (settings.PRICE_REPORT_NAME,))]}
         return item_list(request, errors=errors)
     return render_string_to_pdf(Template(report.body), {'items':items, 'user':request.user})  
@@ -644,7 +639,6 @@ def item_image_upload(request, object_id):
         item.image=form.cleaned_data['image']
         item.save()
         print "form.cleaned_data['image'] = " + str(form.cleaned_data['image'])
-#        item.image=form.cleaned_data['image']
     return _r2r(request,'inventory/item_image.html', {'item':item})
         
 @login_required
@@ -1028,10 +1022,6 @@ def mark_transaction(request, object_id, attr, value):
             return _r2r(request,'inventory/results.html', {'objects':[obj],'error_list':{'Process':[_('You do not have sufficient rights to start production'),]}, 'info_list':[]})
         if attr in ['delivered','active' ] and obj.quantity > 0 and not request.user.has_perm('production.finish_production'):
             return _r2r(request,'inventory/results.html', {'objects':[obj],'error_list':{'Process':[_('You do not have sufficient rights to finish production'),]}, 'info_list':[]})
-
-#    print "attr=" + str(attr)
-#    print "value=" + str(value)
-    
     setattr(obj, attr, value)
 #    print "obj = " + str(obj)
 #    print "obj.pk = " + str(obj.pk)
@@ -1284,19 +1274,19 @@ def new_transfer(request): # AJAX POST ONLY
     try: 
         sample=Transfer.objects.filter(doc_number=doc_number)[0]
         date=sample.date
-        branch=sample.branch
     except:
         date=datetime.now()
-    try: branch=Branch.objects.get(name=request.POST['branch'])
-    except: branch=None
+    try: account=Site.objects.get(name=request.POST['client'])
+    except: 
+        account=None
+        error_list['client']=[unicode('Unable to find a site with the name specified.')]
     try: 
         item=Item.objects.fetch(request.POST['item'])
         cost=item.cost
     except:
         item=None
         cost=0
-    if not branch: error_list['branch']=[unicode('Unable to find a branch with the name specified.')]
-    transfer=Transfer(doc_number=doc_number, date=date, branch=branch, item=item, cost=cost)
+    transfer=Transfer(doc_number=doc_number, date=date, account=account, item=item, cost=cost)
     if len(error_list)==0:
         transfer.save()
     return _r2r(request,'inventory/results.html', {'edit_mode':True, 'objects':[transfer],'prefix':'transfer','line_template':"inventory/transaction.html",'error_list':error_list, 'info_list':{}})
