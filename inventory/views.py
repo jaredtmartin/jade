@@ -569,6 +569,20 @@ def item_list(request, errors=[]):
 def low_stock(request, errors=[]):
     items=Item.objects.low_stock()
     return _r2r(request,'inventory/low_stock.html', {'page':_paginate(request, items), 'q':'', 'error_list':errors, 'boxform':BoxForm()})
+
+@login_required
+@permission_required('inventory.view_item', login_url="/blocked/")
+def low_stock_report(request):
+    items=Item.objects.low_stock()
+    try:report=Report.objects.get(name=settings.LOW_STOCK_REPORT_NAME)
+    except Report.DoesNotExist: 
+        request.GET=request.GET.copy()
+        errors={'Report':[unicode(_('Unable to find a report template with the name "%s"') % (settings.LOW_STOCK_REPORT_NAME,))]}
+        return low_stock(request, errors=errors)
+    return render_string_to_pdf(Template(report.body), {'items':items, 'user':request.user})  
+    
+
+
 @login_required
 @permission_required('inventory.view_item', login_url="/blocked/")
 def price_report(request):
@@ -591,7 +605,7 @@ def inventory_report(request):
     try:report=Report.objects.get(name=settings.INVENTORY_REPORT_NAME)
     except Report.DoesNotExist: 
         request.GET=request.GET.copy()
-        errors={'Report':[unicode(_('Unable to find a report template with the name "%s"') % (settings.PRICE_REPORT_NAME,))]}
+        errors={'Report':[unicode(_('Unable to find a report template with the name "%s"') % (settings.INVENTORY_REPORT_NAME,))]}
         return item_list(request, errors=errors)
     return render_string_to_pdf(Template(report.body), {'items':items, 'user':request.user})  
     

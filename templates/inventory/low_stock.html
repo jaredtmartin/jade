@@ -5,6 +5,12 @@
 {% block heading %}
     {% trans 'List of items with low stock levels' %}
 {% endblock%}
-
+{% block actions %}
+    {% if perms.inventory.change_sale %}
+        <div class="actiontab" ><a href="/inventory/item/" class="action">{% trans 'New' %}</a></div>
+        <div class="actiontab" ><a href="/inventory/items/prices.pdf?q={{q}}" class="action">{% trans 'Prices' %}</a></div>
+        <div class="actiontab" ><a href="/inventory/items/low_stock.pdf?q={{q}}" class="action">{% trans 'Print' %}</a></div>
+    {% endif %}
+{% endblock%}
 
 
