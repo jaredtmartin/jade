@@ -223,7 +223,7 @@ msgstr " dolares "
 
 #: inventory/templatetags/tags.py:143
 msgid " and "
-msgstr "y"
+msgstr " y "
 
 #: inventory/templatetags/tags.py:144
 msgid " cents "
