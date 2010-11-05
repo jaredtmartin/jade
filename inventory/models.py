@@ -618,8 +618,8 @@ except TaxGroup.DoesNotExist:
     site=Site.objects.get_current())
     DEFAULT_TAX_GROUP.save()
 except DatabaseError: pass
-try: SiteDetail.objects.get_or_create(site=Site.objects.get_current(), default_tax_group=DEFAULT_TAX_GROUP, inventory=INVENTORY_ACCOUNT)
-except: print "Unable to establish SiteDetail for current site"
+#try: SiteDetail.objects.get_or_create(site=Site.objects.get_current(), default_tax_group=DEFAULT_TAX_GROUP, inventory=INVENTORY_ACCOUNT)
+#except: print "Unable to establish SiteDetail for current site"
 class Contact(models.Model):
     def save(self, *args, **kwargs):
         if not self.tax_group_name: tax_group_name=settings.DEFAULT_TAX_GROUP_NAME
@@ -701,7 +701,8 @@ class Transaction(models.Model):
     comments = models.CharField(max_length=200, blank=True, default='')
     sites = models.ManyToManyField(Site)
     tipo = models.CharField(max_length=16, choices=TRANSACTION_TYPES)
-    
+    class Meta:
+        ordering = ('-_date',)
     def _get_date(self):
         return self._date
     def _set_date(self, value):

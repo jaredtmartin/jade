@@ -87,7 +87,6 @@ urlpatterns = patterns('',
     
     #Items
     (r'^items/$', 'jade.inventory.views.item_list'),
-#    (r'^item/$', create_update.create_object, item),
     (r'^items/low_stock/$', 'jade.inventory.views.low_stock'),
     (r'^item/$', 'jade.inventory.views.new_item'),
     (r'^item//$', 'jade.inventory.views.new_item'),
@@ -96,9 +95,7 @@ urlpatterns = patterns('',
     (r'^items/low_stock.pdf$', 'jade.inventory.views.low_stock_report'),
     (r'^item/(?P<object_id>\d+)/delete/$', 'jade.inventory.views.delete_item'),
     (r'^item/(?P<object_id>\d+)/image_upload/$', 'jade.inventory.views.item_image_upload'),
-#    (r'^item/edit/(?P<object_id>\d+)/$', create_update.update_object, item),
     (r'^item/edit/(?P<object_id>\d+)/$', 'jade.inventory.views.edit_item'),
-
     (r'^item/(?P<object_id>\d+)/$', 'jade.inventory.views.item_show'),
         
     #Serials
@@ -119,8 +116,6 @@ urlpatterns = patterns('',
     (r'^vendor/$', 'jade.inventory.views.new_vendor'),
     (r'^account/$', 'jade.inventory.views.new_account'),
     (r'^account/(?P<object_id>\d+)/statement.pdf$', 'jade.inventory.views.account_statement'),
-    
-#    (r'^account/edit/(?P<object_id>\d+)/$', 'jade.inventory.views.edit_account'),
 
     #Prices
     (r'^prices/$', 'jade.inventory.views.price_list'),

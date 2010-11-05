@@ -54,7 +54,8 @@ class SaleForm(forms.ModelForm):
         model.serial =      self.cleaned_data['serial']
         model.tax =         (self.cleaned_data['unit_tax'] or 0)
         model.discount =    (self.cleaned_data['unit_discount'] or 0)
-        model.price =       (self.cleaned_data['unit_price'] or model.item.price(model.client))
+        model.price =       self.cleaned_data['unit_price'] 
+        if not model.price and model.item: model.price = model.item.price(model.client)
         model.cost =        self.cleaned_data['unit_cost']
         if model.item and not model.cost: model.cost = model.item.cost
         if self.cleaned_data['quantity']!=0: 

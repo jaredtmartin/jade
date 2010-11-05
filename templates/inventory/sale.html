@@ -30,4 +30,6 @@
         <a class="show" id="id_transaction-{{object.pk}}-deliver" title="{% trans 'Mark as Delivered' %}" href="#" onclick="markTransaction('/inventory/transaction/{{object.pk}}/deliver/'); return false;"><img src="{{MEDIA_URL}}/img/undelivered.png"/></a>
     {% endif %}
     <a class="show" id="id_transaction-{{object.pk}}-payment" title="{% trans 'Add a Payment' %}" href="#" onclick="newTransaction('/inventory/sale/{{object.pk}}/pay/'); return false;"><img src="{{MEDIA_URL}}/img/money.png"/></a>
+    <a class="show" id="id_transaction-{{object.pk}}-print" title="{% trans 'Print Receipt' %}" href="/inventory/sale/{{object.doc_number}}/receipt.pdf"><img src="{{MEDIA_URL}}/img/print.png"/></a>
+    
 {% endblock %}

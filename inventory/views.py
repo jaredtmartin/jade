@@ -333,12 +333,39 @@ def render_report(request, name, context={}):
     except Report.DoesNotExist: 
         return account_show(request, context['account'].pk, errors={'Report':[unicode(_('Unable to find a report template with the name "%s"') % (name,)  ),]})
     return render_string_to_pdf(Template(report.body), context)
-    
+def doc_inactive(doc):
+    for line in doc:
+        if line.active or line.delivered: return False
+    return True
+@login_required
+@permission_required('inventory.view_receipt', login_url="/blocked/")
+def quote(request, doc_number):
+    doc=Sale.objects.filter(doc_number=doc_number)
+    if doc.count()==0: return fallback_to_transactions(request, doc_number, _('Unable to find sales with the specified document number.'))
+    try:report=Report.objects.get(name=settings.QUOTE_TEMPLATE_NAME)
+    except Report.DoesNotExist: 
+        return fallback_to_transactions(request, doc_number, _('Unable to find a report template with the name "%s"') % settings.QUOTE_TEMPLATE_NAME)
+    tax=charge=discount=0
+    for t in doc:
+        s=t.subclass
+        try: tax+=s.tax
+        except AttributeError: pass
+        try: charge+=s.charge
+        except AttributeError: pass
+        try: discount+=s.discount
+        except AttributeError: pass
+    try:
+        request.GET['test']
+        return render_string_to_pdf(Template(report.body), {'doc':doc, 'watermark_filename':report.watermark_url,'tax':tax, 'charge':charge, 'discount':discount})
+    except:
+        return render_string_to_pdf(Template(report.body), {'watermark_filename':None, 'doc':doc, 'tax':tax, 'charge':charge, 'discount':discount})
+
 @login_required
 @permission_required('inventory.view_receipt', login_url="/blocked/")
 def sale_receipt(request, doc_number):
     doc=Sale.objects.filter(doc_number=doc_number)
     if doc.count()==0: return fallback_to_transactions(request, doc_number, _('Unable to find sales with the specified document number.'))
+    if doc_inactive(doc): return quote(request, doc_number)
     try:report=Report.objects.get(name=settings.RECEIPT_REPORT_NAME_PREFIX+doc[0].client.tax_group.name+settings.RECEIPT_REPORT_NAME_SUFFIX)
     except Report.DoesNotExist: 
         return fallback_to_transactions(request, doc_number, _('Unable to find a report template with the name "%s"') % (settings.RECEIPT_REPORT_NAME_PREFIX+doc[0].client.tax_group.name+settings.RECEIPT_REPORT_NAME_SUFFIX,))
@@ -353,8 +380,10 @@ def sale_receipt(request, doc_number):
         except AttributeError: pass
     try:
         request.GET['test']
+        print "Yep"
         return render_string_to_pdf(Template(report.body), {'doc':doc, 'watermark_filename':report.watermark_url,'tax':tax, 'charge':charge, 'discount':discount})
     except:
+        print "Nope"
         return render_string_to_pdf(Template(report.body), {'watermark_filename':None, 'doc':doc, 'tax':tax, 'charge':charge, 'discount':discount})
 
 @login_required
@@ -492,12 +521,14 @@ def vendor_list(request):
     try: q=request.GET['q']
     except KeyError: q=''
     return _r2r(request,'inventory/vendor_list.html', {'page':_paginate(request, Vendor.objects.filter(name__icontains=q)),'q':q})
+
 @login_required
 @permission_required('inventory.view_branch', login_url="/blocked/")
 def branch_list(request):
     try: q=request.GET['q']
     except KeyError: q=''
     return _r2r(request,'inventory/branch_list.html', {'page':_paginate(request, Branch.objects.filter(name__icontains=q)),'q':q})
+
 @login_required
 def account_show(request, object_id, errors={}):
     if request.POST:
@@ -564,6 +595,7 @@ def item_list(request, errors=[]):
     except KeyError: q=''
     items=Item.objects.find(q)
     return _r2r(request,'inventory/item_list.html', {'page':_paginate(request, items),'q':q, 'error_list':errors, 'boxform':BoxForm()})
+
 @login_required
 @permission_required('inventory.view_item', login_url="/blocked/")
 def low_stock(request, errors=[]):

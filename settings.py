@@ -11,7 +11,7 @@ ADMINS = (
 MANAGERS = ADMINS
 
 DATABASE_ENGINE = 'mysql'           # 'postgresql_psycopg2', 'postgresql', 'mysql', 'sqlite3' or 'oracle'.
-DATABASE_NAME = 'jade'             # Or path to database file if using sqlite3.
+DATABASE_NAME = 'temp'             # Or path to database file if using sqlite3.
 DATABASE_USER = 'root'             # Not used with sqlite3.
 DATABASE_PASSWORD = 't1bur0n'         # Not used with sqlite3.
 DATABASE_HOST = ''             # Set to empty string for localhost. Not used with sqlite3.
@@ -172,6 +172,7 @@ MOVEMENTS_REPORT_NAME='Reporte de Movimientos'
 LOW_STOCK_REPORT_NAME='Reporte de Baja Inventario'
 CORTE_REPORT_NAME='Corte de Caja'
 ACCOUNT_STATEMENT_REPORT_NAME='Estado de Cuentas'
+QUOTE_TEMPLATE_NAME='Cotizacion'
 DEFAULT_UNIT_NAME='Cada Uno'
 DEFAULT_CREDIT_DAYS=30
 BARCODES_FOLDER='media/barcodes/'
