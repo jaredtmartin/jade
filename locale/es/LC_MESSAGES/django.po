@@ -632,7 +632,7 @@ msgstr "Documentos en mora"
 
 #: templates/inventory/all_accounts_list.html:4
 msgid "Accounts"
-msgstr "Cuenta"
+msgstr "Contabilidad"
 
 #: templates/inventory/all_accounts_list.html:11
 #: templates/inventory/client_list.html:4
