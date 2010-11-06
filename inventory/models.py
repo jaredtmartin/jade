@@ -1454,7 +1454,15 @@ class Payment(Transaction):
         try: self.entry('Debit').update('account', value)
         except AttributeError: self._dest = value
     dest = property(_get_dest, _set_dest)
-
+    def _get_timing(self):
+        try:
+            p=datetime.date(self.date)
+            s=datetime.date(Sale.objects.filter(doc_number=self.doc_number)[0].date)
+        except IndexError: return "Early"
+        if p==s:return "OnTime"
+        if p<s: return "Early"
+        if p>s: return "Late"
+    timing = property(_get_timing)
     ################ ################ ################  Create Entries   ################ ################ ################
 def add_payment_entries(sender, **kwargs):
     if kwargs['created']:

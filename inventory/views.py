@@ -1130,6 +1130,7 @@ class Document():
             self._price = Entry.objects.filter(transaction__doc_number=self.number, tipo='Revenue').aggregate(total=models.Sum('value'))['total'] or Decimal('0.00')
         return -self._price
     price=property(_get_price)
+    value=property(_get_price)
     def _get_due(self):
         if not self._due:
             self._due = Entry.objects.filter(transaction__doc_number=self.number, tipo='Client').aggregate(total=models.Sum('value'))['total'] or Decimal('0.00')
@@ -1214,6 +1215,11 @@ def separate_by_paid_on_spot(documents):
         else: unpaid.append(doc)
     return (paid, unpaid)
     
+def separate_payments_by_timing(payments):
+    groups={'Early':[], 'OnTime':[],'Late':[]}
+    for payment in payments: update_dict_list(groups, {payment.timing:payment})
+    return groups
+    
 def separate_by_tax_group(documents):
     groups={}
     for doc in documents: update_dict_list(groups, {doc.client.tax_group.name:doc})
@@ -1257,14 +1263,18 @@ def corte(request):
     start=form.cleaned_data['start']
     end=form.cleaned_data['end']
     sales = Sale.objects.all().order_by('doc_number')
-    print "sales = " + str(sales)
-    payments = Payment.objects.all().order_by('-_date')
+    payments = ClientPayment.objects.all().order_by('-_date')    
+    if not start and not end:
+        from datetime import datetime
+        start=datetime.date(datetime.now())
+        end=start+timedelta(days=1)
     if start:
         sales=sales.filter(_date__gte=start)
         payments=payments.filter(_date__gte=start)
     if end:
-        sales=sales.filter(_date__lt=end)
-        payments=payments.filter(_date__lt=end)
+        deadline = end + timedelta(days=1)
+        sales=sales.filter(_date__lt=deadline)
+        payments=payments.filter(_date__lt=deadline)
     # Organize sales:
     # if it was made and paid today, group by tax_group
     # otherwise put it in the "unpaid" list
@@ -1278,6 +1288,11 @@ def corte(request):
     tax_groups_by_series=[]
     for group in tax_groups:
         tax_groups_by_series.append(create_series(group))
+        
+    # group payments by timing
+    # returns a dict with three lists of payments: 'Early', 'OnTime', and 'Late'
+    grouped_payments=separate_payments_by_timing(payments)
+        
     try:report=Report.objects.get(name=settings.CORTE_REPORT_NAME)
     except Report.DoesNotExist: 
         request.GET=request.GET.copy()
@@ -1292,6 +1307,7 @@ def corte(request):
         'paid_sales':paid_sales,
         'unpaid_sales':unpaid_sales,
         'tax_groups_by_series':tax_groups_by_series,
+        'grouped_payments':grouped_payments,
         'user':request.user,
         'settings.COMPANY_NAME':settings.COMPANY_NAME,
     })  
