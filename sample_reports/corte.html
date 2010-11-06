@@ -22,19 +22,21 @@
                 text-shadow:0 1px 0 #E4F2FD;
             }
             th{text-align:left;}
+            .toprow{  
+                background:white none repeat scroll 0 0;
+            }
             .row1{  
-                -moz-background-clip:border;
-                -moz-background-inline-policy:continuous;
-                -moz-background-origin:padding;
+                padding-top:3px;
                 background:#EDF3FE none repeat scroll 0 0;
             }
             .row2{
-                -moz-background-clip:border;
-                -moz-background-inline-policy:continuous;
-                -moz-background-origin:padding;
+                padding-top:3px;
                 background:white none repeat scroll 0 0;
             }
-            body{line-height:16px;}
+            .bottomrow{
+                background:white none repeat scroll 0 0;
+            }
+            body{}
             td.numero {text-align:left;}
             td.texto {text-align:left;}
             table {border:solid;height:200px;}
@@ -51,18 +53,49 @@
     </head>
     <body>
         <h1>Corte de Caja {{start|date:"m/d/Y"}}{% if end != start %}-{{ end|date:"m/d/Y" }}{% endif %}</h1>
+{% if tax_groups_by_series %}
+<h2>Ventas canceladas inmediatamente:</h2>
         <table id="tableContent"><tbody>
           {% for group in tax_groups_by_series %}
-            <tr class="{% cycle "row1" "row2" %}"><td class="texto">{{group.0.0.client.tax_group.name}}</td><td/><td /></tr>
+            <tr class="toprow"><td class="texto"><b>{{group.0.0.client.tax_group.name}}</b></td><td/><td /></tr>
                 {% for series in group %}
                     {% if series.first == series.last %}
                         <tr class="{% cycle "row1" "row2" %}"><td/><td class="texto">{{series.first}}</td><td class="numero">${{series.value|floatformat:2}}</td></tr>
                     {% else %}
                         <tr class="{% cycle "row1" "row2" %}"><td/><td class="texto">{{series.first}} - {{series.last}}</td><td class="numero">${{series.value|floatformat:2}}</td></tr>
                     {% endif %}
-                {%endfor %}
-              <tr class="{% cycle "row1" "row2" %}"><td class="texto">Total de {{group.0.0.client.tax_group.name}}</td><td /><td class="numero">{% total_value group %}</td></tr>
+                {% endfor %}
+              <tr class="bottomrow"><td /><td class="texto"><b>Total</b></td><td class="numero"><b>{% total_value group %}</b></td></tr>
           {%endfor %}
+<tr class="bottomrow"><td /><td class="texto"><b>Total de Ventas canceladas inmediatamente:</b></td><td class="numero"><b>{% total_value paid_sales %}</b>
         </tbody></table>
+{% endif %}
+{% if unpaid_sales %}
+        <h2>Ventas a credito:</h2>
+        <table id="tableContent"><tbody>
+          {% for doc in unpaid_sales %}
+             <tr class="{% cycle "row1" "row2" %}"><td/><td class="numero">{{doc.number}}</td><td class="texto">{{doc.client.name}}</td><td class="numero"> ${{doc.value|floatformat:2}}</td></tr>
+          {% endfor %}
+          <tr class="bottomrow"><td /><td class="texto"><b>Total</b></td><td/><td class="numero"><b>{% total_value unpaid_sales %}</b></td></tr>
+        </tbody></table>
+{% endif %}
+{% if grouped_payments.Late %}
+        <h2>Pagos a credito:</h2>
+        <table id="tableContent"><tbody>
+          {% for payment in grouped_payments.Late %}
+             <tr class="{% cycle "row1" "row2" %}"><td/><td class="numero">{{payment.doc_number}}</td><td class="texto">{{payment.source.name}}</td><td class="numero"> ${{payment.value|floatformat:2}}</td></tr>
+          {% endfor %}
+          <tr class="bottomrow"><td /><td class="texto"><b>Total</b></td><td/><td class="numero"><b>{% total_value grouped_payments.Late %}</b></td></tr>
+        </tbody></table>
+{% endif %}
+{% if grouped_payments.Early %}
+        <h2>Abonos a cuenta:</h2>
+        <table id="tableContent"><tbody>
+          {% for payment in grouped_payments.Early %}
+             <tr class="{% cycle "row1" "row2" %}"><td/><td class="numero">{{payment.doc_number}}</td><td class="texto">{{payment.source.name}}</td><td class="numero"> ${{payment.value|floatformat:2}}</td></tr>
+          {% endfor %}
+          <tr class="bottomrow"><td /><td class="texto"><b>Total</b></td><td/><td class="numero"><b>{% total_value grouped_payments.Early %}</b></td></tr>
+        </tbody></table>
+{% endif %}
     </body>
 </html>
