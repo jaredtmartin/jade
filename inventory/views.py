@@ -150,7 +150,7 @@ def paginate_transactions(request, form, collection, template='inventory/transac
         'show_totals':True,
         'error_list':form.errors,
         })
-def search_and_paginate_transactions(request, model, template='inventory/transactions.html', errors={}):    
+def search_and_paginate_transactions(request, model, template='inventory/transactions.html', errors={}):
     form=SearchForm(request.GET, validate=True)
     q=form.cleaned_data['q']
     start=form.cleaned_data['start']
@@ -301,7 +301,8 @@ def ajax_item_list(request):
 # PDF Functions
 ######################################################################################
 def fetch_resources(uri, rel):
-    path = os.path.join(settings.MEDIA_ROOT, uri.replace(settings.MEDIA_URL, ""))
+    #path = os.path.join(settings.MEDIA_ROOT, uri.replace(settings.MEDIA_ROOT, ""))
+    path=uri
     return path
     
 def render_to_pdf(template_src, context_dict):
