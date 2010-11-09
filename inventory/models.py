@@ -1539,7 +1539,9 @@ class GaranteeOffer(models.Model):
     item = models.ForeignKey(Item)
     site = models.ForeignKey(Site)#, default=Site.objects.get_current().pk
     objects = CurrentSiteManager()
-
+    def _get_tipo(self):
+        return unicode("GaranteeOffer")
+    tipo=property(_get_tipo)
     def __init__(self, *args, **kwargs):
         self.template='inventory/garantee_offer.html'
         super(GaranteeOffer, self).__init__(*args, **kwargs)
@@ -1559,7 +1561,6 @@ class Garantee(Transaction):
         self._garanteed = kwargs.pop('garanteed', None)
         self._quantity = kwargs.pop('quantity', 0)
         self._item = kwargs.pop('item', None)
-        self._quantity = kwargs.pop('quantity', 0)
         self._serial = kwargs.pop('serial', None)
         self._price = kwargs.pop('price', Decimal('0.00'))
         super(Garantee, self).__init__(*args, **kwargs)
@@ -1628,8 +1629,6 @@ def add_garantee_entries(sender, **kwargs):
     if kwargs['created']:
         l=kwargs['instance']
         l.sites.add(Site.objects.get_current())
-        if not l._price: l.price=0
-        if not l._quantity: l._quantity=0
         l.create_related_entry(
             account     = l._garanteer,
             tipo        = 'Garanteer',
@@ -1667,7 +1666,6 @@ class ClientGarantee(Garantee):
         try: return self.entry('Garanteed').account
         except AttributeError: return self._client
     def _set_client(self, value):
-        print "set_client --> value=" + str(value)
         try: self.entry('Garanteed').update('account', value)
         except AttributeError: self._client = value
     client = property(_get_client, _set_client)

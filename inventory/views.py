@@ -46,7 +46,7 @@ def edit_object(request, object_id, model, form, prefix, tipo=None, extra_contex
     if f.is_valid():
         obj=f.save()
         updated_form=form(instance=obj, prefix=prefix+'-'+str(obj.pk))
-        if type(tipo)!=unicode: tipo=tipo.__unicode__()
+        if type(tipo)!=unicode: tipo=unicode(tipo)
         info_list=['The '+tipo+' has been saved successfully.',]
         error_list={}
     else:
