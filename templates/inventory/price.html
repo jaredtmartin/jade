@@ -3,7 +3,9 @@
 <tr id="price-{{ object.pk }}" class="price">
     <td>{% link object.item %}</td>
     <td>{{ object.group }}</td>
-    <td>{{ object.item.cost|floatformat:2 }}</td>
+    {% if perms.inventory.can_view_costs %}
+        <td>{{ object.item.cost|floatformat:2 }}</td>
+    {% endif %}
     <td>{{ object.item.unit }}</td>
     <td><input type="text" id="id_price-{{ object.pk }}-relative" value="{{ object.relative|floatformat:2 }}" name="price-{{ object.pk }}-relative"></td>
     <td><input type="text" id="id_price-{{ object.pk }}-fixed" value="{{ object.fixed|floatformat:2 }}" name="price-{{ object.pk }}-fixed"></td>

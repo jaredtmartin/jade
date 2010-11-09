@@ -3,9 +3,11 @@
 
 {% load tags %}
 {% block actions %}
-    {% if perms.inventory.change_sale %}
-        <div class="actiontab" ><a href="/inventory/item/" class="action">{% trans 'New' %}</a></div>
-        {% if object %}<div class="actiontab" ><a href='/inventory/item/{{object.pk}}/delete'>{% trans 'Delete' %}</a></div>{% endif %}
+    {% if perms.inventory.create_items %}
+        <div class="actiontab" ><a href="/inventory/item/" class="action">{% trans 'New' %}</a></div>        
+    {% endif %}
+    {% if perms.inventory.delete_items %}
+    {% if object %}<div class="actiontab" ><a href='/inventory/item/{{object.pk}}/delete'>{% trans 'Delete' %}</a></div>{% endif %}      
     {% endif %}
 {% endblock%}
 {% block js %}
