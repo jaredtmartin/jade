@@ -8,6 +8,15 @@ function editTransaction(object_id) {
     $('#id_transaction-'+object_id+'-account.client').autocomplete('/inventory/client_list/', {matchSubset:0, autoFill:1,});
     $('#id_transaction-'+object_id+'-account.vendor').autocomplete('/inventory/vendor_list/', {matchSubset:0, autoFill:1,});
     $('#id_transaction-'+object_id+'-garantee_months').attr('onblur', 'getGaranteePrice('+object_id+')');
+        $('.transaction:first').children().children('.field:visible').keydown(function(e){
+            if (e.keyCode == 13) {
+                $(this).parents('.transaction').children().children('.save').trigger('click');
+                $('#item').select();
+                e.preventDefault();
+                return false;
+            }
+        });
+
     
     $('#transaction-'+object_id+' .show').hide();
     $('#transaction-'+object_id+' .edit').show();
@@ -55,6 +64,14 @@ function updateTransaction(data){
     }
     if ($('#item:visible').length>0){
         $('.quantity:first').keydown(function(e){
+            if (e.keyCode == 13) {
+                $(this).parents('.transaction').children().children('.save').trigger('click');
+                $('#item').select();
+                e.preventDefault();
+                return false;
+            }
+        });
+        $('.price:first').keydown(function(e){
             if (e.keyCode == 13) {
                 $(this).parents('.transaction').children().children('.save').trigger('click');
                 $('#item').select();
