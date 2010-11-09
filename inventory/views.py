@@ -845,7 +845,7 @@ def new_sale(request): # AJAX POST ONLY
         offer=sale.item.garanteeoffer_set.filter(price=0)[0]
         garantee=ClientGarantee(doc_number=sale.doc_number, date=sale.date, client=sale.client, item=sale.item, quantity=offer.months, serial=sale.serial)
         garantee.save()
-        objects.append(garantee)
+        objects.insert(0,garantee)
     except: pass
     return _r2r(request,'inventory/results.html', {'edit_mode':True, 'objects':objects,'prefix':'sale','line_template':"inventory/transaction.html",'error_list':error_list, 'info_list':{}})
     
