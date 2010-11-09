@@ -1967,8 +1967,10 @@ class UserProfile(models.Model):
         except:
             self._tabs=[]
             for tab in settings.BASE_TABS:
-                if self.user.has_perms(tab.permission):
+                if self.user.has_perm(tab.permission):
                     self._tabs.append(tab)
+                else:
+                    print "user doesnt have permission:%s" %tab.permission
         return self._tabs
     tabs=property(_get_tabs)
     def _get_actions(self):

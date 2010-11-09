@@ -56,7 +56,8 @@ class SaleForm(forms.ModelForm):
         model.discount =    (self.cleaned_data['unit_discount'] or 0)
         model.price =       self.cleaned_data['unit_price'] 
         if not model.price and model.item: model.price = model.item.price(model.client)
-        model.cost =        self.cleaned_data['unit_cost']
+        if self.cleaned_data['unit_cost']:
+            model.cost = self.cleaned_data['unit_cost']
         if model.item and not model.cost: model.cost = model.item.cost
         if self.cleaned_data['quantity']!=0: 
             model.tax=              model.tax            * self.cleaned_data['quantity']
@@ -72,7 +73,7 @@ class SaleForm(forms.ModelForm):
     quantity =          forms.DecimalField()
     unit_tax =          forms.DecimalField()
     unit_discount =     forms.DecimalField()
-    unit_cost =         forms.DecimalField()
+    unit_cost =         forms.CharField(required=False)#forms.DecimalField()
     date =              forms.DateField(initial=datetime.now()) #, input_formats=['%Y-%m-%d', '%d/%m/%Y',]) # Uncomment this for spanish dates
     serial =            forms.CharField(required=False)
     def clean_account(self):
@@ -80,6 +81,15 @@ class SaleForm(forms.ModelForm):
     def clean_item(self):
         x=clean_bar_code(self, 'item', Item)
         return x
+    def clean_unit_cost(self):
+        try:
+            data=self.cleaned_data['unit_cost']
+            if data=='undefined': return None
+            return Decimal(data)
+        except:
+            raise forms.ValidationError('Enter a number')
+            return data
+        
 
 
 class ClientGaranteeForm(forms.ModelForm):

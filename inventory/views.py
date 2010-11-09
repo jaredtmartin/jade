@@ -40,7 +40,7 @@ def _r2r(request, template, context={}):
 
 def edit_object(request, object_id, model, form, prefix, tipo=None, extra_context={}):
     obj = get_object_or_404(model, pk=object_id)
-    if not request.user.has_perms('inventory.change_'+obj.tipo.lower()): return http.HttpResponseRedirect("/blocked/")
+    if not request.user.has_perm('inventory.change_'+obj.tipo.lower()): return http.HttpResponseRedirect("/blocked/")
     f = form(request.POST, instance=obj)
     if not tipo: tipo=obj.get_tipo_display()
     if f.is_valid():
@@ -58,14 +58,14 @@ def edit_object(request, object_id, model, form, prefix, tipo=None, extra_contex
     
 def delete_object(request, object_id, model, prefix, tipo=None):
     obj = get_object_or_404(model, pk=object_id)
-    if not request.user.has_perms('inventory.delete_'+obj.tipo.lower()): return http.HttpResponseRedirect("/blocked/")
+    if not request.user.has_perm('inventory.delete_'+obj.tipo.lower()): return http.HttpResponseRedirect("/blocked/")
     if not tipo: tipo=obj.get_tipo_display()
     obj.delete()
     info_list=['The '+tipo+' has been deleted successfully.',]
     return _r2r(request,'inventory/results.html', {'error_list':{}, 'info_list':info_list})
 
 def new_object(request, form, prefix, template='', tipo=None, extra_context={}):
-    if tipo and not request.user.has_perms('inventory.change_'+tipo.lower()): return http.HttpResponseRedirect("/blocked/")
+    if tipo and not request.user.has_perm('inventory.change_'+tipo.lower()): return http.HttpResponseRedirect("/blocked/")
     if request.POST:
         f = form(request.POST)
         print "adadad"
@@ -647,7 +647,7 @@ def inventory_report(request):
 @permission_required('inventory.view_item', login_url="/blocked/")
 def item_show(request, object_id):
     if request.POST:
-        if not request.user.has_perms('inventory.change_item'): return http.HttpResponseRedirect("/blocked/")
+        if not request.user.has_perm('inventory.change_item'): return http.HttpResponseRedirect("/blocked/")
         return edit_object(request, object_id, Item, ItemForm, "item")
     else:
         item = get_object_or_404(Item, pk=object_id)
