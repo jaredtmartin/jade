@@ -470,6 +470,9 @@ msgid "Your username and password didn't match. Please try again."
 msgstr ""
 "Su nombre de usuario y contraseña no coinciden. Favor de intentarlo otra vez."
 
+
+msgid "Sorry, you don't have permission to access this page."
+msgstr "Disculpe, pero usted no tiene permiso para esta pagina."
 #: templates/login.html:12 templates/logout.html:8
 msgid "Inventory and Accounting System"
 msgstr "Sistema de inventario y contabilidad"

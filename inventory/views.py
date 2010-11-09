@@ -595,6 +595,7 @@ def item_list(request, errors=[]):
     try: q=request.GET['q']
     except KeyError: q=''
     items=Item.objects.find(q)
+    if items.count()==1: return item_show(request, items[0].pk)
     return _r2r(request,'inventory/item_list.html', {'page':_paginate(request, items),'q':q, 'error_list':errors, 'boxform':BoxForm()})
 
 @login_required

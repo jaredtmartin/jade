@@ -25,8 +25,12 @@
             {% else %}
                 {% trans 'New Item' %}
             {% endif %}
+            
         {% endblock %}
     </h1>
+    {% trans 'Item Name or Bar Code' %}: <input id="search_field" type="text" value="{{q}}" >
+    <a onclick="$('#search_field').val('');$('#search_field').select();" href="#"> <img src="{{MEDIA_URL}}/img/clear.png"/></a>    
+    <a onclick="window.location = '/inventory/items/?q='+$('#search_field').val(); return false;" href="#"> <img src="{{MEDIA_URL}}/img/find.png"/></a>
 {% endblock %}
 {% block content %}
     <script type="text/javascript">
