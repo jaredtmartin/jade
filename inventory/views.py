@@ -831,7 +831,11 @@ def new_sale(request): # AJAX POST ONLY
         price = item.price(client)
         if client.tax_group.price_includes_tax:
             price = price/(client.tax_group.value+1)
+        print "client.tax_group.value = " + str(client.tax_group.value)
+        print "price = " + str(price)
+        print "item.price(client) = " + str(item.price(client))
         tax = item.price(client)*client.tax_group.value
+        print "item.price(client)*client.tax_group.value = " + str(item.price(client)*client.tax_group.value)
     except:
         pass
     if not client: error_list['client']=[unicode('Unable to find a client with the name specified.')]

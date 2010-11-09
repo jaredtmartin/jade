@@ -890,8 +890,31 @@ class Sale(Transaction):
         self._serial = kwargs.pop('serial', None)
         self._client = kwargs.pop('client', DEFAULT_CLIENT)
         super(Sale, self).__init__(*args, **kwargs)
+        self._initial_price=self.price
         self.tipo='Sale'
-        
+    def save(self, *args, **kwargs):
+        try: 
+            ct=self.extravalue_set.get(name='CalculatedTax')
+            print "-ct.value = " + str(-ct.value)
+            print "self.tax = " + str(self.tax)
+            print "-ct.value==self.tax = " + str(-ct.value==self.tax)
+            if ct.value==self.tax and self._initial_price != self.price:
+                    self.tax = ct.value = self.calculate_tax()
+                    print "ct.value = " + str(ct.value)
+                    print "self.tax = " + str(self.tax)
+                    ct.save()
+        except ExtraValue.DoesNotExist: pass
+        super(Sale, self).save(*args, **kwargs)
+    def calculate_tax(self):
+        try: 
+            print "self.price = " + str(self.price)
+            print "-self.discount = " + str(-self.discount)
+            print "self.client.tax_group.value = " + str(self.client.tax_group.value)
+            print "self.price-self.discount = " + str(self.price-self.discount)
+            print "self.price-self.discount * self.client.tax_group.value = " + str(self.price-self.discount * self.client.tax_group.value)
+            return (self.price-self.discount) * self.client.tax_group.value
+        except NameError: return 0
+        except AttributeError: return 0
     ################ ################ ################  Active   ################ ################ ################
     def _get_active(self):
         try: return self.entry('Client').active
@@ -1145,6 +1168,7 @@ def add_sale_entries(sender, **kwargs):
                 account     = l._client.tax_group.discounts_account,
                 tipo        = 'Discount',
                 value       = l._discount)
+        ExtraValue.objects.create(transaction = l, name = 'CalculatedTax', value = l.tax)
         if (l._quantity!=0 or l._cost!=0) and l._delivered:
     #            print "creating inventory entry"
     #            print "l.item = " + str(l.item)
