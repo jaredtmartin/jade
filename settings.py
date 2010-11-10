@@ -110,19 +110,19 @@ class Tab():
         self.url=url
         self.permission=permission
 BASE_TABS = [
-    Tab(label='Items', url='/inventory/items', permission='inventory.view_item'),
-    Tab(label='Transactions', url='/inventory/transactions', permission='inventory.change_transaction'),
+    Tab(label='Items', url='/inventory/items/', permission='inventory.view_item'),
+    Tab(label='Transactions', url='/inventory/transactions/', permission='inventory.change_transaction'),
     
-    Tab(label='Accounts', url='/inventory/accounts', permission='inventory.change_account'),
+    Tab(label='Accounts', url='/inventory/accounts/', permission='inventory.change_account'),
 #    Tab(label='Clients', url='/inventory/clients', permission='inventory.view_client'),
 #    Tab(label='Vendors', url='/inventory/vendors', permission='inventory.view_vendor'),
     Tab(label='Production', url='/production/production/list/', permission='production.view_production'),
 ]
 ACTIONS = [
-    Tab(label='Sales', url='/inventory/sales', permission='inventory.view_sale'),
-    Tab(label='Purchases', url='/inventory/purchases', permission='inventory.view_purchase'),
-    Tab(label='Counts', url='/inventory/counts', permission='inventory.view_count'),
-    Tab(label='Transfers', url='/inventory/sales', permission='inventory.view_transfers'),
+    Tab(label='Sales', url='/inventory/sales/', permission='inventory.view_sale'),
+    Tab(label='Purchases', url='/inventory/purchases/', permission='inventory.view_purchase'),
+    Tab(label='Counts', url='/inventory/counts/', permission='inventory.view_count'),
+    Tab(label='Transfers', url='/inventory/sales/', permission='inventory.view_transfers'),
 ]
 ASSETS_ACCOUNT_DATA=('Activos','01', 1)
 CASH_ACCOUNT_DATA=('Efectivo','0101', 1)
