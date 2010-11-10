@@ -97,5 +97,11 @@
           <tr class="bottomrow"><td /><td class="texto"><b>Total</b></td><td/><td class="numero"><b>{% total_value grouped_payments.Early %}</b></td></tr>
         </tbody></table>
 {% endif %}
+<table id="cashContent"><tbody>
+<tr class="{% cycle "row1" "row2" %}"><td/><td class="texto">Efectivo al inicio del dia:</td><td>${{initial_cash|floatformat:2}}</td></tr>
+<tr class="{% cycle "row1" "row2" %}"><td/><td class="texto">Ganacia:</td><td>${{earnings|floatformat:2}}</td></tr>
+<tr class="{% cycle "row1" "row2" %}"><td/><td class="texto">Gastos:</td><td>${{expense|floatformat:2}}</td></tr>
+<tr class="{% cycle "row1" "row2" %}"><td/><td class="texto">Impuestos:</td><td>${{tax|floatformat:2}}</td></tr>
+<tr class="{% cycle "row1" "row2" %}"><td/><td class="texto">Efectivo al fin del dia:</td><td>${{cash|floatformat:2}}</td></tr>
     </body>
 </html>

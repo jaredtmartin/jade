@@ -1,4 +1,4 @@
-from jade.inventory.models import Count, Sale, Purchase, INVENTORY_ACCOUNT
+from jade.inventory.models import Count, Sale, Purchase, INVENTORY_ACCOUNT, CASH_ACCOUNT, REVENUE_ACCOUNT, TAX_ACCOUNT, EXPENSE_ACCOUNT
 from jade.inventory.forms import *
 #from django.template import loader, Context, RequestContext
 from django.utils.translation import ugettext_lazy as _
@@ -1243,8 +1243,12 @@ def create_series(documents):
         if series==[]:
             series.append(Series([doc]))
             l=re.split("(\d*)", doc.number)
-            prefix=l[0:-2]
-            last=int(l[-2])
+            if len(l)>1:
+                prefix=l[0:-2]
+                last=int(l[-2])
+            else:
+                prefix=''
+                last=0
         else:
             x=int(re.split("(\d*)", doc.number)[-2])
             if x-1==last or x==last: series[-1].append(doc)
@@ -1307,7 +1311,11 @@ def corte(request):
     start=form.cleaned_data['start']
     end=form.cleaned_data['end']
     sales = Sale.objects.all().order_by('doc_number')
-    payments = ClientPayment.objects.all().order_by('-_date')    
+    payments = ClientPayment.objects.all().order_by('-_date')
+    cash = Entry.objects.filter(account=CASH_ACCOUNT)
+    revenue = Entry.objects.filter(account__number__startswith=REVENUE_ACCOUNT.number)
+    expense = Entry.objects.filter(account=EXPENSE_ACCOUNT)
+    tax = Entry.objects.filter(account__number__startswith=TAX_ACCOUNT.number)
     if not start and not end:
         from datetime import datetime
         start=datetime.date(datetime.now())
@@ -1315,10 +1323,22 @@ def corte(request):
     if start:
         sales=sales.filter(_date__gte=start)
         payments=payments.filter(_date__gte=start)
+        cash=cash.filter(date__gte=start)
+        revenue=revenue.filter(date__gte=start)
+        expense=expense.filter(date__gte=start)
+        tax=tax.filter(date__gte=start)
+        initial_cash=Entry.objects.filter(account=CASH_ACCOUNT, date__lt=start).aggregate(total=models.Sum('value'))['total'] or Decimal('0.00')
+    else:
+        initial_cash=Entry.objects.filter(account=CASH_ACCOUNT, date__lte=datetime.date(datetime.now())).aggregate(total=models.Sum('value'))['total'] or Decimal('0.00')
     if end:
         deadline = end + timedelta(days=1)
         sales=sales.filter(_date__lt=deadline)
         payments=payments.filter(_date__lt=deadline)
+        cash=cash.filter(date__lt=deadline)
+        revenue=revenue.filter(date__lt=deadline)
+        expense=expense.filter(date__lt=deadline)
+        tax=tax.filter(date__lt=deadline)
+        
     # Organize sales:
     # if it was made and paid today, group by tax_group
     # otherwise put it in the "unpaid" list
@@ -1342,6 +1362,10 @@ def corte(request):
         request.GET=request.GET.copy()
         errors={'Report':[unicode(_('Unable to find a report template with the name "%s"') % (settings.CORTE_REPORT_NAME,))]}
         return item_list(request, errors=errors)
+    cash=cash.aggregate(total=models.Sum('value'))['total'] or Decimal('0.00')
+    revenue=-revenue.aggregate(total=models.Sum('value'))['total'] or Decimal('0.00')
+    expense=expense.aggregate(total=models.Sum('value'))['total'] or Decimal('0.00')
+    tax=-tax.aggregate(total=models.Sum('value'))['total'] or Decimal('0.00')
     return render_string_to_pdf(Template(report.body), {
         'start':start or datetime.now(),
         'end':end,
@@ -1354,6 +1378,13 @@ def corte(request):
         'grouped_payments':grouped_payments,
         'user':request.user,
         'settings.COMPANY_NAME':settings.COMPANY_NAME,
+        'cash':cash,
+        'revenue':revenue,
+        'earnings':revenue-expense,
+        'expense':expense,
+        'tax':tax,
+        'final_cash':CASH_ACCOUNT.balance,
+        'initial_cash':initial_cash
     })  
     
 ######################################################################################
