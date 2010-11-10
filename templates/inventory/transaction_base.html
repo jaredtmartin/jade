@@ -19,7 +19,7 @@
     {% block other_fields_show %}{% endblock %}
     <td>
         <a class="show" id="id_transaction-{{object.pk}}-edit" href="#" title="{% trans 'Edit Sale' %}" onclick="editTransaction({{object.pk}}); return false;"><img src="{{MEDIA_URL}}/img/edit.png"/></a>
-        {% block show_save_link %}<a class="edit save" style="display:none;" id="id_transaction-{{object.pk}}-save" title="{% trans 'Save Changes' %}" href="#" onclick="saveTransaction({{object.pk}}, '/inventory/{{object.tipo|lower}}/{{object.pk}}/');$('.quantity:first').select(); return false;"><img src="{{MEDIA_URL}}/img/save.png"/></a>{% endblock %}
+        {% block show_save_link %}<a class="edit save" style="display:none;" id="id_transaction-{{object.pk}}-save" title="{% trans 'Save Changes' %}" href="#" onclick="saveTransaction({{object.pk}}, '/inventory/{{object.tipo|lower}}/{{object.pk}}/');$('#item.ac_input').select(); return false;"><img src="{{MEDIA_URL}}/img/save.png"/></a>{% endblock %}
         <a class="edit" style="display:none;" id="id_transaction-{{object.pk}}-cancel" title="{% trans 'Cancel Changes' %}" href="#" onclick="cancelTransaction({{object.pk}}); return false;"><img src="{{MEDIA_URL}}/img/cancel.png"/></a>
         {% if object.subclass.active %}
             <a class="show" id="id_transaction-{{object.pk}}-deactivate" title="{% trans 'Mark as Inactive' %}" href="#" onclick="markTransaction('/inventory/transaction/{{object.pk}}/deactivate/'); return false;"><img src="{{MEDIA_URL}}/img/on.png"/></a>

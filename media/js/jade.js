@@ -78,7 +78,7 @@ function updateAndSelectQuantity(data){
 }
 function updateAndSelectItemField(data){
     updateTransaction(data)
-    $('#item.ac_input').select();
+//    $('#item.ac_input').select();
 }
 function cancelTransaction(object_id) {
     $('#transaction-'+object_id+' .field').each(function(i){
