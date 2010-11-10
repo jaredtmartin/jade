@@ -806,7 +806,7 @@ class Entry(models.Model):
 
         # Garantee entries
         ('Garanteed', 'Garanteed'), # Debit
-        ('Garanteer', 'Garanteer'), # Credit
+        ('Revenue', 'Revenue'), # Credit
         
         
         ('Production', 'Production'), # Credit
@@ -1608,7 +1608,7 @@ class Garantee(Transaction):
         try: return self.entry('Garanteed').item
         except AttributeError: return self._item
     def _set_item(self, value):
-        try: return [self.entry(e).update('item',value) for e in ['Garanteed','Garanteer']]
+        try: return [self.entry(e).update('item',value) for e in ['Garanteed','Revenue']]
         except AttributeError: self._item=value
     item = property(_get_item, _set_item)
     ################ ################ ################  Quantity   ################ ################ ################
@@ -1619,7 +1619,7 @@ class Garantee(Transaction):
         value=(value or 0)
         try:
             self.entry('Garanteed').update('quantity', value)
-            self.entry('Garanteer').update('quantity', -value)
+            self.entry('Revenue').update('quantity', -value)
 
         except AttributeError: self._quantity=value
     quantity = property(_get_quantity, _set_quantity)
@@ -1629,7 +1629,7 @@ class Garantee(Transaction):
         except AttributeError: return self._serial
     def _set_serial(self, value):
         print "setting serial"
-        try: return [self.entry(e).update('serial',value) for e in ['Garanteed','Garanteer']]
+        try: return [self.entry(e).update('serial',value) for e in ['Garanteed','Revenue']]
         except AttributeError: 
             print "setting cache serial!!!!!!"
             self._serial=value
@@ -1641,7 +1641,7 @@ class Garantee(Transaction):
     def _set_price(self, value):
         try:
             self.entry('Garanteed').update('value', value)
-            self.entry('Garanteer').update('value', -value)
+            self.entry('Revenue').update('value', -value)
         except: self._price = value
     price=property(_get_price, _set_price)
     ################ ################ ################  Expires  ################ ################ ################
@@ -1655,7 +1655,7 @@ def add_garantee_entries(sender, **kwargs):
         l.sites.add(Site.objects.get_current())
         l.create_related_entry(
             account     = l._garanteer,
-            tipo        = 'Garanteer',
+            tipo        = 'Revenue',
             value       = l.price * -1,
             item        = l._item,
             quantity    = -l._quantity,
@@ -1715,10 +1715,10 @@ class VendorGarantee(Garantee):
         self.tipo='VendorGarantee'
     ################ ################ ################  Vendor   ################ ################ ################
     def _get_vendor(self):
-        try: return self.entry('Garanteer').account
+        try: return self.entry('Revenue').account
         except AttributeError: return self._vendor
     def _set_vendor(self, value):
-        try: self.entry('Garanteer').update('account', value)
+        try: self.entry('Revenue').update('account', value)
         except AttributeError: self._vendor = value
     vendor = property(_get_vendor, _set_vendor)
     
