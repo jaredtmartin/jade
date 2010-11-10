@@ -140,7 +140,7 @@ class Item(models.Model):
     def template(self):
         return 'inventory/item.html'
     def url(self):
-        return '/inventory/item/'+str(self.pk)
+        return '/inventory/item/'+unicode(self.pk)
     def barcode_url(self):
         return "/%s%s.png" % (settings.BARCODES_FOLDER, self.bar_code)
     def _get_total_cost(self):
@@ -758,7 +758,7 @@ class Transaction(models.Model):
             self.entry(tipo).delete()
             
     def url(self):
-        return '/inventory/transactions/?q='+self.doc_number
+        return '/inventory/transactions/?q='+unicode(self.doc_number)
     def _get_garantee_expires(self):
         try: return self.garantee.expires
         except ObjectDoesNotExist: return None

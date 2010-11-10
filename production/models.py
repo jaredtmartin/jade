@@ -122,7 +122,7 @@ class Process(Production):
         return self.doc_number+str(int(last_number)+1)
 
     def url(self):
-        return '/production/process/list/?q='+str(self.doc_number)
+        return '/production/process/list/?q='+unicode(self.doc_number)
         
 def add_process_entries(sender, **kwargs):
     l=kwargs['instance']
@@ -177,7 +177,7 @@ class Job(Production):
         return total==active
     finished=property(_get_finished)
     def url(self):
-        return '/production/job/list/?q='+str(self.doc_number)
+        return '/production/job/list/?q='+unicode(self.doc_number)
     class Meta:
         permissions = (
             ("start_production", "Can start production"),
