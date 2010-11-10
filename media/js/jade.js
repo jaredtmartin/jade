@@ -95,10 +95,10 @@ function newTransaction(url) {
         url: url,
         type:'POST',
         data:{
-            doc_number:     jQuery('#doc_number').val(),
-            client:     jQuery('#client').val(),
-            vendor:     jQuery('#vendor').val(),
-            item:     jQuery('#item').val(),
+            doc_number:     jQuery('#doc_number.ac_input').val(),
+            client:     jQuery('#client.ac_input').val(),
+            vendor:     jQuery('#vendor.ac_input').val(),
+            item:     jQuery('#item.ac_input').val(),
         },
         success: updateAndSelectQuantity
     });
