@@ -10,14 +10,14 @@ function editTransaction(object_id) {
     $('#id_transaction-'+object_id+'-account2.accounting').autocomplete('/inventory/account_list/', {matchSubset:0, autoFill:1,});
     $('#id_transaction-'+object_id+'-account.accounting').autocomplete('/inventory/account_list/', {matchSubset:0, autoFill:1,});
     $('#id_transaction-'+object_id+'-garantee_months').attr('onblur', 'getGaranteePrice('+object_id+')');
-        $('.transaction:first').children().children('.field:visible').keydown(function(e){
-            if (e.keyCode == 13) {
-                $(this).parents('.transaction').children().children('.save').trigger('click');
-                $('#item').select();
-                e.preventDefault();
-                return false;
-            }
-        });    
+    $('.transaction:first').children().children('.field:visible').keydown(function(e){
+        if (e.keyCode == 13) {
+            $(this).parents('.transaction').children().children('.save').trigger('click');
+            $('#item').select();
+            e.preventDefault();
+            return false;
+        }
+    });    
     $('#transaction-'+object_id+' .show').hide();
     $('#transaction-'+object_id+' .edit').show();
 }
@@ -63,24 +63,13 @@ function updateTransaction(data){
         $('#transaction-'+object_id+' .show').show();
         $('#transaction-'+object_id+' .edit').hide();
     }
-    if ($('#item:visible').length>0){
-        $('.quantity:first').keydown(function(e){
-            if (e.keyCode == 13) {
-                $(this).parents('.transaction').children().children('.save').trigger('click');
-                $('#item').select();
-                e.preventDefault();
-                return false;
-            }
-        });
-        $('.price:first').keydown(function(e){
-            if (e.keyCode == 13) {
-                $(this).parents('.transaction').children().children('.save').trigger('click');
-                $('#item').select();
-                e.preventDefault();
-                return false;
-            }
-        });
-    }
+    $('.transaction:first').children().children('.field:visible').keydown(function(e){
+        if (e.keyCode == 13) {
+            $(this).parents('.transaction').children().children('.save').trigger('click');
+            e.preventDefault();
+            return false;
+        }
+    });    
 }
 function updateAndSelectQuantity(data){
     updateTransaction(data)
@@ -89,7 +78,7 @@ function updateAndSelectQuantity(data){
 }
 function updateAndSelectItemField(data){
     updateTransaction(data)
-    $('#order-form #item').select();
+    $('#item.ac_input').select();
 }
 function cancelTransaction(object_id) {
     $('#transaction-'+object_id+' .field').each(function(i){
