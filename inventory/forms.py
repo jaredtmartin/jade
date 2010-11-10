@@ -9,7 +9,8 @@ from django.forms.formsets import BaseFormSet
 from datetime import datetime
 import settings
 
-def clean_lookup(form, name, model, by_pk=False):
+def clean_lookup(form, name, model, by_pk=False, title=None):
+    if not title: title=name
     data = form.cleaned_data[name]
     if (not data) and (not form.fields[name].required): return data
     try: 
@@ -18,9 +19,9 @@ def clean_lookup(form, name, model, by_pk=False):
         else:
             data = model.objects.filter(name=data).get()
     except model.MultipleObjectsReturned: 
-            raise forms.ValidationError('There are more than one %ss with the name %s. Resolve this issue and try again.' % (name, data))
+            raise forms.ValidationError('There are more than one %ss with the name %s. Resolve this issue and try again.' % (title, data))
     except model.DoesNotExist: 
-        raise forms.ValidationError('Unable to find %s in the list of %ss.' % (data, name))
+        raise forms.ValidationError('Unable to find %s in the list of %ss.' % (data, title))
     return data
     
 def clean_bar_code(form, name, model):
@@ -89,8 +90,31 @@ class SaleForm(forms.ModelForm):
         except:
             raise forms.ValidationError('Enter a number')
             return data
-        
-
+            
+class AccountingForm(forms.ModelForm):
+    class Meta:
+        model = Accounting
+        fields=('doc_number','date','account','account2','value')
+    def save(self, commit=True):
+        model = super(AccountingForm, self).save(commit=False)
+        model.debit_account =      self.cleaned_data['account']
+        model.credit_account =      self.cleaned_data['account2']
+        model.date =        self.cleaned_data['date']
+        model.value =    self.cleaned_data['value']
+        if commit: model.save()
+        return model
+    doc_number =     forms.CharField()
+    account =  forms.CharField(initial=settings.DEFAULT_ACCOUNTING_DEBIT_ACCOUNT_NAME)
+    account2 = forms.CharField(initial=settings.DEFAULT_ACCOUNTING_CREDIT_ACCOUNT_NAME)
+    value =          forms.DecimalField()
+    date =           forms.DateField(initial=datetime.now())
+    def clean_account(self):
+        print "asdafahhhhhhhhhhhhhhhhhhhhhhhhhhhhhh"
+        return clean_lookup(self, 'account', Account)
+    def clean_account2(self):
+        print "asdadadadadadddddddddddd"
+        a=self.cleaned_data
+        return clean_lookup(self, 'account2', Account, title='account')
 
 class ClientGaranteeForm(forms.ModelForm):
     class Meta:

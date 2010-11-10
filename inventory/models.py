@@ -594,10 +594,12 @@ DEFAULT_REVENUE_ACCOUNT = make_default_account(settings.DEFAULT_REVENUE_ACCOUNT_
 DEFAULT_DISCOUNTS_ACCOUNT = make_default_account(settings.DEFAULT_DISCOUNTS_ACCOUNT_DATA)
 DEFAULT_RETURNS_ACCOUNT = make_default_account(settings.DEFAULT_RETURNS_ACCOUNT_DATA)
 EXPENSE_ACCOUNT = make_default_account(settings.EXPENSE_ACCOUNT_DATA)
-EXPENSE_ACCOUNT = make_default_account(settings.EXPENSE_ACCOUNT_DATA)
 INVENTORY_EXPENSE_ACCOUNT = make_default_account(settings.INVENTORY_EXPENSE_ACCOUNT_DATA)
 COUNTS_EXPENSE_ACCOUNT = make_default_account(settings.COUNTS_EXPENSE_ACCOUNT_DATA)
-
+try: DEFAULT_ACCOUNTING_DEBIT_ACCOUNT=Account.objects.filter(name=settings.DEFAULT_ACCOUNTING_DEBIT_ACCOUNT_NAME)[0]
+except: print "Unable to establish default accounting debit account"
+try: DEFAULT_ACCOUNTING_CREDIT_ACCOUNT=Account.objects.filter(name=settings.DEFAULT_ACCOUNTING_CREDIT_ACCOUNT_NAME)[0]
+except: print "Unable to establish default accounting credit account"
 try: DEFAULT_UNIT = Unit.objects.get_or_create(name=settings.DEFAULT_UNIT_NAME)[0]
 except DatabaseError: pass
 
@@ -694,8 +696,6 @@ class TransactionManager(CurrentMultiSiteManager):
         return []
 
 class Transaction(models.Model):
-#    objects = CurrentMultiSiteManager()
-    
     _date = models.DateTimeField(default=datetime.now())
     doc_number = models.CharField(max_length=32, default='', blank=True)
     comments = models.CharField(max_length=200, blank=True, default='')
@@ -1990,6 +1990,90 @@ def add_user_profile(sender, **kwargs):
             UserProfile.objects.create(user=l, price_group=pg)
         except:pass
 post_save.connect(add_user_profile, sender=User, dispatch_uid="jade.inventory.moddels")
+
+class AccountingManager(models.Manager):
+    def get_query_set(self):
+        return super(AccountingManager, self).get_query_set().filter(tipo="Accounting")
+    def next_doc_number(self):
+        try:
+            number=super(AccountingManager, self).get_query_set().filter(tipo="Accounting").order_by('-pk')[0].doc_number
+            number=re.split("(\d*)", number)
+            if number[-1]=='':
+                number[-2]=str(int(number[-2])+1)
+            number="".join(number)
+        except: number="1001"
+        return number
+class Accounting(Transaction):
+    class Meta:
+        proxy = True
+        permissions = (
+            ("view_accounting", "Can view accounting"),
+        )
+    objects = AccountingManager()
+    def __init__(self, *args, **kwargs):
+        self.template='inventory/accounting.html'
+        self._value = kwargs.pop('value', 0)
+        self._date = kwargs.pop('date', datetime.now())
+        self._active = kwargs.pop('active', True)
+        self._debit_account = kwargs.pop('debit_account', None)
+        self._credit_account = kwargs.pop('credit_account', None)
+        super(Accounting, self).__init__(*args, **kwargs)
+        self.tipo='Accounting'
+    def _get_active(self):
+        try: return self.entry('Client').active
+        except AttributeError: return self._active
+    def _set_active(self, value):
+        self._active=value
+        [e.update('active',value) for e in self.entry_set.all()]
+    active = property(_get_active, _set_active)
+    def _get_debit_account(self):
+        try: return self.entry('Debit').account
+        except AttributeError: return self._debit_account
+    def _set_debit_account(self, value):
+        try: self.entry('Debit').update('account', value)
+        except AttributeError: self._debit_account = value
+    debit_account = property(_get_debit_account, _set_debit_account)
+    def _get_credit_account(self):
+        try: return self.entry('Credit').account
+        except AttributeError: return self._credit_account
+    def _set_credit_account(self, value):
+        try: self.entry('Credit').update('account', value)
+        except AttributeError: self._credit_account = value
+    credit_account = property(_get_credit_account, _set_credit_account)
+    def _get_value(self):
+        try: return self.entry('Debit').value
+        except AttributeError: return self._value
+    def _set_value(self, value):
+        value=(value or 0)
+        try:
+            self.entry('Debit').update('value',   value)
+            self.entry('Credit').update('value', -value)
+        except: self._value = value
+    value=property(_get_value, _set_value)
+def add_accounting_entries(sender, **kwargs):
+    if kwargs['created']:
+        l=kwargs['instance']
+        l.sites.add(Site.objects.get_current())
+        l.create_related_entry(
+            account = l._debit_account,
+            tipo = 'Debit',
+            value=l.value,
+            active=l.active)
+        l.create_related_entry(
+            account = l._credit_account,
+            tipo = 'Credit',
+            value=-l.value,
+            active=l.active)
+
+post_save.connect(add_accounting_entries, sender=Accounting, dispatch_uid="jade.inventory.models")
+
+
+
+
+
+    
+        
+        
 
 class TransferManager(models.Manager):
     def get_query_set(self):

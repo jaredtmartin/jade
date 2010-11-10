@@ -7,6 +7,8 @@ function editTransaction(object_id) {
     $('#id_transaction-'+object_id+'-item').autocomplete('/inventory/item_list/', {matchSubset:0, autoFill:1,});
     $('#id_transaction-'+object_id+'-account.client').autocomplete('/inventory/client_list/', {matchSubset:0, autoFill:1,});
     $('#id_transaction-'+object_id+'-account.vendor').autocomplete('/inventory/vendor_list/', {matchSubset:0, autoFill:1,});
+    $('#id_transaction-'+object_id+'-account2.accounting').autocomplete('/inventory/account_list/', {matchSubset:0, autoFill:1,});
+    $('#id_transaction-'+object_id+'-account.accounting').autocomplete('/inventory/account_list/', {matchSubset:0, autoFill:1,});
     $('#id_transaction-'+object_id+'-garantee_months').attr('onblur', 'getGaranteePrice('+object_id+')');
         $('.transaction:first').children().children('.field:visible').keydown(function(e){
             if (e.keyCode == 13) {
@@ -15,9 +17,7 @@ function editTransaction(object_id) {
                 e.preventDefault();
                 return false;
             }
-        });
-
-    
+        });    
     $('#transaction-'+object_id+' .show').hide();
     $('#transaction-'+object_id+' .edit').show();
 }
@@ -51,6 +51,7 @@ function saveTransaction(object_id, url) {
             unit_cost:      jQuery('#id_transaction-'+object_id+'-unit_cost').val(),
             unit_discount:  jQuery('#id_transaction-'+object_id+'-unit_discount').val(),
             unit_price:     jQuery('#id_transaction-'+object_id+'-unit_price').val(),
+            account2:        jQuery('#id_transaction-'+object_id+'-account2').val(),
         },
         success: updateAndSelectItemField
     });

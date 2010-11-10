@@ -869,7 +869,46 @@ def add_payment_to_sale(request, object_id): # AJAX POST ONLY
     payment=ClientPayment(doc_number=obj.doc_number, date=obj.date, source=obj.client, dest=PAYMENTS_RECEIVED_ACCOUNT, value=total)
     payment.save()
     return _r2r(request,'inventory/results.html', {'edit_mode':True, 'objects':[payment],'prefix':'clientpayment','line_template':"inventory/transaction.html",'error_list':{}, 'info_list':{}})
+######################################################################################
+# Accounting Views
+######################################################################################
+@login_required
+@permission_required('inventory.change_accounting', login_url="/blocked/")
+def edit_accounting(request, object_id): # AJAX POST ONLY
+    return edit_object(request, object_id, Accounting, AccountingForm, "accounting")
     
+@login_required
+@permission_required('inventory.view_accounting', login_url="/blocked/")
+def list_accounting(request, errors={}): # GET ONLY
+    return search_and_paginate_transactions(request, Accounting,'inventory/accounting_list.html', errors)
+@login_required
+@permission_required('inventory.change_accounting', login_url="/blocked/")
+def new_accounting(request): # AJAX POST ONLY
+    error_list={}
+    # get the doc number
+    try: doc_number=request.POST['doc_number']
+    except: doc_number='' 
+    if doc_number=='': doc_number=Accounting.objects.next_doc_number()
+    # get the date
+    try: 
+        sample=Accounting.objects.filter(doc_number=doc_number)[0]
+        date=sample.date
+    except:
+        date=datetime.now()
+    if len(error_list)==0:
+        transaction=Accounting(
+            doc_number=doc_number, 
+            date=date, 
+            debit_account=DEFAULT_ACCOUNTING_DEBIT_ACCOUNT, 
+            credit_account=DEFAULT_ACCOUNTING_CREDIT_ACCOUNT)
+        transaction.save()
+        objects=[transaction]
+    else:
+        objects=[]
+    return _r2r(request,'inventory/results.html', {'edit_mode':True, 'objects':objects,'prefix':'accounting','line_template':"inventory/accounting.html",'error_list':error_list, 'info_list':{}})
+    
+def delete_accounting(request, object_id):
+    return delete_object(request, object_id, Accounting, 'accounting')    
 ######################################################################################
 # Return Views
 ######################################################################################

@@ -48,7 +48,11 @@ urlpatterns = patterns('',
 #    (r'^transferreturn/(?P<object_id>\d+)/$', 'jade.inventory.views.edit_transferreturn'),
 #    (r'^transferreturn/(?P<object_id>\d+)/new/$', 'jade.inventory.views.new_transferreturn'),
 #    (r'^transferreturn/(?P<object_id>\d+)/delete/$', 'jade.inventory.views.delete_transferreturn'),
-    
+    # Accounting
+    (r'^accounting/$', 'jade.inventory.views.list_accounting'),
+    (r'^accounting/(?P<object_id>\d+)/$', 'jade.inventory.views.edit_accounting'),
+    (r'^accounting/new/$', 'jade.inventory.views.new_accounting'),
+    (r'^accounting/(?P<object_id>\d+)/delete/$', 'jade.inventory.views.delete_accounting'),
     #Purchase Returns
     (r'^purchasereturn/(?P<object_id>\d+)/$', 'jade.inventory.views.edit_purchasereturn'),
     (r'^purchasereturn/(?P<object_id>\d+)/new/$', 'jade.inventory.views.new_purchasereturn'),
