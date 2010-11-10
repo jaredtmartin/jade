@@ -11,8 +11,6 @@ from django.contrib.sites.models import Site
 from django.contrib.sites.managers import CurrentSiteManager
 from jade.inventory.managers import CurrentMultiSiteManager, AccountManager
 
-
-print "settings.PRODUCTION_EXPENSE_ACCOUNT_DATA=%s" % str(settings.PRODUCTION_EXPENSE_ACCOUNT_DATA)
 if settings.PRODUCTION_EXPENSE_ACCOUNT_DATA:
     PRODUCTION_EXPENSE_ACCOUNT = make_default_account(settings.PRODUCTION_EXPENSE_ACCOUNT_DATA)
 class ProductionManager(models.Manager):
