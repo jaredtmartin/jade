@@ -68,7 +68,7 @@ price.is_safe = True
 @register.filter(name='mult')
 def mult(value, arg):
     "Multiplies the value by the multiplier"
-    return value * arg
+    return Decimal(str(value)) * Decimal(str(arg))
 mult.is_safe = True
 
 @register.filter(name='div')
