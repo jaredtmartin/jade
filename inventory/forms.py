@@ -55,7 +55,11 @@ class SaleForm(forms.ModelForm):
         model.tax =         (self.cleaned_data['unit_tax'] or 0)
         model.discount =    (self.cleaned_data['unit_discount'] or 0)
         model.price =       self.cleaned_data['unit_price'] 
-        if not model.price and model.item: model.price = model.item.price(model.client)
+#        if not self.cleaned_data['unit_price'] and model.item: 
+#            print "resetting price"
+#            model.price = model.item.price(model.client)
+#        print "self.cleaned_data['unit_price'] = " + str(self.cleaned_data['unit_price'])
+        
         if self.cleaned_data['unit_cost']:
             model.cost = self.cleaned_data['unit_cost']
         if model.item and not model.cost: model.cost = model.item.cost
