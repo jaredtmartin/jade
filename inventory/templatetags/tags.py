@@ -70,19 +70,19 @@ def mult(value, arg):
     return value * arg
 mult.is_safe = True
 
-@register.filter(name='mult')
+@register.filter(name='div')
 def div(value, arg):
     "Divides the value by the arg"
     return value / arg
 div.is_safe = True
 
-@register.filter(name='mult')
+@register.filter(name='plus')
 def plus(value, arg):
     "Adds the arg to the value"
     return value + arg
 plus.is_safe = True
 
-@register.filter(name='mult')
+@register.filter(name='minus')
 def minus(value, arg):
     "subtracts the arg from the value"
     return value - arg
