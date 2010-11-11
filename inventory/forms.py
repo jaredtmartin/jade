@@ -31,9 +31,6 @@ def clean_bar_code(form, name, model):
         data = model.objects.filter(bar_code=data).get()
     except model.DoesNotExist: 
         try: 
-            print "model = " + str(model)
-            print "data = '" + str(data) + "'"
-            print "model.objects.filter(name=data).get() = " + str(model.objects.filter(name=data).get())
             data = model.objects.filter(name=data).get()
         except model.MultipleObjectsReturned: 
             raise forms.ValidationError('There are more than one %ss with the name %s. Try using a bar code.' % (name, data))
@@ -41,7 +38,6 @@ def clean_bar_code(form, name, model):
             raise forms.ValidationError("Unable to find '%s' in the list of items." % (data, ))
     except model.MultipleObjectsReturned:
         raise forms.ValidationError('There are more than one %ss with the bar code %s. Try using the name and later resolve the issue.' % (name, data))
-    print "data = " + str(data)
     return data
 
 
