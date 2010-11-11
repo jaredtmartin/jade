@@ -109,8 +109,8 @@ class ItemManager(models.Manager):
         return query
 #        return super(ItemManager, self).get_query_set().filter(Q(name__icontains=q) | Q(bar_code__icontains=q)|Q(description__icontains=q))
     def fetch(self, q):
-        print "q = %s"% q
-        print "super(ItemManager, self).get_query_set().get(Q(name=q) | Q(bar_code=q)) = " + str(super(ItemManager, self).get_query_set().get(Q(name=q) | Q(bar_code=q)))
+#        print "q = %s"% q
+#        print "super(ItemManager, self).get_query_set().get(Q(name=q) | Q(bar_code=q)) = " + str(super(ItemManager, self).get_query_set().get(Q(name=q) | Q(bar_code=q)))
         return super(ItemManager, self).get_query_set().get(Q(name=q) | Q(bar_code=q))
     def low_stock(self):
 #        Item.objects.find(q)
