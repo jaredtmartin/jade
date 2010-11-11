@@ -177,6 +177,8 @@ def edit_purchase(request, object_id): # AJAX POST ONLY
 @permission_required('inventory.change_purchase', login_url="/blocked/")
 def new_purchase(request): # AJAX POST ONLY
     error_list={}
+    cost=0
+    item=None
     try: doc_number=request.POST['doc_number']
     except: doc_number='' 
     if doc_number=='': doc_number=Purchase.objects.next_doc_number()
@@ -192,17 +194,17 @@ def new_purchase(request): # AJAX POST ONLY
     try: 
         item=Item.objects.fetch(request.POST['item'])
         cost=item.cost
-    except:
-        item=None
-        cost=0
+    except Item.MultipleObjectsReturned: 
+        error_list['item']=['There are more than one %ss with the name %s. Try using a bar code.' % ('item', request.POST['item'])]
+    except Item.DoesNotExist: 
+        if request.POST['item']!='': error_list['item']=["Unable to find '%s' in the list of items." % (request.POST['item'], )]
     if vendor:
         if vendor.tax_group.price_includes_tax: cost = cost/(vendor.tax_group.value+1)
         tax=cost*vendor.tax_group.value
     else:
         error_list['vendor']=[unicode('Unable to find a vendor with the name specified.')]
     purchase=Purchase(doc_number=doc_number, date=date, vendor=vendor, item=item, cost=cost, tax=tax)
-    if len(error_list)==0:
-        purchase.save()
+    purchase.save()
     return _r2r(request,'inventory/results.html', {'edit_mode':True, 'objects':[purchase],'prefix':'purchase','line_template':"inventory/transaction.html",'error_list':error_list, 'info_list':{}})
 
 @login_required
@@ -454,6 +456,7 @@ def edit_count(request, object_id): # AJAX POST ONLY
 @login_required
 @permission_required('inventory.change_count', login_url="/blocked/")
 def new_count(request): # AJAX POST ONLY
+    item=None
     try: doc_number=request.POST['doc_number']
     except: doc_number='' 
     if doc_number=='': doc_number=Count.objects.next_doc_number()
@@ -462,7 +465,12 @@ def new_count(request): # AJAX POST ONLY
         date=sample.date
     except:
         date=datetime.now()
-    item=Item.objects.fetch(request.POST['item'])
+    try:
+        item=Item.objects.fetch(request.POST['item'])
+    except Item.MultipleObjectsReturned: 
+        error_list['item']=['There are more than one %ss with the name %s. Try using a bar code.' % ('item', request.POST['item'])]
+    except Item.DoesNotExist: 
+        if request.POST['item']!='': error_list['item']=["Unable to find '%s' in the list of items." % (request.POST['item'], )]
     try: unit_cost=item.cost
     except: unit_cost=0
     count=Count(doc_number=doc_number, date=date, item=item, unit_cost=unit_cost)
@@ -826,26 +834,23 @@ def new_sale(request): # AJAX POST ONLY
     print "client = " + str(client)
     item=None
     tax=price=cost=0
-    try: 
+    try:
         item = Item.objects.fetch(request.POST['item'])
         cost = item.cost
         price = item.price(client)
         if client.tax_group.price_includes_tax:
             price = price/(client.tax_group.value+1)
-        print "client.tax_group.value = " + str(client.tax_group.value)
-        print "price = " + str(price)
-        print "item.price(client) = " + str(item.price(client))
         tax = item.price(client)*client.tax_group.value
-        print "item.price(client)*client.tax_group.value = " + str(item.price(client)*client.tax_group.value)
-    except:
-        pass
+    except Item.MultipleObjectsReturned: 
+#        raise forms.ValidationError('There are more than one %ss with the name %s. Try using a bar code.' % (name, data))
+        error_list['item']=['There are more than one %ss with the name %s. Try using a bar code.' % ('item', request.POST['item'])]
+    except Item.DoesNotExist: 
+        if request.POST['item']!='': error_list['item']=["Unable to find '%s' in the list of items." % (request.POST['item'], )]
+#        raise forms.ValidationError("Unable to find '%s' in the list of items." % (data, ))
     if not client: error_list['client']=[unicode('Unable to find a client with the name specified.')]
-    if len(error_list)==0:
-        sale=Sale(doc_number=doc_number, date=date, client=client, item=item, cost=cost, price=price, tax=tax)
-        sale.save()
-        objects=[sale]
-    else:
-        objects=[]
+    sale=Sale(doc_number=doc_number, date=date, client=client, item=item, cost=cost, price=price, tax=tax)
+    sale.save()
+    objects=[sale]
     try: 
         offer=sale.item.garanteeoffer_set.filter(price=0)[0]
         garantee=ClientGarantee(doc_number=sale.doc_number, date=sale.date, client=sale.client, item=sale.item, quantity=offer.months, serial=sale.serial)
@@ -1160,7 +1165,10 @@ def movements_report(request):
    
 class Document():
     def __init__(self, number):
-        self._price = self._due = self._client = self._paid_on_spot = None
+        self._price = None
+        self._due = None
+        self._client = None
+        self._paid_on_spot = None
         self.transactions=Transaction.objects.filter(doc_number=number)
     def _get_number(self):
         return self.transactions[0].doc_number
@@ -1177,14 +1185,20 @@ class Document():
     value=property(_get_price)
     def _get_due(self):
         if not self._due:
-            self._due = Entry.objects.filter(transaction__doc_number=self.number, tipo='Client').aggregate(total=models.Sum('value'))['total'] or Decimal('0.00')
+#            self._due = Entry.objects.filter(transaction__doc_number=self.number, tipo='Client').aggregate(total=models.Sum('value'))['total'] or Decimal('0.00')
+            self._due = Entry.objects.filter(transaction__doc_number=self.number, date=self.transactions[0]._date, account=self.client, tipo='Debit').aggregate(total=models.Sum('value'))['total'] or Decimal('0.00')
         return self._due
     due=property(_get_due)
     def _get_paid_on_spot(self):
         if not self._paid_on_spot:
-            self._paid_on_spot = Entry.objects.filter(transaction__doc_number=self.number, date=self.transactions[0]._date, tipo='Client').aggregate(total=models.Sum('value'))['total'] or Decimal('0.00')
+            self._paid_on_spot = Entry.objects.filter(transaction__doc_number=self.number, date=self.transactions[0]._date, account=self.client, tipo='Credit').aggregate(total=models.Sum('value'))['total'] or Decimal('0.00')
         return self._paid_on_spot
     paid_on_spot=property(_get_paid_on_spot)
+    def _get_unpaid_on_spot(self):
+        if not self._unpaid_on_spot:
+            self._unpaid_on_spot = Entry.objects.filter(transaction__doc_number=self.number, date=self.transactions[0]._date, account=self.client).aggregate(total=models.Sum('value'))['total'] or Decimal('0.00')
+        return self._unpaid_on_spot
+    unpaid_on_spot=property(_get_unpaid_on_spot)
     def _get_client(self):
         if not self._client:
             self._client = Entry.objects.filter(transaction__doc_number=self.number, tipo='Client')[0].account
@@ -1202,6 +1216,14 @@ def create_documents(trans):
     d={}
     for t in trans:
         update_dict_list(d, {t.doc_number:t})
+    documents=[]
+    for doc in d:
+        documents.append(Document(doc))
+    return documents
+def create_documents_from_entries(entries):
+    d={}
+    for e in entries:
+        update_dict_list(d, {e.transaction.doc_number:e.transaction})
     documents=[]
     for doc in d:
         documents.append(Document(doc))
@@ -1257,14 +1279,25 @@ def create_series(documents):
     return series
     
 def separate_by_paid_on_spot(documents):
-    paid= unpaid=[]
+    paid= []
+    unpaid=[]
     for doc in documents:
-        if doc.paid_on_spot==0: paid.append(doc)
-        else: unpaid.append(doc)
+        print "doc.number = " + str(doc.number)
+        print "doc.paid_on_spot = " + str(doc.paid_on_spot)
+        print "doc.due = " + str(doc.due)
+        print "doc.paid_on_spot==doc.due = " + str(doc.paid_on_spot==doc.due)
+        if doc.paid_on_spot==doc.due: 
+            print "adding to paid"
+            paid.append(doc)
+        else: 
+            print "adding to unpaid"
+            unpaid.append(doc)
+    print "paid = " + str(paid)
+    print "unpaid = " + str(unpaid)
     return (paid, unpaid)
     
 def separate_payments_by_timing(payments):
-    groups={'Early':[], 'OnTime':[],'Late':[]}
+    groups={'Early':[], 'OnTime':[],'Late':[],'Down':[],'Over':[]}
     for payment in payments: update_dict_list(groups, {payment.timing:payment})
     return groups
     
@@ -1311,6 +1344,9 @@ def corte(request):
     start=form.cleaned_data['start']
     end=form.cleaned_data['end']
     sales = Sale.objects.all().order_by('doc_number')
+    print "REVENUE_ACCOUNT = " + str(REVENUE_ACCOUNT)
+    sale_entries = Entry.objects.filter(tipo='Revenue')
+    print "sale_entries.count() = " + str(sale_entries.count())
     payments = ClientPayment.objects.all().order_by('-_date')
     cash = Entry.objects.filter(account=CASH_ACCOUNT)
     revenue = Entry.objects.filter(account__number__startswith=REVENUE_ACCOUNT.number)
@@ -1322,6 +1358,8 @@ def corte(request):
         end=start+timedelta(days=1)
     if start:
         sales=sales.filter(_date__gte=start)
+        sale_entries=sale_entries.filter(transaction___date__gte=start)
+        print "sale_entries.count() = " + str(sale_entries.count())
         payments=payments.filter(_date__gte=start)
         cash=cash.filter(date__gte=start)
         revenue=revenue.filter(date__gte=start)
@@ -1333,6 +1371,8 @@ def corte(request):
     if end:
         deadline = end + timedelta(days=1)
         sales=sales.filter(_date__lt=deadline)
+        sale_entries=sale_entries.filter(transaction___date__lt=deadline)
+        print "sale_entries.count() = " + str(sale_entries.count())
         payments=payments.filter(_date__lt=deadline)
         cash=cash.filter(date__lt=deadline)
         revenue=revenue.filter(date__lt=deadline)
@@ -1342,9 +1382,11 @@ def corte(request):
     # Organize sales:
     # if it was made and paid today, group by tax_group
     # otherwise put it in the "unpaid" list
-    sales_docs=create_documents(sales)
+#    sales_docs=create_documents(sales)
+    sales_docs=create_documents_from_entries(sale_entries)
     paid_sales, unpaid_sales = separate_by_paid_on_spot(sales_docs)
-    
+    print "paid_sales = " + str(paid_sales)
+    print "unpaid_sales = " + str(unpaid_sales)
     # put each paid doc in a list for its tax_group
     tax_groups = separate_by_tax_group(paid_sales)
     
@@ -1370,7 +1412,7 @@ def corte(request):
         'start':start or datetime.now(),
         'end':end,
         'tax_groups':tax_groups,
-        'sales':sales,
+        'sales':sale_entries,
         'payments':payments,
         'paid_sales':paid_sales,
         'unpaid_sales':unpaid_sales,
@@ -1380,7 +1422,7 @@ def corte(request):
         'settings.COMPANY_NAME':settings.COMPANY_NAME,
         'cash':cash,
         'revenue':revenue,
-        'earnings':revenue-expense,
+        'earnings':cash-initial_cash-expense-tax,
         'expense':expense,
         'tax':tax,
         'final_cash':CASH_ACCOUNT.balance,
@@ -1404,6 +1446,8 @@ def edit_transfer(request, object_id): # AJAX POST ONLY
 @permission_required('inventory.change_transfer', login_url="/blocked/")
 def new_transfer(request): # AJAX POST ONLY
     error_list={}
+    item=None
+    cost=0
     try: doc_number=request.POST['doc_number']
     except: doc_number='' 
     if doc_number=='': doc_number=Transfer.objects.next_doc_number()
@@ -1416,12 +1460,13 @@ def new_transfer(request): # AJAX POST ONLY
     except: 
         account=None
         error_list['client']=[unicode('Unable to find a site with the name specified.')]
-    try: 
+    try:
         item=Item.objects.fetch(request.POST['item'])
         cost=item.cost
-    except:
-        item=None
-        cost=0
+    except Item.MultipleObjectsReturned: 
+        error_list['item']=['There are more than one %ss with the name %s. Try using a bar code.' % ('item', request.POST['item'])]
+    except Item.DoesNotExist: 
+        if request.POST['item']!='': error_list['item']=["Unable to find '%s' in the list of items." % (request.POST['item'], )]
     transfer=Transfer(doc_number=doc_number, date=date, account=account, item=item, cost=cost)
     if len(error_list)==0:
         transfer.save()

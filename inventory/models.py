@@ -109,6 +109,8 @@ class ItemManager(models.Manager):
         return query
 #        return super(ItemManager, self).get_query_set().filter(Q(name__icontains=q) | Q(bar_code__icontains=q)|Q(description__icontains=q))
     def fetch(self, q):
+        print "q = %s"% q
+        print "super(ItemManager, self).get_query_set().get(Q(name=q) | Q(bar_code=q)) = " + str(super(ItemManager, self).get_query_set().get(Q(name=q) | Q(bar_code=q)))
         return super(ItemManager, self).get_query_set().get(Q(name=q) | Q(bar_code=q))
     def low_stock(self):
 #        Item.objects.find(q)
@@ -803,11 +805,6 @@ class Entry(models.Model):
         # Payment entries
         ('Debit', 'Debit'), # Debit
         ('Credit', 'Credit'), # Credit
-
-        # Garantee entries
-        ('Garanteed', 'Garanteed'), # Debit
-        ('Revenue', 'Revenue'), # Credit
-        
         
         ('Production', 'Production'), # Credit
         )
@@ -1483,7 +1480,12 @@ class Payment(Transaction):
             p=datetime.date(self.date)
             s=datetime.date(Sale.objects.filter(doc_number=self.doc_number)[0].date)
         except IndexError: return "Early"
-        if p==s:return "OnTime"
+        if p==s:
+            s_end= s + timedelta(days=1)
+            due=Entry.objects.filter(date__gte=s,date__lt=s_end, transaction__doc_number=self.doc_number, account=self.source).aggregate(total=models.Sum('value'))['total'] or Decimal('0.00')
+            if due==0: return "OnTime"
+            if due>0: return "Down"
+            if due<0: return "Over"
         if p<s: return "Early"
         if p>s: return "Late"
     timing = property(_get_timing)
@@ -1591,7 +1593,7 @@ class Garantee(Transaction):
         self.tipo='Garantee'
     ################ ################ ################  Active   ################ ################ ################
     def _get_active(self):
-        try: return self.entry('Garanteed').active
+        try: return self.entry('Client').active
         except AttributeError: return self._active
     def _set_active(self, value):
         self._active=value
@@ -1605,42 +1607,42 @@ class Garantee(Transaction):
     unit_price = property(_get_unit_price)
     ################ ################ ################  Item   ################ ################ ################
     def _get_item(self):
-        try: return self.entry('Garanteed').item
+        try: return self.entry('Client').item
         except AttributeError: return self._item
     def _set_item(self, value):
-        try: return [self.entry(e).update('item',value) for e in ['Garanteed','Revenue']]
+        try: return [self.entry(e).update('item',value) for e in ['Client','Revenue']]
         except AttributeError: self._item=value
     item = property(_get_item, _set_item)
     ################ ################ ################  Quantity   ################ ################ ################
     def _get_quantity(self):
-        try: return self.entry('Garanteed').quantity
+        try: return self.entry('Client').quantity
         except AttributeError: return self._quantity
     def _set_quantity(self, value):
         value=(value or 0)
         try:
-            self.entry('Garanteed').update('quantity', value)
+            self.entry('Client').update('quantity', value)
             self.entry('Revenue').update('quantity', -value)
 
         except AttributeError: self._quantity=value
     quantity = property(_get_quantity, _set_quantity)
     ################ ################ ################  Serial  ################ ################ ################
     def _get_serial(self):
-        try: return self.entry('Garanteed').serial
+        try: return self.entry('Client').serial
         except AttributeError: return self._serial
     def _set_serial(self, value):
         print "setting serial"
-        try: return [self.entry(e).update('serial',value) for e in ['Garanteed','Revenue']]
+        try: return [self.entry(e).update('serial',value) for e in ['Client','Revenue']]
         except AttributeError: 
             print "setting cache serial!!!!!!"
             self._serial=value
     serial = property(_get_serial, _set_serial)
     ################ ################ ################  Price  ################ ################ ################
     def _get_price(self):
-        try: return self.entry('Garanteed').value
+        try: return self.entry('Client').value
         except AttributeError: return self._price
     def _set_price(self, value):
         try:
-            self.entry('Garanteed').update('value', value)
+            self.entry('Client').update('value', value)
             self.entry('Revenue').update('value', -value)
         except: self._price = value
     price=property(_get_price, _set_price)
@@ -1663,7 +1665,7 @@ def add_garantee_entries(sender, **kwargs):
             delivered   = True)
         l.create_related_entry(
             account     = l._garanteed,
-            tipo        = 'Garanteed',
+            tipo        = 'Client',
             value       = l.price,
             item        = l._item,
             quantity    = l._quantity,
@@ -1687,10 +1689,10 @@ class ClientGarantee(Garantee):
         self.tipo='ClientGarantee'
     ################ ################ ################  Client  ################ ################ ################
     def _get_client(self):
-        try: return self.entry('Garanteed').account
+        try: return self.entry('Client').account
         except AttributeError: return self._client
     def _set_client(self, value):
-        try: self.entry('Garanteed').update('account', value)
+        try: self.entry('Client').update('account', value)
         except AttributeError: self._client = value
     client = property(_get_client, _set_client)
 

@@ -31,11 +31,14 @@ def clean_bar_code(form, name, model):
         data = model.objects.filter(bar_code=data).get()
     except model.DoesNotExist: 
         try: 
+            print "model = " + str(model)
+            print "data = '" + str(data) + "'"
+            print "model.objects.filter(name=data).get() = " + str(model.objects.filter(name=data).get())
             data = model.objects.filter(name=data).get()
         except model.MultipleObjectsReturned: 
             raise forms.ValidationError('There are more than one %ss with the name %s. Try using a bar code.' % (name, data))
         except model.DoesNotExist: 
-            raise forms.ValidationError('Unable to find %s in the list of items.' % (data, ))
+            raise forms.ValidationError("Unable to find '%s' in the list of items." % (data, ))
     except model.MultipleObjectsReturned:
         raise forms.ValidationError('There are more than one %ss with the bar code %s. Try using the name and later resolve the issue.' % (name, data))
     print "data = " + str(data)
@@ -359,12 +362,16 @@ class GaranteeOfferForm(forms.ModelForm):
 class AccountForm(forms.ModelForm):
     class Meta:
         model = Account
-        exclude=('tax_group', 'price_group', 'tipo')
+        exclude=('tax_group', 'price_group', 'tipo','site')
     def __init__(self, *args, **kwargs):
         super(AccountForm, self).__init__(*args, **kwargs)
         if not kwargs.has_key('instance'):
             self.initial['number'] = Account.objects.next_number()
-    
+    def save(self, commit=True, tipo=None):        
+        model = super(AccountForm, self).save(commit=False)
+        if tipo: model.tipo=tipo
+        if commit: model.save()
+        return model
 
 class ContactForm(forms.ModelForm):
     class Meta:

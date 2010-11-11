@@ -11,7 +11,7 @@
 	    <form>
 		    {% trans 'Doc Number' %}: <input id="doc_number" value="{{q}}" type="text"> <a href="#" onclick="$(this).prev().val('');return false;"><img id="next_doc_number" src="{{MEDIA_URL}}/img/clear.png"/></a><br>
 		    {% trans 'Vendor' %}: <input id="vendor" value="{{page.object_list.1.vendor}}" type="text"><br>
-		    {% trans 'Item' %}: <input id="item" value="{{page.object_list.1.item}}" type="text"><br>
+		    {% trans 'Item' %}: <input id="item" value="{{page.object_list.1.item}}" type="text"><a href="#" onclick="$(this).prev().val('');$(this).prev().select();return false;"><img id="clear_product" src="{{MEDIA_URL}}/img/clear.png"/></a><br>
 	    </form>
     </div>
     <script>

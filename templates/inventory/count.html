@@ -15,7 +15,7 @@
 {% endblock %}
 {% block other_fields_show %}
     <td/>
-    <td id="id_transaction-{{ object.pk }}-item"  title="{% trans 'Name of item counted' %}"   value="{{object.subclass.item|default:''}}"    class="field item lookup" class="inventory-details">{% if object.subclass.item %}<a href="{{object.subclass.item.url}}">{% endif %}{{object.subclass.item}}</a></td>
+    <td id="id_transaction-{{object.pk}}-item"  title="{% trans 'Name of item counted' %}"   value="{{object.subclass.item|default:''}}"    class="field item lookup" class="inventory-details">{% if object.subclass.item %}<a href="{{object.subclass.item.url}}">{% endif %}{{object.subclass.item|default:''}}</a></td>
     <td id="id_transaction-{{object.pk}}-quantity" title="{% trans 'Adjustment applied (Quantity counted)' %}"  value="{{object.subclass.count|floatformat:-2}}" class="field quantity inventory-details"> {{object.subclass.quantity|floatformat:-2}} {% if object.subclass.count %}({{object.subclass.count|floatformat:-2}}){% endif %}</td>
     <td id="id_transaction-{{object.pk}}-serial" title="{% trans 'Serial number found (if applicable)' %}"    value="{{object.subclass.serial|default:''}}"  class="field serial inventory-details">{% if object.subclass.serial %}<a href="/inventory/serial/{{object.subclass.serial}}/">{{object.subclass.serial}}</a>{% endif %}</td>
     <td id="id_transaction-{{object.pk}}-cost" title="{% trans 'Cost of adjustment applied (Value per unit)' %}" value="{{object.subclass.unit_cost|floatformat:2}}"  class="field money">    ${{object.value|default:0|floatformat:2}} (${{object.subclass.unit_cost|floatformat:2}} {% trans 'ea.' %})</td>
