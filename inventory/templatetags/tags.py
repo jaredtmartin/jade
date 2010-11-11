@@ -70,6 +70,24 @@ def mult(value, arg):
     return value * arg
 mult.is_safe = True
 
+@register.filter(name='mult')
+def div(value, arg):
+    "Divides the value by the arg"
+    return value / arg
+div.is_safe = True
+
+@register.filter(name='mult')
+def plus(value, arg):
+    "Adds the arg to the value"
+    return value + arg
+plus.is_safe = True
+
+@register.filter(name='mult')
+def minus(value, arg):
+    "subtracts the arg from the value"
+    return value - arg
+minus.is_safe = True
+
 @register.simple_tag
 def link(obj, label=None):
     if not obj: return ''
