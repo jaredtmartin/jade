@@ -153,14 +153,19 @@ def pages(page, q=''):
     links+=' (%i pages)</p>'% (p.num_pages,)
     return links
 @register.filter(name='money2word')
+#def money2word(n):
+#    dollars=int2word(n)
+#    cents=int2word((n*100)%100)
+#    response=''
+#    if abs(n)>=1: 
+#        response+=int2word(n) + unicode(_(' dollars '))
+#        if (n%1)!=0: response += unicode(_(' and '))
+#    if (n%1)!=0: response += int2word((n*100)%100) +unicode( _(' cents '))
+#    return response
 def money2word(n):
-    dollars=int2word(n)
-    cents=int2word((n*100)%100)
-    response=''
-    if abs(n)>=1: 
-        response+=int2word(n) + unicode(_(' dollars '))
-        if (n%1)!=0: response += unicode(_(' and '))
-    if (n%1)!=0: response += int2word((n*100)%100) +unicode( _(' cents '))
+    response=words(n)
+    cents=(n*100)%100
+    if cents>0: response+= unicode(_('with ')) + unicode(int(cents))+u'/100 ' + unicode(_('cents.'))
     return response
 money2word.is_safe = True
 
@@ -247,3 +252,62 @@ ones = ["", _("one "), _("two "), _("three "), _("four "), _("five "), _("six ")
 tens = [_("ten "), _("eleven "), _("twelve "), _("thirteen "), _("fourteen "), _("fifteen "), _("sixteen "), _("seventeen "), _("eighteen "), _("nineteen ")]
 twenties = ["", "", _("twenty "), _("thirty "), _("forty "), _("fifty "), _("sixty "), _("seventy "), _("eighty "), _("ninety ")]
 thousands = ["", _("thousand "), _("million "), _("billion "), _("trillion "), _("quadrillion "), _("quintillion "), _("sextillion "), _("septillion "), _("octillion "), _("nonillion "), _("decillion "), _("undecillion "), _("duodecillion "), _("tredecillion "), _("quattuordecillion "), _("sexdecillion "), _("septendecillion "), _("octodecillion "), _("novemdecillion "), _("vigintillion ")]
+
+
+
+from django.utils.translation import ugettext_lazy as _
+
+def thousands(i):
+    return [words(int(i/1000))+ unicode(_('thousand ')), i-int(i/1000)*1000]
+NUMBERS=[
+[1000,thousands],
+[900,_('nine hundred ')],
+[800,_('eight hundred ')],
+[700,_('seven hundred ')],
+[600,_('six hundred ')],
+[500,_('five hundred ')],
+[400,_('four hundred ')],
+[300,_('three hundred ')],
+[200,_('two hundred ')],
+[100,_('one hundred ')],
+[90,_('ninety ')],
+[80,_('eighty ')],
+[70,_('seventy ')],
+[60,_('sixty ')],
+[50,_('fifty ')],
+[40,_('fourty ')],
+[30,_('thirty ')],
+[20,_('twenty ')],
+[19,_('ninteen ')],
+[18,_('eighteen ')],
+[17,_('seventeen ')],
+[16,_('sixteen ')],
+[15,_('fifteen ')],
+[14,_('fourteen ')],
+[13,_('thirteen ')],
+[12,_('twelve ')],
+[11,_('eleven ')],
+[10,_('ten ')],
+[9,_('nine ')],
+[8,_('eight ')],
+[7,_('seven ')],
+[6,_('six ')],
+[5,_('five ')],
+[4,_('four ')],
+[3,_('three ')],
+[2,_('two ')],
+[1,_('one ')],
+]
+
+def words(num):
+    s=''
+    for i in NUMBERS:
+        if num >= i[0]:
+            if hasattr(i[1],'_proxy____args'):
+                s+=unicode(i[1])
+                num-=i[0]
+            else: 
+                a=i[1](num)
+                s+=a[0]
+                num=a[1]
+    return s            

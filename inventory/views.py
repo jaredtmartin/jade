@@ -471,7 +471,7 @@ def new_count(request): # AJAX POST ONLY
         error_list['item']=['There are more than one %ss with the name %s. Try using a bar code.' % ('item', request.POST['item'])]
     except Item.DoesNotExist: 
         if request.POST['item']!='': error_list['item']=["Unable to find '%s' in the list of items." % (request.POST['item'], )]
-    try: unit_cost=item.cost
+    try: unit_cost=-item.cost
     except: unit_cost=0
     count=Count(doc_number=doc_number, date=date, item=item, unit_cost=unit_cost)
     count.save()
