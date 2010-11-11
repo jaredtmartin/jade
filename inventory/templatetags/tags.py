@@ -1,5 +1,6 @@
 from django import template
 from inventory import models
+from decimal import *
 from django.utils.translation import ugettext_lazy as _
 register = template.Library()
 
