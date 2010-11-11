@@ -241,6 +241,8 @@ class EntryAdmin(admin.ModelAdmin):
     list_display = ('transaction','tipo', 'value', 'account','item','quantity')  
 class CostLinkAdmin(admin.ModelAdmin):
     list_display = ('incoming', 'outgoing','quantity','value')
+class ContactAdmin(admin.ModelAdmin):
+    search_fields = ('account__name', )
 class ReportAdmin(admin.ModelAdmin):
   class Media: 
     js = ('js/jquery.js',
@@ -259,7 +261,7 @@ admin.site.register(ClientPayment, ClientPaymentAdmin)
 admin.site.register(VendorPayment, VendorPaymentAdmin)
 admin.site.register(Transaction, TransactionAdmin)
 admin.site.register(Unit)
-admin.site.register(Contact)
+admin.site.register(Contact, ContactAdmin)
 admin.site.register(UserProfile)
 admin.site.register(TaxGroup)
 admin.site.register(PriceGroup)
