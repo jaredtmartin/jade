@@ -73,7 +73,7 @@ mult.is_safe = True
 @register.filter(name='div')
 def div(value, arg):
     "Divides the value by the arg"
-    return value / arg
+    return value / Decimal(arg)
 div.is_safe = True
 
 @register.filter(name='plus')
