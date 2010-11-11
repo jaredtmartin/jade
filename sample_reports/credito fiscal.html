@@ -1,78 +1,106 @@
+{% load tags %}
 <html>
 <style>
-    body{line-height:16px;}
-    td.numero {text-align:left;}
-    td.texto {text-align:left;}
+    body{font-size:16px;line-height:14px;}
+    .spread{line-height:18px;}
+    td.numero {text-align:left;font-size:16px;}
+    td.texto {text-align:left;font-size:16px;}
     table {border:solid;height:200px;}
 @page {
-    size:letter;
+    size:a5;
   {% if watermark_filename %}
 background-image: url({{watermark_filename}});
 {% endif %}
-  top: 3.2cm;
-  left: 1.7cm;
-      @frame header{
-        top:3.4cm;
-        height: 1.3cm;
-        left: 3.7cm;
-        right: 1.7cm;
-        -pdf-frame-content: headerContent;
+  top: 0cm;
+  left: 0cm;
+      @frame client{
+        top:4.8cm;
+        height: 1cm;
+        left: 2.1cm;
+        width: 4.5cm;
+        -pdf-frame-content: clientContent;
       }
+      @frame address{
+        top:5.8cm;
+        height: 1.5cm;
+        left: 2.5cm;
+        width: 4cm;
+        -pdf-frame-content: addressContent;
+      }
+      @frame state{
+        top:7.3cm;
+        height: 1cm;
+        left: 3cm;
+        width: 3.5cm;
+        -pdf-frame-content: citystateContent;
+      }
+      @frame dateregister{
+        top:4.8cm;
+        height: 1cm;
+        left: 9cm;
+        width: 2cm;
+        -pdf-frame-content: dateregisterContent;
+      }
+      @frame nitgiro{
+        top:5.9cm;
+        height: 1cm;
+        left: 7.7cm;
+        width: 5cm;
+        -pdf-frame-content: nitgiroContent;
+      }      
       @frame table{
-        top:5.3cm;
-        height: 5.8cm;
-        left: 1.7cm;
-        right: 1.7cm;
+        top:8.6cm;
+        height: 7cm;
+        left: 1cm;
+        width: 12cm;
         -pdf-frame-content: tableContent;
       }
       @frame totals{
-        top:11cm;
-        height: 2.3cm;
-        left: 2.7cm;
-        right: 1.7cm;
+        top:15.6cm;
+        height: 3.7cm;
+        left: 11cm;
+        width: 2cm;
         -pdf-frame-content: totalsContent;
       }
-  right: 1.7cm;
+      @frame words{
+        top:16cm;
+        height: 3.7cm;
+        left: 1cm;
+        width: 5cm;
+        -pdf-frame-content: wordsContent;
+      }
+  right: 0cm;
   }
 </style>
 <body>
-    <table id="headerContent">
-        <tr>
-            <td style="width:11.5cm;">{{doc.0.client.name}}</td>
-            <td>{{doc.0.date|date:"m/d/Y"}}</td>
-        </tr>
-        <tr><td colspan="2">{{doc.0.client.address}}</td></tr>
-        <tr>
-            <td>{{doc.0.client.tax_number}}</td>
-            <td>{{doc.0.form_of_payment}}</td>
-        </tr>
-    </table>
+    <div id="clientContent" class="spread">{{doc.0.client.name|trunc:30}}</div>
+    <div id="addressContent" class="spread">{{doc.0.client.address|trunc:30}}</div>
+    <div id="stateContent" class="spread">{{doc.0.client.state_name|trunc:10}}</div>
+    <div id="dateregisterContent" class="spread">{{doc.0.date|date:"m/d/Y"}}<br>{{doc.0.client.registration|trunc:20}}</div>
+    <div id="nitgiroContent" class="spread">{{doc.0.client.tax_id|trunc:20}}<br>{{doc.0.client.description|trunc:20}}</div>
+    
     <table id="tableContent">
          {% for sale in doc %}
             <tr>
-                <td class="numero" style="width:68px;">{{sale.quantity|floatformat:-2}}</td>
-                <td class="texto" style="width:387px;">{{sale.item.name}}</td>
-                <td class="numero" style="width:58px;">${{sale.unit_charge|floatformat:2}}</td>
-                <td class="numero" style="width:47px;"> </td>
-                <td class="numero" style="width:47px;"> </td>
+                <td class="numero" style="width:40px;">{{sale.quantity|floatformat:-2}}</td>
+                <td class="texto" style="width:247px;">
+                    {% if sale.serial %}
+                        {{sale.item.name|trunc:40}} - {{sale.serial|trunc:30}}
+                    {% else %}
+                        {{sale.item.name|trunc:70}}
+                    {% endif %}
+                </td>
+                <td class="numero" style="width:45px;">${{sale.unit_charge|floatformat:2}}</td>
+                <td class="numero" style="width:42px;"> </td>
                 <td class="numero">${{sale.charge|floatformat:2}}</td>
             </tr>
         {%endfor%}
     </table>
+    <div id="wordsContent">{{charge|money2word}}</div>
     <table id="totalsContent">
-        <tr>
-            <td style="width:15.2cm;">${{charge|floatformat:2}}</td>
-            <td>${{charge|floatformat:2}}</td>
-        </tr>
-        <tr>
-            <td></td>
-            <td>${{charge|floatformat:2}}</td>
-        </tr>
+        <tr><td>${{charge|floatformat:2}}</td></tr>
+        <tr><td>${{charge|floatformat:2}}</td></tr>
         <tr/><tr/>
-        <tr>
-            <td></td>
-            <td>${{charge|floatformat:2}}</td>
-        </tr>
-
+        <tr><td>${{charge|floatformat:2}}</td></tr>
     </table>
 </body>
