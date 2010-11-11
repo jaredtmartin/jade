@@ -244,7 +244,7 @@ class Account(models.Model):
     test = models.Manager()
 
     class Meta:
-        ordering = ('number',)
+        ordering = ('_date',)
     def __init__(self, *args, **kwargs):
         self.template='inventory/account.html'
         self._address =         kwargs.pop('address','')
