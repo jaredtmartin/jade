@@ -890,7 +890,7 @@ class Sale(Transaction):
         self._initial_price=self.price
         self.tipo='Sale'
     def save(self, *args, **kwargs):
-        if self.calculated_tax.value==self.unit_tax and self._initial_price != self.price: self.calculate_tax()
+        if self.calculated_tax==self.unit_tax and self._initial_price != self.price: self.calculate_tax()
         super(Sale, self).save(*args, **kwargs)
     def calculate_tax(self):
         charge=self.price-self.discount
