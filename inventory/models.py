@@ -845,19 +845,13 @@ class ExtraValue(models.Model):
  # Sales
  ######################################################################################
 
-
 class SaleManager(models.Manager):
     def get_query_set(self):
         return super(SaleManager, self).get_query_set().filter(tipo="Sale")
     def next_doc_number(self):
-        try:
-            number=super(SaleManager, self).get_query_set().filter(tipo="Sale").order_by('-pk')[0].doc_number
-            number=re.split("(\d*)", number)
-            if number[-1]=='':
-                number[-2]=str(int(number[-2])+1)
-            number="".join(number)
-        except: number="1001"
-        return number
+        try: return get_next_doc_number(
+            super(SaleManager, self).get_query_set().filter(tipo="Sale").order_by('-pk')[0].doc_number)
+        except: return "1001"
         
     def find(self):
         return super(SaleManager, self).raw("SELECT inventory_transaction.*, prices.value price FROM inventory_transaction left join (select transaction_id, sum(value) value from inventory_entry where tipo='Client' and active=1) as prices on transaction_id=inventory_transaction.id")
@@ -890,7 +884,6 @@ class Sale(Transaction):
         self._initial_price=self.price
         self.tipo='Sale'
     def save(self, *args, **kwargs):
-        if self.quantity!=0:print "self.tax/self.quantity = " + str(self.tax/self.quantity)
         if self.calculated_tax==Decimal("%.2f" % self.unit_tax) and self._initial_price != self.price: 
             self.calculate_tax()
         super(Sale, self).save(*args, **kwargs)
@@ -1213,26 +1206,28 @@ def add_sale_entries(sender, **kwargs):
                     value = l._cost)
 
 post_save.connect(add_sale_entries, sender=Sale, dispatch_uid="jade.inventory.models:add_sale_entries")
-
-class PurchaseManager(models.Manager):
+class BaseManager(models.Manager):
+    def __init__(self, tipo):
+        super(BaseManager, self).__init__()
+        self.tipo=tipo
     def get_query_set(self):
-        return super(PurchaseManager, self).get_query_set().filter(tipo="Purchase")
+        return super(BaseManager, self).get_query_set().filter(tipo=self.tipo)
     def next_doc_number(self):
-        try:
-            number=super(PurchaseManager, self).get_query_set().filter(tipo="Purchase").order_by('-pk')[0].doc_number
+        try: 
+            number = get_next_doc_number(super(BaseManager, self).get_query_set().filter(tipo=self.tipo).order_by('-pk')[0].doc_number)
             number=re.split("(\d*)", number)
             if number[-1]=='':
-                number[-2]=str(int(number[-2])+1)
-            number="".join(number)
-        except: number='1001'
-        return number
+                number[-2]=("%%0%id" % len(number[-2])) % (int(number[-2])+1)
+            return "".join(number)
+        except: return "1001"    
+
 class Purchase(Transaction):
     class Meta:
         proxy = True
         permissions = (
             ("view_purchase", "Can view purchases"),
         )
-    objects = PurchaseManager()
+    objects = BaseManager('Purchase')
 
     def __init__(self, *args, **kwargs):
         self.template='inventory/purchase.html'
@@ -1412,16 +1407,11 @@ def add_purchase_entries(sender, **kwargs):
                 value = l._tax)
 
 post_save.connect(add_purchase_entries, sender=Purchase, dispatch_uid="jade.inventory.models")
-    #post_save.connect(update_entry_costs, sender=Purchase, dispatch_uid="jade.inventory.models:update_entry_costs_for_purchases")##################################################
-    # Returns##################################################
-class SaleReturnManager(models.Manager):
-  def get_query_set(self):
-    return super(SaleReturnManager, self).get_query_set().filter(tipo="SaleReturn")
-    
+ 
 class SaleReturn(Sale):
     class Meta:
         proxy = True
-    objects = SaleReturnManager()
+    objects = BaseManager('SaleReturn')
     def __init__(self, *args, **kwargs):
         super(SaleReturn, self).__init__(*args, **kwargs)
         self.template='inventory/sale_return.html'
@@ -1767,14 +1757,9 @@ class CountManager(models.Manager):
     def get_query_set(self):
         return super(CountManager, self).get_query_set().filter(tipo="Count")
     def next_doc_number(self):
-        try:
-            number=super(CountManager, self).get_query_set().filter(tipo="Count").order_by('-pk')[0].doc_number
-            number=re.split("(\d*)", number)
-            if number[-1]=='':
-                number[-2]=str(int(number[-2])+1)
-            number="".join(number)
-        except: number='1001'
-        return number
+        try: return get_next_doc_number(
+            super(SaleManager, self).get_query_set().filter(tipo="Sale").order_by('-pk')[0].doc_number)
+        except: return "1001"
 class Count(Transaction):
     class Meta:
         proxy = True
