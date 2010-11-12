@@ -98,6 +98,7 @@ class ItemManager(models.Manager):
             number=super(ItemManager, self).get_query_set().all().order_by('-bar_code')[0].bar_code
             number=increment_string_number(number)
             while Item.objects.filter(bar_code=number).count()>0:
+    #                print "Item.objects.filter(bar_code=number).count()=" + str(Item.objects.filter(bar_code=number).count())
                 number=increment_string_number(number)
             return number
         except: return '1'
@@ -106,10 +107,15 @@ class ItemManager(models.Manager):
         for key in q.split():
             query=query.filter(Q(name__icontains=key) | Q(bar_code__icontains=key)|Q(description__icontains=key))
         return query
+#        return super(ItemManager, self).get_query_set().filter(Q(name__icontains=q) | Q(bar_code__icontains=q)|Q(description__icontains=q))
     def fetch(self, q):
+#        print "q = %s"% q
+#        print "super(ItemManager, self).get_query_set().get(Q(name=q) | Q(bar_code=q)) = " + str(super(ItemManager, self).get_query_set().get(Q(name=q) | Q(bar_code=q)))
         return super(ItemManager, self).get_query_set().get(Q(name=q) | Q(bar_code=q))
     def low_stock(self):
+#        Item.objects.find(q)
         return list(Item.objects.raw("select id from (select inventory_item.*, sum(quantity) total from inventory_item left join inventory_entry on inventory_item.id=inventory_entry.item_id where (inventory_entry.delivered=True and account_id=%i) or (inventory_entry.id is null) group by inventory_item.id) asd where (total<minimum) or (total is null and minimum>0);" % INVENTORY_ACCOUNT.pk))
+#        select inventory_item.id, name, (quantity) from inventory_item left join inventory_entry on inventory_item.id=inventory_entry.item_id where inventory_entry.active=True and account_id=58;
 class Item(models.Model):
     """
     """
@@ -462,7 +468,6 @@ class TaxGroup(models.Model):
     discounts_account = models.ForeignKey(Account, related_name = 'discounts_account_id')
     returns_account = models.ForeignKey(Account, related_name = 'returns_account_id')
     price_includes_tax = models.BooleanField(blank=True, default=True)
-#    doc_number_sequence = models.CharField(max_length=32, default='1001')
     site = models.ForeignKey(Site)#, default=Site.objects.get_current().pk
     objects = CurrentSiteManager()
     
@@ -836,33 +841,27 @@ class ExtraValue(models.Model):
     value = models.DecimalField(max_digits=8, decimal_places=2, null=True, blank=True)
     transaction = models.ForeignKey(Transaction)
 
-class BaseManager(models.Manager):
-    def __init__(self, tipo):
-        super(BaseManager, self).__init__()
-        self.tipo=tipo
-    def get_query_set(self):
-        return super(BaseManager, self).get_query_set().filter(tipo=self.tipo)
-    def next_doc_number(self):
-        try: 
-            number = super(BaseManager, self).get_query_set().filter(tipo=self.tipo).order_by('-pk')[0].doc_number
-            number=re.split("(\d*)", number)
-            if number[-1]=='':
-                number[-2]=("%%0%id" % len(number[-2])) % (int(number[-2])+1)
-            return "".join(number)
-        except: return "1001"    
-
  ######################################################################################
  # Sales
  ######################################################################################
-class SaleManager(BaseManager):
+
+
+class SaleManager(models.Manager):
+    def get_query_set(self):
+        return super(SaleManager, self).get_query_set().filter(tipo="Sale")
     def next_doc_number(self):
-        try: 
-            number = super(BaseManager, self).get_query_set().filter(tipo=self.tipo).order_by('-pk')[0].doc_number
+        try:
+            number=super(SaleManager, self).get_query_set().filter(tipo="Sale").order_by('-pk')[0].doc_number
             number=re.split("(\d*)", number)
             if number[-1]=='':
-                number[-2]=("%%0%id" % len(number[-2])) % (int(number[-2])+1)
-            return "".join(number)
-        except: return "1001"    
+                number[-2]=str(int(number[-2])+1)
+            number="".join(number)
+        except: number="1001"
+        return number
+        
+    def find(self):
+        return super(SaleManager, self).raw("SELECT inventory_transaction.*, prices.value price FROM inventory_transaction left join (select transaction_id, sum(value) value from inventory_entry where tipo='Client' and active=1) as prices on transaction_id=inventory_transaction.id")
+
 class Sale(Transaction):
     class Meta:
         proxy = True
@@ -870,7 +869,7 @@ class Sale(Transaction):
             ("view_sale", "Can view sales"),
             ("view_receipt", "Can view sales"),
         )
-    objects = BaseManager('Sale')
+    objects = SaleManager()
     def print_url(self):
         return '/inventory/sale/%s/receipt.pdf'% self.doc_number
 
@@ -891,6 +890,7 @@ class Sale(Transaction):
         self._initial_price=self.price
         self.tipo='Sale'
     def save(self, *args, **kwargs):
+        if self.quantity!=0:print "self.tax/self.quantity = " + str(self.tax/self.quantity)
         if self.calculated_tax==Decimal("%.2f" % self.unit_tax) and self._initial_price != self.price: 
             self.calculate_tax()
         super(Sale, self).save(*args, **kwargs)
@@ -1214,13 +1214,25 @@ def add_sale_entries(sender, **kwargs):
 
 post_save.connect(add_sale_entries, sender=Sale, dispatch_uid="jade.inventory.models:add_sale_entries")
 
+class PurchaseManager(models.Manager):
+    def get_query_set(self):
+        return super(PurchaseManager, self).get_query_set().filter(tipo="Purchase")
+    def next_doc_number(self):
+        try:
+            number=super(PurchaseManager, self).get_query_set().filter(tipo="Purchase").order_by('-pk')[0].doc_number
+            number=re.split("(\d*)", number)
+            if number[-1]=='':
+                number[-2]=str(int(number[-2])+1)
+            number="".join(number)
+        except: number='1001'
+        return number
 class Purchase(Transaction):
     class Meta:
         proxy = True
         permissions = (
             ("view_purchase", "Can view purchases"),
         )
-    objects = BaseManager('Purchase')
+    objects = PurchaseManager()
 
     def __init__(self, *args, **kwargs):
         self.template='inventory/purchase.html'
@@ -1400,11 +1412,16 @@ def add_purchase_entries(sender, **kwargs):
                 value = l._tax)
 
 post_save.connect(add_purchase_entries, sender=Purchase, dispatch_uid="jade.inventory.models")
- 
+    #post_save.connect(update_entry_costs, sender=Purchase, dispatch_uid="jade.inventory.models:update_entry_costs_for_purchases")##################################################
+    # Returns##################################################
+class SaleReturnManager(models.Manager):
+  def get_query_set(self):
+    return super(SaleReturnManager, self).get_query_set().filter(tipo="SaleReturn")
+    
 class SaleReturn(Sale):
     class Meta:
         proxy = True
-    objects = BaseManager('SaleReturn')
+    objects = SaleReturnManager()
     def __init__(self, *args, **kwargs):
         super(SaleReturn, self).__init__(*args, **kwargs)
         self.template='inventory/sale_return.html'
@@ -1434,6 +1451,12 @@ class PurchaseReturn(Purchase):
         self.template='inventory/purchase_return.html'
         self.tipo='PurchaseReturn'
 post_save.connect(add_purchase_entries, sender=PurchaseReturn, dispatch_uid="jade.inventory.models")##################################################
+class ClientPaymentManager(models.Manager):
+  def get_query_set(self):
+    return super(ClientPaymentManager, self).get_query_set().filter(tipo="ClientPayment")
+class VendorPaymentManager(models.Manager):
+  def get_query_set(self):
+    return super(VendorPaymentManager, self).get_query_set().filter(tipo="VendorPayment")
 
 class Payment(Transaction):
     class Meta:
@@ -1515,17 +1538,20 @@ def add_payment_entries(sender, **kwargs):
 class ClientPayment(Payment):
     class Meta:
         proxy = True
-    objects = BaseManager('ClientPayment')
+    objects = ClientPaymentManager()
     def __init__(self, *args, **kwargs):
         kwargs.update({'dest':PAYMENTS_RECEIVED_ACCOUNT})
         super(ClientPayment, self).__init__(*args, **kwargs)
         self.template='inventory/client_payment.html'
         self.tipo='ClientPayment'
 post_save.connect(add_payment_entries, sender=ClientPayment, dispatch_uid="jade.inventory.models")
+class ClientRefundManager(models.Manager):
+  def get_query_set(self):
+    return super(ClientRefundManager, self).get_query_set().filter(tipo="ClientRefund")
 class ClientRefund(Payment):
     class Meta:
         proxy = True
-    objects = BaseManager('ClientRefund')
+    objects = ClientRefundManager()
     def __init__(self, *args, **kwargs):
         kwargs.update({'dest':PAYMENTS_RECEIVED_ACCOUNT})
         super(ClientRefund, self).__init__(*args, **kwargs)
@@ -1536,7 +1562,7 @@ post_save.connect(add_payment_entries, sender=ClientRefund, dispatch_uid="jade.i
 class VendorPayment(Payment):
     class Meta:
         proxy = True
-    objects = BaseManager('VendorPayment')
+    objects = VendorPaymentManager()
     def __init__(self, *args, **kwargs):
         kwargs.update({'source':PAYMENTS_MADE_ACCOUNT})
         super(VendorPayment, self).__init__(*args, **kwargs)
@@ -1544,10 +1570,13 @@ class VendorPayment(Payment):
         self.tipo='VendorPayment'
 
 post_save.connect(add_payment_entries, sender=VendorPayment, dispatch_uid="jade.inventory.models")
+class VendorRefundManager(models.Manager):
+  def get_query_set(self):
+    return super(VendorRefundManager, self).get_query_set().filter(tipo="VendorRefund")
 class VendorRefund(Payment):
     class Meta:
         proxy = True
-    objects = BaseManager('VendorRefund')
+    objects = VendorRefundManager()
     def __init__(self, *args, **kwargs):
         kwargs.update({'source':PAYMENTS_MADE_ACCOUNT})
         super(VendorRefund, self).__init__(*args, **kwargs)
@@ -1673,10 +1702,14 @@ def add_garantee_entries(sender, **kwargs):
             serial      = l._serial,
             delivered   = True)
 
+class ClientGaranteeManager(models.Manager):
+  def get_query_set(self):
+    return super(ClientGaranteeManager, self).get_query_set().filter(tipo="ClientGarantee")
+    
 class ClientGarantee(Garantee):
     class Meta:
         proxy = True
-    objects=BaseManager('ClientGarantee')
+    objects=ClientGaranteeManager()
     def __init__(self, *args, **kwargs):
         self.template='inventory/client_garantee.html'
         self._client = kwargs.pop('client', None)
@@ -1695,10 +1728,14 @@ class ClientGarantee(Garantee):
 
 post_save.connect(add_garantee_entries, sender=ClientGarantee, dispatch_uid="jade.inventory.models")
 
+class VendorGaranteeManager(models.Manager):
+  def get_query_set(self):
+    return super(VendorGaranteeManager, self).get_query_set().filter(tipo="VendorGarantee")
+    
 class VendorGarantee(Garantee):
     class Meta:
         proxy = True
-    objects=BaseManager('VendorGarantee')
+    objects=VendorGaranteeManager()
     def __init__(self, *args, **kwargs):
         self.template='inventory/vendor_garantee.html'
         self._vendor=kwargs.pop('vendor', None)
@@ -1725,6 +1762,19 @@ class CountDetail(models.Model):
     unit_cost = models.DecimalField(max_digits=8, decimal_places=2, default=Decimal('0.00'))
     transaction = models.OneToOneField(Transaction)
 
+
+class CountManager(models.Manager):
+    def get_query_set(self):
+        return super(CountManager, self).get_query_set().filter(tipo="Count")
+    def next_doc_number(self):
+        try:
+            number=super(CountManager, self).get_query_set().filter(tipo="Count").order_by('-pk')[0].doc_number
+            number=re.split("(\d*)", number)
+            if number[-1]=='':
+                number[-2]=str(int(number[-2])+1)
+            number="".join(number)
+        except: number='1001'
+        return number
 class Count(Transaction):
     class Meta:
         proxy = True
@@ -1734,7 +1784,7 @@ class Count(Transaction):
         )
     def print_url(self):
         return '/inventory/count/%s/sheet.pdf'% self.doc_number
-    objects = BaseManager('Count')
+    objects = CountManager()
     def __init__(self, *args, **kwargs):
         self.template='inventory/count.html'
     #        print "kwargs=" + str(kwargs)
@@ -1973,13 +2023,25 @@ def add_user_profile(sender, **kwargs):
         except:pass
 post_save.connect(add_user_profile, sender=User, dispatch_uid="jade.inventory.moddels")
 
+class AccountingManager(models.Manager):
+    def get_query_set(self):
+        return super(AccountingManager, self).get_query_set().filter(tipo="Accounting")
+    def next_doc_number(self):
+        try:
+            number=super(AccountingManager, self).get_query_set().filter(tipo="Accounting").order_by('-pk')[0].doc_number
+            number=re.split("(\d*)", number)
+            if number[-1]=='':
+                number[-2]=str(int(number[-2])+1)
+            number="".join(number)
+        except: number="1001"
+        return number
 class Accounting(Transaction):
     class Meta:
         proxy = True
         permissions = (
             ("view_accounting", "Can view accounting"),
         )
-    objects = BaseManager('Accounting')
+    objects = AccountingManager()
     def __init__(self, *args, **kwargs):
         self.template='inventory/accounting.html'
         self._value = kwargs.pop('value', 0)
@@ -2037,8 +2099,28 @@ def add_accounting_entries(sender, **kwargs):
 
 post_save.connect(add_accounting_entries, sender=Accounting, dispatch_uid="jade.inventory.models")
 
+
+
+
+
+    
+        
+        
+
+class TransferManager(models.Manager):
+    def get_query_set(self):
+        return super(TransferManager, self).get_query_set().filter(tipo="Transfer")
+    def next_doc_number(self):
+        try:
+            number=super(TransferManager, self).get_query_set().filter(tipo="Transfer").order_by('-pk')[0].doc_number
+            number=re.split("(\d*)", number)
+            if number[-1]=='':
+                number[-2]=str(int(number[-2])+1)
+            number="".join(number)
+        except: number='1001'
+        return number
 class Transfer(Transaction):
-    objects = BaseManager('Transfer')
+    objects = TransferManager()
     #    Entry Name             Account     Site
     #    SourceInventory        Inventory   A
     #    SourceTransfer         Transfer    A
