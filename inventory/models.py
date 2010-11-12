@@ -890,11 +890,14 @@ class Sale(Transaction):
         self._initial_price=self.price
         self.tipo='Sale'
     def save(self, *args, **kwargs):
-        if self.calculated_tax==self.unit_tax and self._initial_price != self.price: self.calculate_tax()
+        if self.quantity!=0:print "self.tax/self.quantity = " + str(self.tax/self.quantity)
+        if self.calculated_tax==Decimal("%.2f" % self.unit_tax) and self._initial_price != self.price: 
+            self.calculate_tax()
         super(Sale, self).save(*args, **kwargs)
     def calculate_tax(self):
         charge=self.price-self.discount
-        if self.client.tax_group.price_includes_tax: charge = charge/(self.client.tax_group.value+1)
+        if self.client.tax_group.price_includes_tax: 
+            charge = charge/(self.client.tax_group.value+1)
         self.price=charge+self.discount
         self.tax=charge*self.client.tax_group.value
         self.calculated_tax=self.unit_tax
@@ -907,13 +910,17 @@ class Sale(Transaction):
             except: 
                 return self.unit_tax
     def _set_calculated_tax(self, value):
-        try: 
+#        try: 
             ct=self.extravalue_set.get(name='CalculatedTax')
+            print "value = " + str(value)
+            print "ct.value = " + str(ct.value)
             ct.value=value
-            ct.save
-        except ExtraValue.DoesNotExist: 
-            try: ExtraValue.objects.create(transaction = self, name = 'CalculatedTax', value = value)
-            except: pass
+            print "ct.value = " + str(ct.value)
+            ct.save()
+#        except ExtraValue.DoesNotExist: 
+#            try: ExtraValue.objects.create(transaction = self, name = 'CalculatedTax', value = value)
+#            except: pass
+            print "ct.value = " + str(ct.value)
     calculated_tax = property(_get_calculated_tax, _set_calculated_tax)
     ################ ################ ################  Active   ################ ################ ################
     def _get_active(self):
@@ -957,6 +964,13 @@ class Sale(Transaction):
         try: return self.entry('Client').quantity
         except AttributeError: return self._quantity
     def _set_quantity(self, value):
+#        recalculate_tax=False
+#        print "changing quantity"
+#        print "self.calculated_tax = " + str(self.calculated_tax)
+#        print "self.unit_tax = " + str(self.unit_tax)
+#        if self.calculated_tax==round(self.unit_tax,2): 
+#            recalculate_tax=True
+#        print "recalculate_tax = " + str(recalculate_tax)
         value=(value or 0)
         try:
             if not self.pk: raise AttributeError('You must save the sale first')
@@ -974,6 +988,11 @@ class Sale(Transaction):
                     i.delete()
                     self._item=None
                     self._quantity=0
+#            if recalculate_tax: 
+#                print "self.tax = " + str(self.tax)
+#                print "self.quantity = " + str(self.quantity)
+#                self.calculated_tax=self.unit_tax
+#                print "self.calculated_tax = " + str(self.calculated_tax)
         except AttributeError: self._quantity=value
     quantity = property(_get_quantity, _set_quantity)
     ################ ################ ################  Serial  ################ ################ ################
