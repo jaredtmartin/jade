@@ -35,7 +35,7 @@
         <h2>{% trans 'Prices' %}</h2>
         <input type="hidden" id="last_id" value="">
         <table id="price-table">
-            <thead><tr><th>{% trans 'Item' %}</th><th>{% trans 'Group' %}</th>{% if perms.inventory.can_view_costs %}<th>{% trans 'Cost' %}</th>{% endif %}<th>{% trans 'Unit' %}</th><th>{% trans 'Relative' %}</th><th>{% trans 'Fixed' %}</th><th>{% trans 'Total' %}</th></tr></thead>
+            <thead><tr><th>{% trans 'Item' %}</th><th>{% trans 'Group' %}</th>{% if perms.inventory.can_view_costs %}<th>{% trans 'Cost' %}</th>{% endif %}<th>{% trans 'Unit' %}</th>{% if perms.inventory.can_view_costs %}<th>{% trans 'Relative' %}</th><th>{% trans 'Fixed' %}</th>{% endif %}<th>{% trans 'Total' %}</th></tr></thead>
             <tbody id="prices">
                 {% for object in form.instance.price_set.all %}
                     {% include "inventory/price.html" %}
