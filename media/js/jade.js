@@ -73,7 +73,9 @@ function updateTransaction(data){
 }
 function updateAndSelectQuantity(data){
     updateTransaction(data)
-    jQuery('#doc_number').val(jQuery('.doc_number:first').val());
+    
+    jQuery('.ui-dialog-content:visible').children().children('#doc_number').val(jQuery('.doc_number:first').val());
+//    jQuery('#doc_number').val(jQuery('.doc_number:first').val());
     $('.quantity:first').select();
 }
 function updateAndSelectItemField(data){

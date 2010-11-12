@@ -704,7 +704,7 @@ class Transaction(models.Model):
     sites = models.ManyToManyField(Site)
     tipo = models.CharField(max_length=16, choices=TRANSACTION_TYPES)
     class Meta:
-        ordering = ('number',)
+        ordering = ('doc_number',)
     def _get_date(self):
         return self._date
     def _set_date(self, value):
