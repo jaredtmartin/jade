@@ -462,6 +462,7 @@ class TaxGroup(models.Model):
     discounts_account = models.ForeignKey(Account, related_name = 'discounts_account_id')
     returns_account = models.ForeignKey(Account, related_name = 'returns_account_id')
     price_includes_tax = models.BooleanField(blank=True, default=True)
+    doc_number_sequence = models.CharField(max_length=32)
     site = models.ForeignKey(Site)#, default=Site.objects.get_current().pk
     objects = CurrentSiteManager()
     
@@ -853,7 +854,15 @@ class BaseManager(models.Manager):
  ######################################################################################
  # Sales
  ######################################################################################
-
+class SaleManager(BaseManager):
+    def next_doc_number(self):Z
+        try: 
+            number = super(BaseManager, self).get_query_set().filter(tipo=self.tipo).order_by('-pk')[0].doc_number
+            number=re.split("(\d*)", number)
+            if number[-1]=='':
+                number[-2]=("%%0%id" % len(number[-2])) % (int(number[-2])+1)
+            return "".join(number)
+        except: return "1001"    
 class Sale(Transaction):
     class Meta:
         proxy = True
