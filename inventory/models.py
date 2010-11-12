@@ -890,28 +890,31 @@ class Sale(Transaction):
         self._initial_price=self.price
         self.tipo='Sale'
     def save(self, *args, **kwargs):
-        try: 
-            ct=self.extravalue_set.get(name='CalculatedTax')
-            print "-ct.value = " + str(-ct.value)
-            print "self.tax = " + str(self.tax)
-            print "-ct.value==self.tax = " + str(-ct.value==self.tax)
-            if ct.value==self.tax and self._initial_price != self.price:
-                    self.tax = ct.value = self.calculate_tax()
-                    print "ct.value = " + str(ct.value)
-                    print "self.tax = " + str(self.tax)
-                    ct.save()
-        except ExtraValue.DoesNotExist: pass
+        if self.calculated_tax.value==self.unit_tax and self._initial_price != self.price: self.calculate_tax()
         super(Sale, self).save(*args, **kwargs)
     def calculate_tax(self):
+        charge=self.price-self.discount
+        if self.client.tax_group.price_includes_tax: charge = charge/(self.client.tax_group.value+1)
+        self.price=charge+self.discount
+        self.tax=charge*self.client.tax_group.value
+        self.calculated_tax=self.unit_tax
+    def _get_calculated_tax(self):
         try: 
-            print "self.price = " + str(self.price)
-            print "-self.discount = " + str(-self.discount)
-            print "self.client.tax_group.value = " + str(self.client.tax_group.value)
-            print "self.price-self.discount = " + str(self.price-self.discount)
-            print "self.price-self.discount * self.client.tax_group.value = " + str(self.price-self.discount * self.client.tax_group.value)
-            return (self.price-self.discount) * self.client.tax_group.value
-        except NameError: return 0
-        except AttributeError: return 0
+            return self.extravalue_set.get(name='CalculatedTax').value
+        except ExtraValue.DoesNotExist: 
+            try:
+                ExtraValue.objects.create(transaction = self, name = 'CalculatedTax', value = self.unit_tax)
+            except: 
+                return self.unit_tax
+    def _set_calculated_tax(self, value):
+        try: 
+            ct=self.extravalue_set.get(name='CalculatedTax')
+            ct.value=value
+            ct.save
+        except ExtraValue.DoesNotExist: 
+            try: ExtraValue.objects.create(transaction = self, name = 'CalculatedTax', value = value)
+            except: pass
+    calculated_tax = property(_get_calculated_tax, _set_calculated_tax)
     ################ ################ ################  Active   ################ ################ ################
     def _get_active(self):
         try: return self.entry('Client').active
@@ -1065,6 +1068,10 @@ class Sale(Transaction):
         except AttributeError:
             return self._tax
     def _set_tax(self, value):
+        print "setting tax!"
+        ct=self.extravalue_set.get(name='CalculatedTax')
+        print "ct.value = " + str(ct.value)
+        print "value = " + str(value)
         value=(value or 0)
         try:
             client=self.entry('Client').account
@@ -1119,7 +1126,10 @@ class Sale(Transaction):
     def _get_unit_tax(self):
         if self.quantity != 0 and self.tax !=0: return self.tax / self.quantity
         else: return self.tax
-    unit_tax = property(_get_unit_tax)
+    def _set_unit_tax(self, value):
+        if quantity==0: self.tax=value
+        else: self.tax=value*quantity
+    unit_tax = property(_get_unit_tax, _set_unit_tax)
     ################ ################ ################  Total   ################ ################ ################
     def _get_total(self):
         return Decimal(str(round(self.price-self.discount+self.tax,2)))
@@ -1165,7 +1175,8 @@ def add_sale_entries(sender, **kwargs):
                 account     = l._client.tax_group.discounts_account,
                 tipo        = 'Discount',
                 value       = l._discount)
-        ExtraValue.objects.create(transaction = l, name = 'CalculatedTax', value = l.tax)
+        if l.quantity==0: ExtraValue.objects.create(transaction = l, name = 'CalculatedTax', value = l.tax)
+        else: ExtraValue.objects.create(transaction = l, name = 'CalculatedTax', value = l.tax/l.quantity)
         if (l._quantity!=0 or l._cost!=0) and l._delivered:
     #            print "creating inventory entry"
     #            print "l.item = " + str(l.item)
