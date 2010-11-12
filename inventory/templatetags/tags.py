@@ -163,7 +163,7 @@ def pages(page, q=''):
 #    if (n%1)!=0: response += int2word((n*100)%100) +unicode( _(' cents '))
 #    return response
 def money2word(n):
-    response=words(n)
+    response=words(n)+unicode(_('dollars '))
     cents=(n*100)%100
     if cents>0: response+= unicode(_('with ')) + unicode(int(cents))+u'/100 ' + unicode(_('cents.'))
     return response

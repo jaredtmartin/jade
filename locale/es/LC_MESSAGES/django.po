@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2010-11-11 17:43-0600\n"
+"POT-Creation-Date: 2010-11-12 09:12-0600\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -15,191 +15,6 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-
-#: words.py:4 inventory/templatetags/tags.py:264
-
-msgid "nine hundred "
-msgstr "novecientos "
-
-#: words.py:5 inventory/templatetags/tags.py:265
-
-msgid "eight hundred "
-msgstr "ochocientos "
-
-#: words.py:6 inventory/templatetags/tags.py:266
-
-msgid "seven hundred "
-msgstr "setecientos "
-
-#: words.py:7 inventory/templatetags/tags.py:267
-
-msgid "six hundred "
-msgstr "seicientos "
-
-#: words.py:8 inventory/templatetags/tags.py:268
-
-msgid "five hundred "
-msgstr "quinientos "
-
-#: words.py:9 inventory/templatetags/tags.py:269
-
-msgid "four hundred "
-msgstr "cuatrocientos "
-
-#: words.py:10 inventory/templatetags/tags.py:270
-
-msgid "three hundred "
-msgstr "trescientos "
-
-#: words.py:11 inventory/templatetags/tags.py:271
-
-msgid "two hundred "
-msgstr "doscientos "
-
-#: words.py:12 inventory/templatetags/tags.py:272
-
-msgid "one hundred "
-msgstr "ciento "
-
-#: words.py:13 inventory/templatetags/tags.py:253
-#: inventory/templatetags/tags.py:273
-msgid "ninety "
-msgstr "noventa "
-
-#: words.py:14 inventory/templatetags/tags.py:253
-#: inventory/templatetags/tags.py:274
-msgid "eighty "
-msgstr "ochenta "
-
-#: words.py:15 inventory/templatetags/tags.py:253
-#: inventory/templatetags/tags.py:275
-msgid "seventy "
-msgstr "setenta "
-
-#: words.py:16 inventory/templatetags/tags.py:253
-#: inventory/templatetags/tags.py:276
-msgid "sixty "
-msgstr "sesenta "
-
-#: words.py:17 inventory/templatetags/tags.py:253
-#: inventory/templatetags/tags.py:277
-msgid "fifty "
-msgstr "cincuenta "
-
-#: words.py:18 inventory/templatetags/tags.py:278
-
-msgid "fourty "
-msgstr "cuarenta "
-
-#: words.py:19 inventory/templatetags/tags.py:253
-#: inventory/templatetags/tags.py:279
-msgid "thirty "
-msgstr "treinta "
-
-#: words.py:20 inventory/templatetags/tags.py:253
-#: inventory/templatetags/tags.py:280
-msgid "twenty "
-msgstr "veinte "
-
-#: words.py:21 inventory/templatetags/tags.py:281
-
-msgid "ninteen "
-msgstr "diecinueve "
-
-#: words.py:22 inventory/templatetags/tags.py:252
-#: inventory/templatetags/tags.py:282
-msgid "eighteen "
-msgstr "dieciocho "
-
-#: words.py:23 inventory/templatetags/tags.py:252
-#: inventory/templatetags/tags.py:283
-msgid "seventeen "
-msgstr "diecisiete "
-
-#: words.py:24 inventory/templatetags/tags.py:252
-#: inventory/templatetags/tags.py:284
-msgid "sixteen "
-msgstr "dieciseis "
-
-#: words.py:25 inventory/templatetags/tags.py:252
-#: inventory/templatetags/tags.py:285
-msgid "fifteen "
-msgstr "quince "
-
-#: words.py:26 inventory/templatetags/tags.py:252
-#: inventory/templatetags/tags.py:286
-msgid "fourteen "
-msgstr "catorce "
-
-#: words.py:27 inventory/templatetags/tags.py:252
-#: inventory/templatetags/tags.py:287
-msgid "thirteen "
-msgstr "trece "
-
-#: words.py:28 inventory/templatetags/tags.py:252
-#: inventory/templatetags/tags.py:288
-msgid "twelve "
-msgstr "doce "
-
-#: words.py:29 inventory/templatetags/tags.py:252
-#: inventory/templatetags/tags.py:289
-msgid "eleven "
-msgstr "once "
-
-#: words.py:30 inventory/templatetags/tags.py:252
-#: inventory/templatetags/tags.py:290
-msgid "ten "
-msgstr "diez "
-
-#: words.py:31 inventory/templatetags/tags.py:251
-#: inventory/templatetags/tags.py:291
-msgid "nine "
-msgstr "nueve "
-
-#: words.py:32 inventory/templatetags/tags.py:251
-#: inventory/templatetags/tags.py:292
-msgid "eight "
-msgstr "ocho "
-
-#: words.py:33 inventory/templatetags/tags.py:251
-#: inventory/templatetags/tags.py:293
-msgid "seven "
-msgstr "siete "
-
-#: words.py:34 inventory/templatetags/tags.py:251
-#: inventory/templatetags/tags.py:294
-msgid "six "
-msgstr "seis"
-
-#: words.py:35 inventory/templatetags/tags.py:251
-#: inventory/templatetags/tags.py:295
-msgid "five "
-msgstr "cinco "
-
-#: words.py:36 inventory/templatetags/tags.py:251
-#: inventory/templatetags/tags.py:296
-msgid "four "
-msgstr "cuatro "
-
-#: words.py:37 inventory/templatetags/tags.py:251
-#: inventory/templatetags/tags.py:297
-msgid "three "
-msgstr "tres "
-
-#: words.py:38 inventory/templatetags/tags.py:251
-#: inventory/templatetags/tags.py:298
-msgid "two "
-msgstr "dos "
-
-#: words.py:39 inventory/templatetags/tags.py:251
-#: inventory/templatetags/tags.py:299
-msgid "one "
-msgstr "un "
-
-#: words.py:42 inventory/templatetags/tags.py:254
-#: inventory/templatetags/tags.py:261
-msgid "thousand "
-msgstr "mil "
 
 #: inventory/forms.py:400
 msgid "Address"
@@ -402,6 +217,10 @@ msgstr "Primera"
 msgid "Last"
 msgstr "Última"
 
+#: inventory/templatetags/tags.py:166
+msgid "dollars "
+msgstr "dolares "
+
 #: inventory/templatetags/tags.py:168
 msgid "with "
 msgstr "con "
@@ -414,13 +233,117 @@ msgstr "ctvs. "
 msgid "hundred "
 msgstr "cien "
 
+#: inventory/templatetags/tags.py:251 inventory/templatetags/tags.py:299
+msgid "one "
+msgstr "un "
+
+#: inventory/templatetags/tags.py:251 inventory/templatetags/tags.py:298
+msgid "two "
+msgstr "dos "
+
+#: inventory/templatetags/tags.py:251 inventory/templatetags/tags.py:297
+msgid "three "
+msgstr "tres "
+
+#: inventory/templatetags/tags.py:251 inventory/templatetags/tags.py:296
+msgid "four "
+msgstr "cuatro "
+
+#: inventory/templatetags/tags.py:251 inventory/templatetags/tags.py:295
+msgid "five "
+msgstr "cinco "
+
+#: inventory/templatetags/tags.py:251 inventory/templatetags/tags.py:294
+msgid "six "
+msgstr "seis"
+
+#: inventory/templatetags/tags.py:251 inventory/templatetags/tags.py:293
+msgid "seven "
+msgstr "siete "
+
+#: inventory/templatetags/tags.py:251 inventory/templatetags/tags.py:292
+msgid "eight "
+msgstr "ocho "
+
+#: inventory/templatetags/tags.py:251 inventory/templatetags/tags.py:291
+msgid "nine "
+msgstr "nueve "
+
+#: inventory/templatetags/tags.py:252 inventory/templatetags/tags.py:290
+msgid "ten "
+msgstr "diez "
+
+#: inventory/templatetags/tags.py:252 inventory/templatetags/tags.py:289
+msgid "eleven "
+msgstr "once "
+
+#: inventory/templatetags/tags.py:252 inventory/templatetags/tags.py:288
+msgid "twelve "
+msgstr "doce "
+
+#: inventory/templatetags/tags.py:252 inventory/templatetags/tags.py:287
+msgid "thirteen "
+msgstr "trece "
+
+#: inventory/templatetags/tags.py:252 inventory/templatetags/tags.py:286
+msgid "fourteen "
+msgstr "catorce "
+
+#: inventory/templatetags/tags.py:252 inventory/templatetags/tags.py:285
+msgid "fifteen "
+msgstr "quince "
+
+#: inventory/templatetags/tags.py:252 inventory/templatetags/tags.py:284
+msgid "sixteen "
+msgstr "dieciseis "
+
+#: inventory/templatetags/tags.py:252 inventory/templatetags/tags.py:283
+msgid "seventeen "
+msgstr "diecisiete "
+
+#: inventory/templatetags/tags.py:252 inventory/templatetags/tags.py:282
+msgid "eighteen "
+msgstr "dieciocho "
+
 #: inventory/templatetags/tags.py:252
 msgid "nineteen "
 msgstr "diecinueve "
 
+#: inventory/templatetags/tags.py:253 inventory/templatetags/tags.py:280
+msgid "twenty "
+msgstr "veinte "
+
+#: inventory/templatetags/tags.py:253 inventory/templatetags/tags.py:279
+msgid "thirty "
+msgstr "treinta "
+
 #: inventory/templatetags/tags.py:253
 msgid "forty "
 msgstr "cuarenta "
+
+#: inventory/templatetags/tags.py:253 inventory/templatetags/tags.py:277
+msgid "fifty "
+msgstr "cincuenta "
+
+#: inventory/templatetags/tags.py:253 inventory/templatetags/tags.py:276
+msgid "sixty "
+msgstr "sesenta "
+
+#: inventory/templatetags/tags.py:253 inventory/templatetags/tags.py:275
+msgid "seventy "
+msgstr "setenta "
+
+#: inventory/templatetags/tags.py:253 inventory/templatetags/tags.py:274
+msgid "eighty "
+msgstr "ochenta "
+
+#: inventory/templatetags/tags.py:253 inventory/templatetags/tags.py:273
+msgid "ninety "
+msgstr "noventa "
+
+#: inventory/templatetags/tags.py:254 inventory/templatetags/tags.py:261
+msgid "thousand "
+msgstr "mil "
 
 #: inventory/templatetags/tags.py:254
 msgid "million "
@@ -497,6 +420,50 @@ msgstr "novemdecillion"
 #: inventory/templatetags/tags.py:254
 msgid "vigintillion "
 msgstr ""
+
+#: inventory/templatetags/tags.py:264
+msgid "nine hundred "
+msgstr "novecientos "
+
+#: inventory/templatetags/tags.py:265
+msgid "eight hundred "
+msgstr "ochocientos "
+
+#: inventory/templatetags/tags.py:266
+msgid "seven hundred "
+msgstr "setecientos "
+
+#: inventory/templatetags/tags.py:267
+msgid "six hundred "
+msgstr "seicientos "
+
+#: inventory/templatetags/tags.py:268
+msgid "five hundred "
+msgstr "quinientos "
+
+#: inventory/templatetags/tags.py:269
+msgid "four hundred "
+msgstr "cuatrocientos "
+
+#: inventory/templatetags/tags.py:270
+msgid "three hundred "
+msgstr "trescientos "
+
+#: inventory/templatetags/tags.py:271
+msgid "two hundred "
+msgstr "doscientos "
+
+#: inventory/templatetags/tags.py:272
+msgid "one hundred "
+msgstr "ciento "
+
+#: inventory/templatetags/tags.py:278
+msgid "fourty "
+msgstr "cuarenta "
+
+#: inventory/templatetags/tags.py:281
+msgid "ninteen "
+msgstr "diecinueve "
 
 #: production/views.py:32
 msgid "The process has been created."
@@ -1274,9 +1241,6 @@ msgstr "Cantidad de veces para multiplicar el proceso"
 #: templates/production/production_list.html:3
 msgid "Production"
 msgstr "Producción"
-
-#~ msgid " dollars "
-#~ msgstr " dolares "
 
 #~ msgid " and "
 #~ msgstr " y "
