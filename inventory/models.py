@@ -462,7 +462,7 @@ class TaxGroup(models.Model):
     discounts_account = models.ForeignKey(Account, related_name = 'discounts_account_id')
     returns_account = models.ForeignKey(Account, related_name = 'returns_account_id')
     price_includes_tax = models.BooleanField(blank=True, default=True)
-    doc_number_sequence = models.CharField(max_length=32, default='1001')
+#    doc_number_sequence = models.CharField(max_length=32, default='1001')
     site = models.ForeignKey(Site)#, default=Site.objects.get_current().pk
     objects = CurrentSiteManager()
     
