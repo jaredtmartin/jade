@@ -18,16 +18,16 @@
     <a style="display:none;" class="show" id="id_transaction-{{object.pk}}-garantee" title="{% trans 'Add Garantee' %}" href="#" onclick="addGarantee({{object.pk}}); return false;"><img src="{{MEDIA_URL}}/img/garantee.png"/></a>
 {% endblock %}
 {% block other_fields_show %}
-    <td id="id_transaction-{{ object.pk }}-account"  title="{% trans 'Name of client' %}" value="{{object.subclass.client|default:''}}" class="field account lookup client"><a href="{{object.subclass.client.url}}">{{object.subclass.client|default:''}}</a></td>
+    <td id="id_transaction-{{ object.pk }}-account"  title="{% trans 'Name of client' %}" value="{{object.subclass.client|default:''}}" class="field account lookup client" label=""><a href="{{object.subclass.client.url}}">{{object.subclass.client|default:''}}</a></td>
     {% include "inventory/inventory_base.html" %}
     {% if perms.inventory.can_view_costs %}
-        <td id="id_transaction-{{object.pk}}-unit_cost" totalvalue="{{object.subclass.cost|floatformat:2}}" title="{% trans 'Total cost' %}" value="{{object.subclass.unit_cost|floatformat:2}}"  class="cost field money">    ${{object.subclass.cost|floatformat:2}}</td>
+        <td id="id_transaction-{{object.pk}}-unit_cost" totalvalue="{{object.subclass.cost|floatformat:2}}" title="{% trans 'Total cost' %}" value="{{object.subclass.unit_cost|floatformat:2}}"  class="cost field money" label="Cost">    Cost ${{object.subclass.cost|floatformat:2}}</td>
     {% else %}
         <input type="hidden" value="">
     {% endif %}
-    <td id="id_transaction-{{object.pk}}-unit_tax" totalvalue="{{object.subclass.tax|floatformat:2}}" title="{% trans 'Total tax' %}" value="{{object.subclass.unit_tax|floatformat:2}}"  class="tax field money">    ${{object.subclass.tax|floatformat:2}}</td>
-    <td id="id_transaction-{{object.pk}}-unit_discount" totalvalue="{{object.subclass.discount|floatformat:2}}" title="{% trans 'Total discount' %}" value="{{object.subclass.unit_discount|floatformat:2}}" class="discount field money"> ${{object.subclass.discount|floatformat:2}}</td>
-    <td id="id_transaction-{{object.pk}}-unit_price" totalvalue="{{object.subclass.price|floatformat:2}}" title="{% trans 'Total price' %}"   value="{{object.subclass.unit_price|floatformat:2}}"    class="price field money">    ${{object.subclass.price|floatformat:2}}</td>
+    <td id="id_transaction-{{object.pk}}-unit_tax" totalvalue="{{object.subclass.tax|floatformat:2}}" title="{% trans 'Total tax' %}" value="{{object.subclass.unit_tax|floatformat:2}}"  class="tax field money" label="Tax">   Tax ${{object.subclass.tax|floatformat:2}}</td>
+    <td id="id_transaction-{{object.pk}}-unit_discount" totalvalue="{{object.subclass.discount|floatformat:2}}" title="{% trans 'Total discount' %}" value="{{object.subclass.unit_discount|floatformat:2}}" class="discount field money" label="Discount"> Discount ${{object.subclass.discount|floatformat:2}}</td>
+    <td id="id_transaction-{{object.pk}}-unit_price" totalvalue="{{object.subclass.price|floatformat:2}}" title="{% trans 'Total price' %}"   value="{{object.subclass.unit_price|floatformat:2}}"    class="price field money" label="Price"> Price   ${{object.subclass.price|floatformat:2}}</td>
 {% endblock %}
 {% block other_actions_show %}
     <a class="show" id="id_transaction-{{object.pk}}-return" title="{% trans 'Return Sale' %}" href="#" onclick="newTransaction('/inventory/salereturn/{{object.pk}}/new/'); return false;"><img src="{{MEDIA_URL}}/img/return.png"/></a>

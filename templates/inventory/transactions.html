@@ -55,7 +55,7 @@
 {% block pre-table %}
 
     
-    {% if show_totals %}
+    {% if q %}
         <div id="totals">
             <h2>Totals:</h2>
             {% if charge %}
@@ -73,12 +73,13 @@
             {% if cost %}
                 <div id="cost" class="five-column">{% trans 'Cost' %}: ${{cost|floatformat:2}}</div>
             {% endif %}
+            <hr>
             <div class="clear-contentunit"></div>
         </div>
     {% endif %}
     
 {% endblock%}
-{% block table_header %}
+{% block table_hegader %}
     <th>{% trans 'Number' %}</th>
     <th>{% trans 'Type' %}</th>
     <th>{% trans 'Date' %}</th>

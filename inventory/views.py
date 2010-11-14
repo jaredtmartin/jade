@@ -859,6 +859,11 @@ def new_sale(request): # AJAX POST ONLY
     except: pass
     return _r2r(request,'inventory/results.html', {'edit_mode':True, 'objects':objects,'prefix':'sale','line_template':"inventory/transaction.html",'error_list':error_list, 'info_list':{}})
     
+def get_transaction(request, object_id, edit_mode=False):
+    obj = get_object_or_404(Transaction, pk=object_id).subclass
+    if not request.user.has_perm('inventory.change_'+obj.tipo.lower()): return http.HttpResponseRedirect("/blocked/")
+    return _r2r(request,'inventory/results.html', {'edit_mode':edit_mode, 'objects':[obj],'prefix':obj.tipo.lower(),'line_template':"inventory/transaction.html",'error_list':{}, 'info_list':{}})
+
 def delete_sale(request, object_id):
     return delete_object(request, object_id, Sale, 'sale')
 

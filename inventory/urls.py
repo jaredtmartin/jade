@@ -149,6 +149,7 @@ urlpatterns = patterns('',
     (r'^transaction/(?P<object_id>\d+)/deactivate/$', 'jade.inventory.views.deactivate_transaction'),
     (r'^transaction/(?P<object_id>\d+)/deliver/$', 'jade.inventory.views.deliver_transaction'),
     (r'^transaction/(?P<object_id>\d+)/undeliver/$', 'jade.inventory.views.undeliver_transaction'),
-
+    (r'^transaction/(?P<object_id>\d+)/get/$', 'jade.inventory.views.get_transaction'),
+    (r'^transaction/(?P<object_id>\d+)/edit/$', 'jade.inventory.views.get_transaction',{'edit_mode':True}),
 )
 
