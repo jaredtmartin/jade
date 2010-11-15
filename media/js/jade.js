@@ -1,6 +1,6 @@
 function editTransaction(object_id) {
     $('#transaction-'+object_id+' .field').each(function(i){
-        var input = '<td style="'+ $(this).attr('style') +'">'+ $(this).attr('label') +'<input id="'+ $(this).attr('id') +'" class="'+ $(this).attr('class') +'" value="'+$(this).attr('value')+'" name="'+ $(this).attr('name') +'" type="text"></td>'
+        var input = '<td style="'+ $(this).attr('style') +'"><input id="'+ $(this).attr('id') +'" class="'+ $(this).attr('class') +'" value="'+$(this).attr('value')+'" name="'+ $(this).attr('name') +'" type="text"></td>'
         $(this).before(input).removeClass('Inventory').hide();
     });
     $('#id_transaction-'+object_id+'-date').datepicker();

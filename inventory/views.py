@@ -391,6 +391,18 @@ def sale_receipt(request, doc_number):
 
 @login_required
 @permission_required('inventory.view_receipt', login_url="/blocked/")
+def garantee_report(request, doc_number):
+    doc=ClientGarantee.objects.filter(doc_number=doc_number)
+    if doc.count()==0: return fallback_to_transactions(request, doc_number, _('Unable to find sales with the specified document number.'))
+    try:report=Report.objects.get(name=settings.GARANTEE_REPORT_NAME)
+    except Report.DoesNotExist: 
+        return fallback_to_transactions(request, doc_number, _('Unable to find a report template with the name "%s"') % settings.GARANTEE_REPORT_NAME)
+    print "doc = " + str(doc)
+    print "doc[0].serial = " + str(doc[0].serial)
+    return render_string_to_pdf(Template(report.body), {'doc':doc})
+
+@login_required
+@permission_required('inventory.view_receipt', login_url="/blocked/")
 def count_sheet(request, doc_number):
     doc=Count.objects.filter(doc_number=doc_number)
     if doc.count()==0: return fallback_to_transactions(request, doc_number, 'Unable to find counts with the specified document number.')

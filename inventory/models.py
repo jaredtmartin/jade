@@ -692,6 +692,9 @@ class Transaction(models.Model):
     comments = models.CharField(max_length=200, blank=True, default='')
     sites = models.ManyToManyField(Site)
     tipo = models.CharField(max_length=16, choices=TRANSACTION_TYPES)
+    def __init__(self, *args, **kwargs):
+        self._active = kwargs.pop('active', True)
+        super(Transaction, self).__init__(*args, **kwargs)
     class Meta:
         ordering = ('-_date',)
     def _get_date(self):
@@ -707,6 +710,19 @@ class Transaction(models.Model):
         return False
     def __unicode__(self):
         return self.doc_number
+    ################ ################ ################  Active   ################ ################ ################
+    def _get_active(self):
+        try: 
+            for e in self.entry_set.all():
+                if not e.active: return False
+            return True
+        except AttributeError: return self._active
+        
+    def _set_active(self, value):
+        self._active=value
+        [e.update('active',value) for e in self.entry_set.all()]
+    active = property(_get_active, _set_active)
+    
     def create_related_entry(self, account, tipo, value=0, item=None, quantity=0, delivered=True, serial=None, count=0, cost=0, active=True, site=None):
         try: 
             if not site: site = Site.objects.get_current()
@@ -875,7 +891,6 @@ class Sale(Transaction):
         self._date = kwargs.pop('date', datetime.now())
         self._delivered = kwargs.pop('delivered', True)
         self._tax = kwargs.pop('tax', 0)
-        self._active = kwargs.pop('active', True)
         self._discount = kwargs.pop('discount', 0)
         self._item = kwargs.pop('item', None)
         self._quantity = kwargs.pop('quantity', 0)
@@ -916,14 +931,6 @@ class Sale(Transaction):
 #            except: pass
             print "ct.value = " + str(ct.value)
     calculated_tax = property(_get_calculated_tax, _set_calculated_tax)
-    ################ ################ ################  Active   ################ ################ ################
-    def _get_active(self):
-        try: return self.entry('Client').active
-        except AttributeError: return self._active
-    def _set_active(self, value):
-        self._active=value
-        [e.update('active',value) for e in self.entry_set.all()]
-    active = property(_get_active, _set_active)
     ################ ################ ################  Delivered   ################ ################ ################
     def _get_delivered(self):
         try: return self.entry('Client').delivered
@@ -1569,10 +1576,6 @@ class GaranteeOffer(models.Model):
     def __unicode__(self):
         return 'Garantee for %i months on %s(%s)'%(self.months, self.item, str(self.price))
 
-    #class GaranteeDetail(models.Model):
-    #    months = models.IntegerField(default=0, blank=True)
-    #    transaction = models.OneToOneField(Transaction)
-
 class Garantee(Transaction):
     # Quantity is the number of months the Garantee will be active
     class Meta:
@@ -1586,29 +1589,25 @@ class Garantee(Transaction):
         self._price = kwargs.pop('price', Decimal('0.00'))
         super(Garantee, self).__init__(*args, **kwargs)
         self.tipo='Garantee'
-    ################ ################ ################  Active   ################ ################ ################
     def _get_active(self):
         try: return self.entry('Client').active
         except AttributeError: return self._active
     def _set_active(self, value):
         self._active=value
         [e.update('active',value) for e in self.entry_set.all()]
-    active = property(_get_active, _set_active)
-
-    ################ ################ ################  (Unit Price)   ################ ################ ################
+    def _get_expires(self):
+        return self._date+timedelta(int(self.quantity)*365/12)
     def _get_unit_price(self):
         if self.quantity != 0 and self.price !=0: return self.price / self.quantity
         else: return self.price
-    unit_price = property(_get_unit_price)
-    ################ ################ ################  Item   ################ ################ ################
+    def _get_value(self):
+        return self.price
     def _get_item(self):
         try: return self.entry('Client').item
         except AttributeError: return self._item
     def _set_item(self, value):
         try: return [self.entry(e).update('item',value) for e in ['Client','Revenue']]
         except AttributeError: self._item=value
-    item = property(_get_item, _set_item)
-    ################ ################ ################  Quantity   ################ ################ ################
     def _get_quantity(self):
         try: return self.entry('Client').quantity
         except AttributeError: return self._quantity
@@ -1617,21 +1616,15 @@ class Garantee(Transaction):
         try:
             self.entry('Client').update('quantity', value)
             self.entry('Revenue').update('quantity', -value)
-
         except AttributeError: self._quantity=value
-    quantity = property(_get_quantity, _set_quantity)
-    ################ ################ ################  Serial  ################ ################ ################
     def _get_serial(self):
         try: return self.entry('Client').serial
         except AttributeError: return self._serial
     def _set_serial(self, value):
-        print "setting serial"
         try: return [self.entry(e).update('serial',value) for e in ['Client','Revenue']]
         except AttributeError: 
             print "setting cache serial!!!!!!"
             self._serial=value
-    serial = property(_get_serial, _set_serial)
-    ################ ################ ################  Price  ################ ################ ################
     def _get_price(self):
         try: return self.entry('Client').value
         except AttributeError: return self._price
@@ -1640,12 +1633,18 @@ class Garantee(Transaction):
             self.entry('Client').update('value', value)
             self.entry('Revenue').update('value', -value)
         except: self._price = value
+#    def _get_expires(self):
+#        return in_months(self.date, self.garanteedetails.months)
+    active = property(_get_active, _set_active)
+    unit_price = property(_get_unit_price)
+    value = property(_get_value)
+    expires = property(_get_expires)
+    item = property(_get_item, _set_item)
+    quantity = property(_get_quantity, _set_quantity)
+    serial = property(_get_serial, _set_serial)
     price=property(_get_price, _set_price)
-    ################ ################ ################  Expires  ################ ################ ################
-    def _get_expires(self):
-        return in_months(self.date, self.garanteedetails.months)
     expires=property(_get_expires)
-    ################ ################ ################  Create Entries   ################ ################ ################
+    
 def add_garantee_entries(sender, **kwargs):
     if kwargs['created']:
         l=kwargs['instance']
@@ -1671,6 +1670,9 @@ class ClientGarantee(Garantee):
     class Meta:
         proxy = True
     objects=BaseManager('ClientGarantee')
+    
+    def print_url(self):
+        return '/inventory/sale/%s/garantee.pdf'% self.doc_number
     def __init__(self, *args, **kwargs):
         self.template='inventory/client_garantee.html'
         self._client = kwargs.pop('client', None)
@@ -1686,7 +1688,9 @@ class ClientGarantee(Garantee):
         try: self.entry('Client').update('account', value)
         except AttributeError: self._client = value
     client = property(_get_client, _set_client)
-
+    def _get_account(self):
+        return self.client
+    account = property(_get_account)
 post_save.connect(add_garantee_entries, sender=ClientGarantee, dispatch_uid="jade.inventory.models")
 
 class VendorGarantee(Garantee):
@@ -1702,6 +1706,9 @@ class VendorGarantee(Garantee):
         })
         super(VendorGarantee, self).__init__(*args, **kwargs)
         self.tipo='VendorGarantee'
+    def _get_account(self):
+        return self.vendor
+    account = property(_get_account)
     ################ ################ ################  Vendor   ################ ################ ################
     def _get_vendor(self):
         try: return self.entry('Revenue').account

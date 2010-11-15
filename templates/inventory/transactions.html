@@ -79,7 +79,7 @@
     {% endif %}
     
 {% endblock%}
-{% block table_hegader %}
+{% block table_header %}
     <th>{% trans 'Number' %}</th>
     <th>{% trans 'Type' %}</th>
     <th>{% trans 'Date' %}</th>
@@ -100,7 +100,7 @@
 {% endblock%}
 {% block line %}
     {% with object.subclass.tipo as tipo %}
-        {% include object.subclass.template %}
+        {% include "inventory/bare_transaction.html" %}
     {% endwith %}
 {% endblock%}
 

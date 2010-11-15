@@ -1,26 +1,17 @@
+{% extends "inventory/transaction_base.html" %}
 {% load i18n %}
-<tr id="transaction-{{ object.pk }}" class="transaction" transaction_id={{object.pk}} tipo={{object.tipo|lower}}>
-    <td id="id_transaction-{{ object.pk }}-doc_number" title="{% trans 'Document Number' %}" value="{{object.doc_number}}" class="field doc_number"><a  href="{{object.subclass.url}}{% if tipo == "Sale" %}&tipo=Sale{% endif %}{% if tipo == "Purchase" %}&tipo=Purchase{% endif %}{% if tipo == "Count" %}&tipo=Count{% endif %}">{{object.doc_number}}</a></td>
-    <td id="id_transaction-{{ object.pk }}-tipo" title="{% trans 'Type' %}" >{{object.get_tipo_display}}</td>
-    <td id="id_transaction-{{object.pk}}-date" title="{% trans 'Date' %}" value="{{object.date|date:"m/d/Y"}}" class="field date">{{object.date|date:"m/d/Y"}}</td>
-    <td id="id_transaction-{{ object.pk }}-account" title="{% trans 'Name of client' %}"      value="{{object.subclass.client|default:''}}"                     class="field account lookup client" ><a href="{{object.subclass.client.url}}">{{object.subclass.client|default:''}}</a></td>
-    <td id="id_transaction-{{ object.pk }}-item"   title="{% trans 'Name of item' %}"          value="{{object.subclass.item|default:''}}"                        class="field item lookup" class="inventory-details">{% if object.subclass.item %}<a href="{{object.subclass.item.url}}">{{object.subclass.item}}</a>{% endif %}</td>
-    <td id="id_transaction-{{object.pk}}-quantity" title="{% trans 'Quantity of item' %}"          value="{{object.subclass.quantity|floatformat:-2}}"     class="field quantity inventory-details"> {{object.subclass.quantity|floatformat:-2}}</td>
-    <td id="id_transaction-{{object.pk}}-serial"   title="{% trans 'Serial number of item (if applicable)' %}"          value="{{object.subclass.serial|default:''}}"                      class="field serial inventory-details">{% if object.subclass.serial %}<a href="/inventory/serial/{{object.subclass.serial}}/">{{object.subclass.serial}}</a>{% endif %}</td>
-
+{% block other_fields_edit %}
+    <td><input id="id_transaction-{{ object.pk }}-account" title="{% trans 'Name of client' %}" class="field account lookup client" value="{{object.subclass.client|default:''}}" type="text"></td>
+    {% include "inventory/inventory_base.html" %}
     <td/><td/><td/>
-    <td id="id_transaction-{{object.pk}}-value" title="{% trans 'Price of garantee' %}"             value="{{object.price|floatformat:2}}"                  class="field money">    ${{object.subclass.price|floatformat:2}}</td>
-    <td>
-        <a class="show" id="id_transaction-{{object.pk}}-edit" href="#" title="{% trans 'Edit Sale' %}" onclick="editTransaction({{object.pk}}); return false;"><img src="{{MEDIA_URL}}/img/edit.png"/></a>
-        {% block show_save_link %}<a class="edit save" style="display:none;" id="id_transaction-{{object.pk}}-save" title="{% trans 'Save Changes' %}" href="#" onclick="saveTransaction({{object.pk}}, '/inventory/{{object.tipo|lower}}/{{object.pk}}/');$('.quantity:first').select(); return false;"><img src="{{MEDIA_URL}}/img/save.png"/></a>{% endblock %}
-        <a class="edit" style="display:none;" id="id_transaction-{{object.pk}}-cancel" title="{% trans 'Cancel Changes' %}" href="#" onclick="cancelTransaction({{object.pk}}); return false;"><img src="{{MEDIA_URL}}/img/cancel.png"/></a>
-        {% if object.subclass.active %}
-            <a class="show" id="id_transaction-{{object.pk}}-deactivate" title="{% trans 'Mark as Inactive' %}" href="#" onclick="markTransaction('/inventory/transaction/{{object.pk}}/deactivate/'); return false;"><img src="{{MEDIA_URL}}/img/on.png"/></a>
-        {% else %}
-            <a class="show" id="id_transaction-{{object.pk}}-activate" title="{% trans 'Mark as Active' %}" href="#" onclick="markTransaction('/inventory/transaction/{{object.pk}}/activate/'); return false;"><img src="{{MEDIA_URL}}/img/off.png"/></a>
-        {% endif %}
-        <a id="show_entries_link_{{object.pk}}" title="{% trans 'Show Entries' %}" onclick="show_entries({{object.pk}});return false;" href="#"><img src="{{MEDIA_URL}}/img/list.png"/></a><a style="display: none;" title="{% trans 'Edit Sale' %}" id="hide_entries_link_{{object.pk}}" onclick="hide_entries({{object.pk}});return false;" href="#"><img src="{{MEDIA_URL}}/img/hide_list.png"/></a>
-        <a onclick="deleteTransaction({{ object.pk }}); return false;" href="#" title="{% trans 'Delete Sale' %}" id="id_transaction-{{ object.pk }}-delete" style=""><img src="{{MEDIA_URL}}/img/trash.png"/></a>
-        {% block other_actions_show %}{% endblock %}
-    </td>
-</tr>
+    <td><input id="id_transaction-{{ object.pk }}-value" title="{% trans 'Price of garantee' %}" class="field money" value="{{object.price|floatformat:2}}" type="text"></td>
+{% endblock %}
+{% block other_fields_show %}
+    <td id="id_transaction-{{ object.pk }}-account" title="{% trans 'Name of client' %}" value="{{object.subclass.client|default:''}}" class="field account lookup client" ><a href="{{object.subclass.client.url}}">{{object.subclass.client|default:''}}</a></td>
+    {% include "inventory/inventory_base.html" %}
+    <td/><td/><td/>
+    <td id="id_transaction-{{object.pk}}-value" title="{% trans 'Price of garantee' %}" value="{{object.price|floatformat:2}}" class="field money"> ${{object.subclass.price|floatformat:2}}</td>
+{% endblock %}
+{% block other_actions_show %}
+    <a class="show" id="id_transaction-{{object.pk}}-print" title="{% trans 'Print Receipt' %}" href="/inventory/sale/{{object.doc_number}}/garantee.pdf"><img src="{{MEDIA_URL}}/img/print.png"/></a>
+{% endblock %}

@@ -23,6 +23,7 @@ urlpatterns = patterns('',
     (r'^sale/(?P<object_id>\d+)/$', 'jade.inventory.views.edit_sale'),
     (r'^sale/new/$', 'jade.inventory.views.new_sale'),
     (r'^sale/(?P<doc_number>\w+)/receipt.pdf$', 'jade.inventory.views.sale_receipt'),
+    (r'^sale/(?P<doc_number>\w+)/garantee.pdf$', 'jade.inventory.views.garantee_report'),
     (r'^sale/(?P<object_id>\d+)/delete/$', 'jade.inventory.views.delete_sale'),
     (r'^sale/(?P<object_id>\d+)/pay/$', 'jade.inventory.views.add_payment_to_sale'),
 
