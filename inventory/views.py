@@ -383,10 +383,8 @@ def sale_receipt(request, doc_number):
         except AttributeError: pass
     try:
         request.GET['test']
-        print "Yep"
         return render_string_to_pdf(Template(report.body), {'doc':doc, 'watermark_filename':report.watermark_url,'tax':tax, 'charge':charge, 'discount':discount})
     except:
-        print "Nope"
         return render_string_to_pdf(Template(report.body), {'watermark_filename':None, 'doc':doc, 'tax':tax, 'charge':charge, 'discount':discount})
 
 @login_required
@@ -397,8 +395,6 @@ def garantee_report(request, doc_number):
     try:report=Report.objects.get(name=settings.GARANTEE_REPORT_NAME)
     except Report.DoesNotExist: 
         return fallback_to_transactions(request, doc_number, _('Unable to find a report template with the name "%s"') % settings.GARANTEE_REPORT_NAME)
-    print "doc = " + str(doc)
-    print "doc[0].serial = " + str(doc[0].serial)
     return render_string_to_pdf(Template(report.body), {'doc':doc})
 
 @login_required
@@ -1119,7 +1115,6 @@ def delete_transaction(request, object_id):
     return delete_object(request, object_id, Transaction, 'transaction')
 def mark_transaction(request, object_id, attr, value):
     obj = get_object_or_404(Transaction, pk=object_id).subclass
-    print "obj.tipo=='Sale' = " + str(obj.tipo=='Sale')
     if not request.user.has_perm('inventory.change_sale') and obj.tipo=='Sale': return http.HttpResponseRedirect("/blocked/")
     if not request.user.has_perm('inventory.change_purchase') and obj.tipo=='Purchase': return http.HttpResponseRedirect("/blocked/")
     if not request.user.has_perm('inventory.change_count') and obj.tipo=='Count': return http.HttpResponseRedirect("/blocked/")
@@ -1163,22 +1158,6 @@ def movements_report(request):
         errors={'Report':[unicode(_('Unable to find a report template with the name "%s"') % (settings.MOVEMENTS_REPORT_NAME,))]}
         return list_sales(request, errors=errors)
     return render_string_to_pdf(Template(report.body), {'transactions':transactions, 'user':request.user})  
-#def separate_by_paid(docs):
-#    paid=unpaid=[]
-#    for doc in docs.keys():
-#        first=Sale.objects.filter(doc_number=doc)[0]
-#        trans = Sale.objects.filter(_date=first._date, doc_number=doc)
-#        s=p=0
-#        for sale in trans:
-#            s+=Entry.objects.filter(transaction=sale, tipo='Client').aggregate(total=models.Sum('value'))['total'] or Decimal('0.00')
-#        trans = Payment.objects.filter(_date=first._date, doc_number=doc)
-#        for payment in trans:
-#            p+=Entry.objects.filter(transaction=payment, tipo='Client').aggregate(total=models.Sum('value'))['total'] or Decimal('0.00')
-#        if p==s: 
-#            paid.append(docs[doc])
-#        else:
-#            unpaid.append(docs[doc])
-#    return [paid, unpaid]
    
 class Document():
     def __init__(self, number):
