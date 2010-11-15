@@ -123,6 +123,8 @@ class Process(Production):
         except: last_number='0'
         return self.doc_number+str(int(last_number)+1)
 
+    def print_url(self):
+        return '/production/process/%s/report.pdf'% self.doc_number
     def url(self):
         return '/production/process/list/?q='+unicode(self.doc_number)
         
@@ -169,7 +171,6 @@ class Job(Production):
         print "active = " + str(active)
         print "total==active = " + str(total==active)
         return total==active
-    started=property(_get_started)
     def _get_finished(self):
         active=Entry.objects.filter(transaction__doc_number=self.doc_number, tipo='Inventory', quantity__gt=0, active=True).count()
         total=Entry.objects.filter(transaction__doc_number=self.doc_number, tipo='Inventory', quantity__gt=0).count()
@@ -177,7 +178,24 @@ class Job(Production):
         print "active = " + str(active)
         print "total==active = " + str(total==active)
         return total==active
+    def _get_start_date(self):
+        if not self.started: return None
+        try:
+            return Entry.objects.filter(transaction__doc_number=self.doc_number, tipo='Inventory', quantity__lte=0)[0].date
+        except:
+            return None
+    def _get_finish_date(self):
+        if not self.finished: return None
+        try:
+            return Entry.objects.filter(transaction__doc_number=self.doc_number, tipo='Inventory', quantity__gt=0)[0].date
+        except:
+            return None
+    def print_url(self):
+        return '/production/job/%s/report.pdf'% self.doc_number
+    started=property(_get_started)
     finished=property(_get_finished)
+    start_date=property(_get_start_date)
+    finish_date=property(_get_finish_date)
     def url(self):
         return '/production/job/list/?q='+unicode(self.doc_number)
     class Meta:

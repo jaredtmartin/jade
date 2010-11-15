@@ -1,11 +1,13 @@
 from jade.production.models import Process, Job, Production
 from django.utils.translation import ugettext_lazy as _
 from django.contrib.auth.decorators import permission_required, login_required
-from jade.inventory.views import search_and_paginate_transactions, search_transactions, paginate_transactions, _r2r, edit_object, search_entries
+from jade.inventory.views import render_string_to_pdf, search_and_paginate_transactions, search_transactions, paginate_transactions, _r2r, edit_object, search_entries
 from jade.production.forms import NewProcessForm, ProcessForm, JobForm
 from jade.inventory.forms import SearchForm
 from django import http
-from jade.inventory.models import Entry
+from jade.inventory.models import Report, Entry
+from django.template import Template, Context, RequestContext
+import settings
 
 
 @login_required
@@ -22,7 +24,38 @@ def job_list(request): # GET ONLY
 @permission_required('production.view_production', login_url="/blocked/")
 def production_list(request): # GET ONLY
     return search_and_paginate_transactions(request, Production,'production/production_list.html', strict=False)
+
+@login_required
+@permission_required('inventory.view_receipt', login_url="/blocked/")
+def job_report(request, doc_number):
+    doc=Job.objects.filter(doc_number=doc_number)
+    if doc.count()==0: return fallback_to_transactions(request, doc_number, _('Unable to find job with the specified document number.'))
+    try:report=Report.objects.get(name=settings.JOB_REPORT_NAME)
+    except Report.DoesNotExist: 
+        return fallback_to_transactions(request, doc_number, _('Unable to find a report template with the name "%s"') % settings.GARANTEE_REPORT_NAME)
+    production=[]
+    consumption =[]   
+    for l in doc:    
+        if l.quantity>=0: production.append(l)
+        else: consumption.append(l)
     
+    return render_string_to_pdf(Template(report.body), {'doc':doc,'consumption':consumption, 'production':production})
+@login_required
+@permission_required('inventory.view_receipt', login_url="/blocked/")
+def process_report(request, doc_number):
+    doc=Process.objects.filter(doc_number=doc_number)
+    if doc.count()==0: return fallback_to_transactions(request, doc_number, _('Unable to find process with the specified document number.'))
+    try:report=Report.objects.get(name=settings.PROCESS_REPORT_NAME)
+    except Report.DoesNotExist: 
+        return fallback_to_transactions(request, doc_number, _('Unable to find a report template with the name "%s"') % settings.GARANTEE_REPORT_NAME)
+    production=[]
+    consumption =[]   
+    for l in doc:    
+        if l.quantity>=0: production.append(l)
+        else: consumption.append(l)
+    return render_string_to_pdf(Template(report.body), {'doc':doc,'consumption':consumption, 'production':production})
+
+
 @login_required
 @permission_required('production.create_process', login_url="/blocked/")
 def process_new(request): # POST ONLY
