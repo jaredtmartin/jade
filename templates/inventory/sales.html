@@ -4,7 +4,6 @@
 {% block moreactions %}
     <div class="actiontab" ><a onclick="$('#sale-form').dialog('open');return false;" href="#" class="action">{% trans 'New' %}</a></div>
     {% if q %}
-        <div class="actiontab" ><a href="/inventory/sale/{{q}}/receipt.pdf" class="action">{% trans 'Receipt' %}</a></div>
     {% else %}
         <div class="actiontab" ><a href="/inventory/transactions/corte.pdf?{% if q %}q={{q}}&{% endif %}{% if start %}start={{start}}&{% endif %}{% if end %}end={{end}}{% endif %}" class="action">{% trans 'Corte' %}</a></div>
     {% endif %}    
