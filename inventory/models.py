@@ -505,9 +505,7 @@ class VendorManager(models.Manager):
     def next_number(self):
         number=super(VendorManager, self).get_query_set().filter(tipo="Vendor").order_by('-number')[0].number
         return increment_string_number(number)
-    def get_or_create_by_name(self, name):        
-    #        print "geting and creating"
-    #        print "name=" + str(name)
+    def get_or_create_by_name(self, name):    
         try:
             return super(VendorManager, self).get_query_set().get(name=name)
         except:
