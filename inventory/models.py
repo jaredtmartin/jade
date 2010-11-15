@@ -2084,7 +2084,7 @@ class Transfer(Transaction):
         
     def _get_quantity(self):
         try: 
-            v = self.local_inventory_entry.quantity
+            v = self.local_inventory_entry.quantity*-1
             #if self.source != Site.objects.get_current(): v=-v
             return v
         except Entry.DoesNotExist: return self._quantity
@@ -2092,10 +2092,10 @@ class Transfer(Transaction):
         #if self.source != Site.objects.get_current(): value=-value
         try:
             
-            self.local_inventory_entry.update('quantity', value)
-            self.local_transfer_entry.update('quantity', -value)
-            self.remote_inventory_entry.update('quantity', -value)
-            self.remote_transfer_entry.update('quantity', value)
+            self.local_inventory_entry.update('quantity', -value)
+            self.local_transfer_entry.update('quantity', value)
+            self.remote_inventory_entry.update('quantity', value)
+            self.remote_transfer_entry.update('quantity', -value)
             
 #            self.entry('SourceInventory').update('quantity', value)
 #            self.entry('SourceTransfer').update('quantity', -value)
@@ -2201,7 +2201,7 @@ def add_transfer_entry(sender, **kwargs):
             tipo = 'SourceInventory',
             value = l._cost,
             item = l._item,
-            quantity = l._quantity,
+            quantity = -l._quantity,
             serial = l._serial,
             delivered = l._delivered,
             site = Site.objects.get_current(),
@@ -2211,7 +2211,7 @@ def add_transfer_entry(sender, **kwargs):
             tipo = 'SourceTransfer',
             value = -l._cost,
             item = l._item,
-            quantity = -l._quantity,
+            quantity = l._quantity,
             serial = l._serial,
             delivered = l._delivered,
             site = Site.objects.get_current(),
@@ -2221,7 +2221,7 @@ def add_transfer_entry(sender, **kwargs):
             tipo = 'DestInventory',
             value = -l._cost,
             item = l._item,
-            quantity = -l._quantity,
+            quantity = l._quantity,
             serial = l._serial,
             delivered = l._delivered,
             site = l._account,
@@ -2231,7 +2231,7 @@ def add_transfer_entry(sender, **kwargs):
             tipo = 'DestTransfer',
             value = l._cost,
             item = l._item,
-            quantity=l._quantity,
+            quantity=-l._quantity,
             serial=l._serial,
             delivered=l._delivered,
             site = l._account,
