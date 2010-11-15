@@ -2084,7 +2084,7 @@ class Transfer(Transaction):
         
     def _get_quantity(self):
         try: 
-            v = self.local_inventory_entry.quantity*-1
+            v = self.local_inventory_entry.quantity
             #if self.source != Site.objects.get_current(): v=-v
             return v
         except Entry.DoesNotExist: return self._quantity
@@ -2092,10 +2092,10 @@ class Transfer(Transaction):
         #if self.source != Site.objects.get_current(): value=-value
         try:
             
-            self.local_inventory_entry.update('quantity', -value)
-            self.local_transfer_entry.update('quantity', value)
-            self.remote_inventory_entry.update('quantity', value)
-            self.remote_transfer_entry.update('quantity', -value)
+            self.local_inventory_entry.update('quantity', value)
+            self.local_transfer_entry.update('quantity', -value)
+            self.remote_inventory_entry.update('quantity', -value)
+            self.remote_transfer_entry.update('quantity', value)
             
 #            self.entry('SourceInventory').update('quantity', value)
 #            self.entry('SourceTransfer').update('quantity', -value)
@@ -2163,10 +2163,15 @@ class Transfer(Transaction):
     def _set_cost(self, value):
         #if self.source != Site.objects.get_current(): value=-value
         try:
-            self.local_inventory_entry.update('value', -value)
-            self.local_transfer_entry.update('value', value)
-            self.remote_inventory_entry.update('value', value)
-            self.remote_transfer_entry.update('value', -value)
+            self.local_inventory_entry.update('value', value)
+            self.local_transfer_entry.update('value', -value)
+            self.remote_inventory_entry.update('value', -value)
+            self.remote_transfer_entry.update('value', value)
+            
+#            self.entry('SourceInventory').update('value', value)
+#            self.entry('SourceTransfer').update('value', -value)
+#            self.entry('DestInventory').update('value', -value)
+#            self.entry('DestTransfer').update('value', value)
         except AttributeError:
             self._cost=value
     def _get_unit_cost(self):
@@ -2194,6 +2199,16 @@ def add_transfer_entry(sender, **kwargs):
         l.create_related_entry(
             account = INVENTORY_ACCOUNT,
             tipo = 'SourceInventory',
+            value = l._cost,
+            item = l._item,
+            quantity = l._quantity,
+            serial = l._serial,
+            delivered = l._delivered,
+            site = Site.objects.get_current(),
+        )
+        l.create_related_entry(
+            account = TRANSFER_ACCOUNT,
+            tipo = 'SourceTransfer',
             value = -l._cost,
             item = l._item,
             quantity = -l._quantity,
@@ -2202,21 +2217,11 @@ def add_transfer_entry(sender, **kwargs):
             site = Site.objects.get_current(),
         )
         l.create_related_entry(
-            account = TRANSFER_ACCOUNT,
-            tipo = 'SourceTransfer',
-            value = l._cost,
-            item = l._item,
-            quantity = l._quantity,
-            serial = l._serial,
-            delivered = l._delivered,
-            site = Site.objects.get_current(),
-        )
-        l.create_related_entry(
             account = INVENTORY_ACCOUNT,
             tipo = 'DestInventory',
-            value = l._cost,
+            value = -l._cost,
             item = l._item,
-            quantity = l._quantity,
+            quantity = -l._quantity,
             serial = l._serial,
             delivered = l._delivered,
             site = l._account,
@@ -2224,9 +2229,9 @@ def add_transfer_entry(sender, **kwargs):
         l.create_related_entry(
             account = TRANSFER_ACCOUNT,
             tipo = 'DestTransfer',
-            value = -l._cost,
+            value = l._cost,
             item = l._item,
-            quantity=-l._quantity,
+            quantity=l._quantity,
             serial=l._serial,
             delivered=l._delivered,
             site = l._account,
