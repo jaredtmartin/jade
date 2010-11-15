@@ -2163,15 +2163,10 @@ class Transfer(Transaction):
     def _set_cost(self, value):
         #if self.source != Site.objects.get_current(): value=-value
         try:
-            self.local_inventory_entry.update('value', value)
-            self.local_transfer_entry.update('value', -value)
-            self.remote_inventory_entry.update('value', -value)
-            self.remote_transfer_entry.update('value', value)
-            
-#            self.entry('SourceInventory').update('value', value)
-#            self.entry('SourceTransfer').update('value', -value)
-#            self.entry('DestInventory').update('value', -value)
-#            self.entry('DestTransfer').update('value', value)
+            self.local_inventory_entry.update('value', -value)
+            self.local_transfer_entry.update('value', value)
+            self.remote_inventory_entry.update('value', value)
+            self.remote_transfer_entry.update('value', -value)
         except AttributeError:
             self._cost=value
     def _get_unit_cost(self):
@@ -2199,7 +2194,7 @@ def add_transfer_entry(sender, **kwargs):
         l.create_related_entry(
             account = INVENTORY_ACCOUNT,
             tipo = 'SourceInventory',
-            value = l._cost,
+            value = -l._cost,
             item = l._item,
             quantity = -l._quantity,
             serial = l._serial,
@@ -2209,7 +2204,7 @@ def add_transfer_entry(sender, **kwargs):
         l.create_related_entry(
             account = TRANSFER_ACCOUNT,
             tipo = 'SourceTransfer',
-            value = -l._cost,
+            value = l._cost,
             item = l._item,
             quantity = l._quantity,
             serial = l._serial,
@@ -2219,7 +2214,7 @@ def add_transfer_entry(sender, **kwargs):
         l.create_related_entry(
             account = INVENTORY_ACCOUNT,
             tipo = 'DestInventory',
-            value = -l._cost,
+            value = l._cost,
             item = l._item,
             quantity = l._quantity,
             serial = l._serial,
@@ -2229,7 +2224,7 @@ def add_transfer_entry(sender, **kwargs):
         l.create_related_entry(
             account = TRANSFER_ACCOUNT,
             tipo = 'DestTransfer',
-            value = l._cost,
+            value = -l._cost,
             item = l._item,
             quantity=-l._quantity,
             serial=l._serial,
