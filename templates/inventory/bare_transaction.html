@@ -10,12 +10,13 @@
     <td id="id_transaction-{{object.pk}}-value" class="money">${{object.subclass.value|floatformat:2}}</td>
     <td>
         <a onclick="getTransaction({{ object.pk }},'/inventory/transaction/{{object.pk}}/get/'); return false;" href="#" title="{% trans 'Retreive more details' %}" id="id_transaction-{{ object.pk }}-show" style=""><img src="{{MEDIA_URL}}/img/next.png"/></a>
-        <a onclick="getTransaction({{ object.pk }},'/inventory/transaction/{{object.pk}}/edit/'); return false;" href="#" title="{% trans 'Retreive more details' %}" id="id_transaction-{{ object.pk }}-edit" style=""><img src="{{MEDIA_URL}}/img/edit.png"/></a>
+        <a onclick="getTransaction({{ object.pk }},'/inventory/transaction/{{object.pk}}/edit/'); return false;" href="#" title="{% trans 'Change' %}" id="id_transaction-{{ object.pk }}-edit" style=""><img src="{{MEDIA_URL}}/img/edit.png"/></a>
         {% if object.subclass.active %}
             <a title="{% trans 'Mark as Inactive' %}" href="#" onclick="markTransaction('/inventory/transaction/{{object.pk}}/deactivate/'); return false;"><img src="{{MEDIA_URL}}/img/on.png"/></a>
         {% else %}
             <a title="{% trans 'Mark as Active' %}" href="#" onclick="markTransaction('/inventory/transaction/{{object.pk}}/activate/'); return false;"><img src="{{MEDIA_URL}}/img/off.png"/></a>
         {% endif %}
+        <a id="show_entries_link_{{object.pk}}" title="{% trans 'Show Entries' %}" onclick="show_entries({{object.pk}});return false;" href="#"><img src="{{MEDIA_URL}}/img/list.png"/></a><a style="display: none;" title="{% trans 'Edit Sale' %}" id="hide_entries_link_{{object.pk}}" onclick="hide_entries({{object.pk}});return false;" href="#"><img src="{{MEDIA_URL}}/img/hide_list.png"/></a>
         <a onclick="deleteTransaction({{ object.pk }}); return false;" href="#" title="{% trans 'Delete Sale' %}" id="id_transaction-{{ object.pk }}-delete" style=""><img src="{{MEDIA_URL}}/img/trash.png"/></a>
         <a class="show" id="id_transaction-{{object.pk}}-print" title="{% trans 'Print' %}" href="{{object.subclass.print_url}}"><img src="{{MEDIA_URL}}/img/print.png"/></a>
     </td>

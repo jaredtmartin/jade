@@ -46,7 +46,9 @@ class Production(Transaction):
         try: return [self.entry(e).update('delivered',value) for e in ['Inventory','Production']]
         except AttributeError: self._delivered=value
     delivered = property(_get_delivered, _set_delivered)
-    
+    def _get_value(self):
+        return self.cost
+    value=property(_get_value)
     def _get_cost(self):
         try: return self.entry('Inventory').value
         except AttributeError: return self._cost
@@ -112,7 +114,7 @@ class Process(Production):
             quantity=self.quantity*times,
             cost=cost*times,
             doc_number=doc_number,
-            serial=""
+            serial="",
         )
     def next_doc_number(self):
         try:
@@ -161,8 +163,8 @@ class Job(Production):
         super(Job, self).save(*args, **kwargs)
     objects = JobManager()
     def _get_started(self):
-        active=Entry.objects.filter(transaction__doc_number=self.doc_number, tipo='Inventory', quantity__lt=0, active=True).count()
-        total=Entry.objects.filter(transaction__doc_number=self.doc_number, tipo='Inventory', quantity__lt=0).count()
+        active=Entry.objects.filter(transaction__doc_number=self.doc_number, tipo='Inventory', quantity__lte=0, active=True).count()
+        total=Entry.objects.filter(transaction__doc_number=self.doc_number, tipo='Inventory', quantity__lte=0).count()
         print "total = " + str(total)
         print "active = " + str(active)
         print "total==active = " + str(total==active)
@@ -195,8 +197,8 @@ def add_job_entries(sender, **kwargs):
         item = l._item,
         quantity=l._quantity,
         serial=l._serial,
-        delivered=l._delivered,
-        active=l._active,
+        delivered=False,
+        active=False,
         )
         l.create_related_entry(
         account = PRODUCTION_EXPENSE_ACCOUNT,
@@ -205,7 +207,7 @@ def add_job_entries(sender, **kwargs):
         item = l._item,
         quantity=-l._quantity,
         serial=l._serial,
-        delivered=l._delivered,
-        active=l._active,
+        delivered=False,
+        active=False,
         )
 post_save.connect(add_job_entries, sender=Job, dispatch_uid="jade.production.models:add_job_entries")

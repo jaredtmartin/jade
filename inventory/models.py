@@ -532,20 +532,6 @@ class Vendor(Account):
         )
 post_save.connect(add_contact, sender=Vendor, dispatch_uid="jade.inventory.models")
 
-#class SiteDetail(models.Model):
-#    site = models.OneToOneField(Site)
-#    inventory = models.ForeignKey(Account)
-#    default_tax_group = models.ForeignKey(TaxGroup)
-#    def __unicode__(self):
-#        return self.site.name
-#def add_sitedetail(sender, **kwargs):
-#    if kwargs['created']:
-#        try:
-#            SiteDetail.objects.create(site=kwargs['instance'], default_tax_group=Site.objects.get_current().sitedetail.default_tax_group)
-#        except:
-#            print "Unable to create SiteDetail for New Site"
-#post_save.connect(add_sitedetail, sender=Site, dispatch_uid="jade.inventory.models")
-
 def make_default_account(data, model=Account):
     try: return model.objects.get(name=data[0])
     except model.DoesNotExist: 
