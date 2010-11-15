@@ -101,14 +101,16 @@ def search_entries(user, form, tipo=None):
     if form.cleaned_data['end']: entries=entries.filter(date__lt=form.cleaned_data['end']+timedelta(days=1))
     return entries
 
-def search_transactions(user, form, transactions):
+def search_transactions(user, form, transactions, strict=True):
     if not user.has_perm('inventory.view_sale'):transactions=transactions.exclude(tipo='Sale')
     if not user.has_perm('inventory.view_purchase'):transactions=transactions.exclude(tipo='Purchase')
     if not user.has_perm('inventory.view_count'):transactions=transactions.exclude(tipo='Count')
     if not user.has_perm('inventory.view_process'):transactions=transactions.exclude(tipo='Process')
     if not user.has_perm('inventory.view_production'):transactions=transactions.exclude(tipo='Production')
     if not user.has_perm('inventory.view_productionorder'):transactions=transactions.exclude(tipo='ProductionOrder')
-    if not form.cleaned_data['q']=='': transactions=transactions.filter(doc_number=form.cleaned_data['q'])
+    if not form.cleaned_data['q']=='': 
+        if strict: transactions=transactions.filter(doc_number=form.cleaned_data['q'])
+        else: transactions=transactions.filter(doc_number__icontains=form.cleaned_data['q'])
     if form.cleaned_data['start']: transactions=transactions.filter(_date__gte=form.cleaned_data['start'])
     if form.cleaned_data['end']: transactions=transactions.filter(_date__lt=form.cleaned_data['end']+timedelta(days=1))
     return transactions
@@ -150,13 +152,13 @@ def paginate_transactions(request, form, collection, template='inventory/transac
         'show_totals':True,
         'error_list':form.errors,
         })
-def search_and_paginate_transactions(request, model, template='inventory/transactions.html', errors={}):
+def search_and_paginate_transactions(request, model, template='inventory/transactions.html', errors={}, strict=True):
     form=SearchForm(request.GET, validate=True)
     q=form.cleaned_data['q']
     start=form.cleaned_data['start']
     end=form.cleaned_data['end']
-    if q: transactions=search_transactions(request.user, form, model.objects.all())
-    else: transactions=search_transactions(request.user, form, model.objects.filter(sites__id__exact=settings.SITE_ID))
+    if q: transactions=search_transactions(request.user, form, model.objects.all(), strict)
+    else: transactions=search_transactions(request.user, form, model.objects.filter(sites__id__exact=settings.SITE_ID), strict)
     for k,v in errors.items(): form.errors[k]=v
     return paginate_transactions(request, form, transactions, template)
 
