@@ -681,6 +681,9 @@ class Transaction(models.Model):
         super(Transaction, self).__init__(*args, **kwargs)
     class Meta:
         ordering = ('-_date',)
+        permissions = (
+            ("view_transaction", "Can view transactions"),
+        )
     def _get_date(self):
         return self._date
     def _set_date(self, value):
@@ -2031,6 +2034,9 @@ class Transfer(Transaction):
     #    DestTransfer           Transfer    B
     class Meta:
         proxy = True
+        permissions = (
+            ("view_transfer", "Can view transfers"),
+        )
     
     def __init__(self, *args, **kwargs):
         self.template='inventory/transfer.html'

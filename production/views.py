@@ -11,17 +11,17 @@ import settings
 
 
 @login_required
-@permission_required('production.view_process', login_url="/blocked/")
+@permission_required('inventory.view_process', login_url="/blocked/")
 def process_list(request): # GET ONLY
     return search_and_paginate_transactions(request, Process,'production/process_list.html', strict=False)
     
 @login_required
-@permission_required('production.view_job', login_url="/blocked/")
+@permission_required('inventory.view_job', login_url="/blocked/")
 def job_list(request): # GET ONLY
     return search_and_paginate_transactions(request, Job,'production/job_list.html')
     
 @login_required
-@permission_required('production.view_production', login_url="/blocked/")
+@permission_required('inventory.view_production', login_url="/blocked/")
 def production_list(request): # GET ONLY
     return search_and_paginate_transactions(request, Production,'production/production_list.html', strict=False)
 
