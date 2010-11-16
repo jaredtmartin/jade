@@ -239,6 +239,9 @@ class Account(models.Model):
 
     class Meta:
         ordering = ('number',)
+        permissions = (
+            ("view_account", "Can view accounts"),
+        )
     def __init__(self, *args, **kwargs):
         self.template='inventory/account.html'
         self._address =         kwargs.pop('address','')

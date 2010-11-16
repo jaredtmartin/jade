@@ -26,7 +26,7 @@ def production_list(request): # GET ONLY
     return search_and_paginate_transactions(request, Production,'production/production_list.html', strict=False)
 
 @login_required
-@permission_required('inventory.view_receipt', login_url="/blocked/")
+@permission_required('inventory.view_job', login_url="/blocked/")
 def job_report(request, doc_number):
     doc=Job.objects.filter(doc_number=doc_number)
     if doc.count()==0: return fallback_to_transactions(request, doc_number, _('Unable to find job with the specified document number.'))
@@ -41,7 +41,7 @@ def job_report(request, doc_number):
     
     return render_string_to_pdf(Template(report.body), {'doc':doc,'consumption':consumption, 'production':production})
 @login_required
-@permission_required('inventory.view_receipt', login_url="/blocked/")
+@permission_required('inventory.view_job', login_url="/blocked/")
 def process_report(request, doc_number):
     doc=Process.objects.filter(doc_number=doc_number)
     if doc.count()==0: return fallback_to_transactions(request, doc_number, _('Unable to find process with the specified document number.'))

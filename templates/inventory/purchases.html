@@ -6,7 +6,7 @@
     {% if q %}<div class="actiontab" ><a href="/inventory/labels/{{q}}.pdf" class="action">{% trans 'Labels' %}</a></div>{% endif %}
     {% if perms.inventory.view_sale %}<div class="actiontab" ><a href="/inventory/sales/?{% if q %}q={{q}}&{% endif %}{% if start %}start={{start}}&{% endif %}{% if end %}end={{end}}{% endif %}" class="action">{% trans 'Sales' %}</a></div>{% endif %}
     {% if perms.inventory.view_count %}<div class="actiontab" ><a href="/inventory/counts/?{% if q %}q={{q}}&{% endif %}{% if start %}start={{start}}&{% endif %}{% if end %}end={{end}}{% endif %}" class="action">{% trans 'Counts' %}</a></div>{% endif %}
-    {% if perms.inventory.change_transfer %}<div class="actiontab" ><a href="/inventory/transfers/?{% if q %}q={{q}}&{% endif %}{% if start %}start={{start}}&{% endif %}{% if end %}end={{end}}{% endif %}" class="action">{% trans 'Transfers' %}</a></div>{% endif %}
+    {% if perms.inventory.view_transfer %}<div class="actiontab" ><a href="/inventory/transfers/?{% if q %}q={{q}}&{% endif %}{% if start %}start={{start}}&{% endif %}{% if end %}end={{end}}{% endif %}" class="action">{% trans 'Transfers' %}</a></div>{% endif %}
     <div id="purchase-form" title="{% trans 'Create purchase' %}">
 	    <form>
 		    {% trans 'Doc Number' %}: <input id="doc_number" value="{{q}}" type="text"> <a href="#" onclick="$(this).prev().val('');return false;"><img id="next_doc_number" src="{{MEDIA_URL}}/img/clear.png"/></a><br>
