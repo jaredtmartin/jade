@@ -3,10 +3,10 @@
 
 {% load tags %}
 {% block actions %}
-    {% if perms.inventory.create_items %}
+    {% if perms.inventory.create_item %}
         <div class="actiontab" ><a href="/inventory/item/" class="action">{% trans 'New' %}</a></div>        
     {% endif %}
-    {% if perms.inventory.delete_items %}
+    {% if perms.inventory.delete_item %}
     {% if object %}<div class="actiontab" ><a href='/inventory/item/{{object.pk}}/delete'>{% trans 'Delete' %}</a></div>{% endif %}      
     {% endif %}
 {% endblock%}

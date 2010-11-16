@@ -3,7 +3,7 @@
 {% block other_fields_edit %}
     <td><input id="id_transaction-{{ object.pk }}-account" class="field account lookup client" title="{% trans 'Name of client' %}" value="{{object.subclass.client|default:''}}" type="text"></td>
     {% include "inventory/inventory_base.html" %}
-    {% if perms.inventory.can_view_costs %}
+    {% if perms.inventory.view_cost %}
         <td><input id="id_transaction-{{ object.pk }}-unit_cost" class="field money" title="{% trans 'Cost per unit' %}" value="{{object.subclass.unit_cost|floatformat:2}}" type="text"></td>
     {% else %}
         <input type="hidden" value="">
@@ -19,7 +19,7 @@
 {% block other_fields_show %}
     <td id="id_transaction-{{ object.pk }}-account"  title="{% trans 'Name of client' %}" value="{{object.subclass.client|default:''}}" class="field account lookup client" label=""><a href="{{object.subclass.client.url}}">{{object.subclass.client|default:''}}</a></td>
     {% include "inventory/inventory_base.html" %}
-    {% if perms.inventory.can_view_costs %}
+    {% if perms.inventory.view_cost %}
         <td id="id_transaction-{{object.pk}}-unit_cost" totalvalue="{{object.subclass.cost|floatformat:2}}" title="{% trans 'Total cost' %}" value="{{object.subclass.unit_cost|floatformat:2}}"  class="cost field money" label="Cost"> ${{object.subclass.cost|floatformat:2}}</td>
     {% else %}
         <input type="hidden" value="">

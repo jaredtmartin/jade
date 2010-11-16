@@ -4,8 +4,8 @@
 {% load tags %}
 {% block actions %}
     {% if perms.inventory.change_sale %}
-        {% if perms.inventory.can_add_items %}<div class="actiontab" ><a href="/inventory/item/" class="action">{% trans 'New' %}</a></div>{% endif %}
-        {% if perms.inventory.can_view_prices %}<div class="actiontab" ><a href="/inventory/items/prices.pdf?q={{q}}" class="action">{% trans 'Prices' %}</a></div>{% endif %}
+        {% if perms.inventory.add_item %}<div class="actiontab" ><a href="/inventory/item/" class="action">{% trans 'New' %}</a></div>{% endif %}
+        {% if perms.inventory.view_price %}<div class="actiontab" ><a href="/inventory/items/prices.pdf?q={{q}}" class="action">{% trans 'Prices' %}</a></div>{% endif %}
         <div class="actiontab" ><a href="/inventory/items/low_stock/" class="action">{% trans 'Low Stock' %}</a></div>
         <div class="actiontab" ><a href="/inventory/items/inventory.pdf?q={{q}}" class="action">{% trans 'Print' %}</a></div>
     {% endif %}
@@ -16,12 +16,12 @@
 {% endblock%}
 {% block search_label %}{% trans 'Item Name or Bar Code' %}{% endblock %}
 {% block table_header %}
-    <th>{% trans 'Image' %}</th><th>{% trans 'Name' %}</th><th>{% trans 'Description' %}</th><th>{% trans 'Price' %}</th>{% if perms.inventory.can_view_costs %}<th>{% trans 'Cost' %}</th>{%endif%}<th>{% trans 'Stock' %}</th><th>{% trans 'Unit' %}</th><th>{% trans 'Min' %}</th><th>{% trans 'Max' %}</th><th>{% trans 'Location' %}</th>
+    <th>{% trans 'Image' %}</th><th>{% trans 'Name' %}</th><th>{% trans 'Description' %}</th><th>{% trans 'Price' %}</th>{% if perms.inventory.view_cost %}<th>{% trans 'Cost' %}</th>{%endif%}<th>{% trans 'Stock' %}</th><th>{% trans 'Unit' %}</th><th>{% trans 'Min' %}</th><th>{% trans 'Max' %}</th><th>{% trans 'Location' %}</th>
 {% endblock%}
 {% block line %}    
     <tr><td><a href="{% if object.image %}{{object.url}}{% endif %}" id="item_image">
                     <img src="{% if object.image %}{{object.image.url_75x75}}{% endif %}">
-                </a></td><td WORD-BREAK:BREAK-ALL;>{% link object %}</td><td WORD-BREAK:BREAK-ALL;>{{object.description}}</td><td>${% price object user %}</td>{% if perms.inventory.can_view_costs %}<td>${{object.cost|default:0|floatformat:2}}</td>{%endif%}<td>{{object.stock|default:0|floatformat:-2}}</td><td>{{object.unit}}</td><td>{{object.minimum|default:0|floatformat:-2}}</td><td>{{object.maximum|default:0|floatformat:-2}}</td><td>{{object.location}}</td></tr>
+                </a></td><td WORD-BREAK:BREAK-ALL;>{% link object %}</td><td WORD-BREAK:BREAK-ALL;>{{object.description}}</td><td>${% price object user %}</td>{% if perms.inventory.view_cost %}<td>${{object.cost|default:0|floatformat:2}}</td>{%endif%}<td>{{object.stock|default:0|floatformat:-2}}</td><td>{{object.unit}}</td><td>{{object.minimum|default:0|floatformat:-2}}</td><td>{{object.maximum|default:0|floatformat:-2}}</td><td>{{object.location}}</td></tr>
 {% endblock%}
 
 
