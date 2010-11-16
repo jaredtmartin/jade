@@ -57,7 +57,7 @@ def process_report(request, doc_number):
 
 
 @login_required
-@permission_required('production.create_process', login_url="/blocked/")
+@permission_required('production.add_process', login_url="/blocked/")
 def process_new(request): # POST ONLY
     form=NewProcessForm(request.POST)
     if form.is_valid():
@@ -80,7 +80,7 @@ def process_delete(request, object_id):
     return delete_object(request, object_id, Process, 'process')
     
 @login_required
-@permission_required('production.create_job', login_url="/blocked/")
+@permission_required('production.add_job', login_url="/blocked/")
 def job_new(request):
     form=SearchForm(request.GET, validate=True)
     try: times=int(request.GET['quantity'])
