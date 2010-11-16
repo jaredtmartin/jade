@@ -116,7 +116,7 @@ BASE_TABS = [
     Tab(label='Accounts', url='/inventory/accounts/', permission='inventory.change_account'),
 #    Tab(label='Clients', url='/inventory/clients', permission='inventory.view_client'),
 #    Tab(label='Vendors', url='/inventory/vendors', permission='inventory.view_vendor'),
-    Tab(label='Production', url='/production/production/list/', permission='production.view_production'),
+    Tab(label='Production', url='/production/production/list/', permission='production.change_production'),
 ]
 ACTIONS = [
     Tab(label='Sales', url='/inventory/sales/', permission='inventory.view_sale'),
