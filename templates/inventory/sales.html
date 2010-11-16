@@ -2,14 +2,14 @@
 {% load i18n %}
 {% block heading %}{% trans 'Sales' %} {% endblock%}
 {% block moreactions %}
-    <div class="actiontab" ><a onclick="$('#sale-form').dialog('open');return false;" href="#" class="action">{% trans 'New' %}</a></div>
+    {% if perms.inventory.add_sale %}<div class="actiontab" ><a onclick="$('#sale-form').dialog('open');return false;" href="#" class="action">{% trans 'New' %}</a></div>{% endif %}  
     {% if q %}
     {% else %}
         <div class="actiontab" ><a href="/inventory/transactions/corte.pdf?{% if q %}q={{q}}&{% endif %}{% if start %}start={{start}}&{% endif %}{% if end %}end={{end}}{% endif %}" class="action">{% trans 'Corte' %}</a></div>
     {% endif %}    
-    <div class="actiontab" ><a href="/inventory/purchases/?{% if q %}q={{q}}&{% endif %}{% if start %}start={{start}}&{% endif %}{% if end %}end={{end}}{% endif %}" class="action">{% trans 'Purchases' %}</a></div>
-    <div class="actiontab" ><a href="/inventory/counts/?{% if q %}q={{q}}&{% endif %}{% if start %}start={{start}}&{% endif %}{% if end %}end={{end}}{% endif %}" class="action">{% trans 'Counts' %}</a></div>
-    <div class="actiontab" ><a href="/inventory/transfers/?{% if q %}q={{q}}&{% endif %}{% if start %}start={{start}}&{% endif %}{% if end %}end={{end}}{% endif %}" class="action">{% trans 'Transfers' %}</a></div>
+    {% if perms.inventory.view_purchase %}<div class="actiontab" ><a href="/inventory/purchases/?{% if q %}q={{q}}&{% endif %}{% if start %}start={{start}}&{% endif %}{% if end %}end={{end}}{% endif %}" class="action">{% trans 'Purchases' %}</a></div>{% endif %}
+    {% if perms.inventory.view_count %}<div class="actiontab" ><a href="/inventory/counts/?{% if q %}q={{q}}&{% endif %}{% if start %}start={{start}}&{% endif %}{% if end %}end={{end}}{% endif %}" class="action">{% trans 'Counts' %}</a></div>{% endif %}
+    {% if perms.inventory.change_transfer %}<div class="actiontab" ><a href="/inventory/transfers/?{% if q %}q={{q}}&{% endif %}{% if start %}start={{start}}&{% endif %}{% if end %}end={{end}}{% endif %}" class="action">{% trans 'Transfers' %}</a></div>{% endif %}
     <div id="sale-form" title="{% trans 'Create sale' %}">
 	    <form>
 		    {% trans 'Doc Number' %}: <input id="doc_number" value="{{q}}" type="text"> <a href="#" onclick="$(this).prev().val('');$(this).prev().select();return false;"><img id="next_doc_number" src="{{MEDIA_URL}}/img/clear.png"/></a><br>
