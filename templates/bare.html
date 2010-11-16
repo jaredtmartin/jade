@@ -18,6 +18,7 @@
         <script type="text/javascript" src="{{MEDIA_URL}}/js/jquery.hotkeys.min.js"></script>
         <script type="text/javascript" src="{{MEDIA_URL}}/js/jquery.autocomplete.js"></script> 
         {% block js %}{% endblock %}
+        {% block css %}{% endblock %}
     </head>
     <body>
         <div id="top">
@@ -43,7 +44,7 @@
         <div id="content">{% block content %}{% endblock %}</div>
         
         <div id="ajax-data" style="display: none;"></div>
-<!--        <div id="right">{% block right %}{% endblock %}</div>-->
+        {% block right %}{% endblock %}
 <div class="clear-contentunit"></div>
         <div id="bottom">
             {% block bottom %}{% endblock %}

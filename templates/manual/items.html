@@ -1,0 +1,79 @@
+{% extends "manual/base.html" %}
+{% load i18n %}
+{% block chapters %}
+    <li class="chapter"><a href="/manual/items">{% trans "Chapter" %} {% trans "1: Items" %}</a></li>
+    
+    <li class="subheading"><a href="#creating-an-item">{% trans "Creating an Item" %}</a></li>
+    <li class="subsubheading"><a href="#name">{% trans "Name" %}</a></li>
+    <li class="subsubheading"><a href="#location">{% trans "Location" %}</a></li>
+    <li class="subsubheading"><a href="#unit">{% trans "Unit of Measure" %}</a></li>
+    <li class="subsubheading"><a href="#bar-code">{% trans "Bar Code" %}</a></li>
+    <li class="subsubheading"><a href="#minmax">{% trans "Minimum and Maximum" %}</a></li>
+    <li class="subsubheading"><a href="#inventory">{% trans "Stock Level" %}</a></li>
+    <li class="subsubheading"><a href="#description">{% trans "Description" %}</a></li>
+    <li class="subsubheading"><a href="#image">{% trans "Image" %}</a></li>
+    <li class="subheading"><a href="#prices">{% trans "Prices" %}</a></li>
+    <li class="subsubheading"><a href="#fixed">{% trans "Simple Fixed Price" %}</a></li>
+    <li class="subsubheading"><a href="#relative">{% trans "Relative Price" %}</a></li>
+    <li class="subsubheading"><a href="#relative-and-fixed">{% trans "Relative and Fixed" %}</a></li>
+    <li class="subheading"><a href="#garantees">{% trans "Garantees" %}</a></li>
+    <li class="subheading"><a href="#entries">{% trans "Entries" %}</a></li>
+    <li class="chapter"><a href="/manual/sales">{% trans "Chapter" %} {% trans "2: Sales" %}</a></li>
+    <li class="chapter"><a href="/manual/transactions">{% trans "Chapter" %} {% trans "3: Transactions" %}</a></li>
+    <li class="chapter"><a href="/manual/accounts">{% trans "Chapter" %} {% trans "4: Accounts" %}</a></li>
+    <li class="chapter"><a href="/manual/purchases">{% trans "Chapter" %} {% trans "5: Purchases" %}</a></li>
+    <li class="chapter"><a href="/manual/counts">{% trans "Chapter" %} {% trans "6: Physical Counts" %}</a></li>
+    <li class="chapter"><a href="/manual/transfers">{% trans "Chapter" %} {% trans "7: Transfers" %}</a></li>
+    <li class="chapter"><a href="/manual/production">{% trans "Chapter" %} {% trans "8: Production" %}</a></li>
+    <li class="chapter"><a href="/manual/groups">{% trans "Chapter" %} {% trans "9: Tax Groups and Price Groups" %}</a></li>
+    <li class="chapter"><a href="/manual/users">{% trans "Chapter" %} {% trans "10: Users and Rights" %}</a></li>
+    <li class="chapter"><a href="/manual/reports">{% trans "Chapter" %} {% trans "11: Reports" %}</a></li>
+{% endblock %}
+{% block main %}
+<span id="creating-an-item"></span>
+<h1>{% trans "Creating an Item" %}</h1>
+<p> {% trans "To create your first item, click on the 'Items' tab and then on 'New'. Now you see the new item form. We'll go over each field in a minute, but for now just type in the name of your item and click on the link 'Save' which is below the Description field. You'll see Jade create a bar code for your new item and some base prices. That's all there is to it. Now let's have a look at all of our options." %}</p>
+<span id="name"></span>
+<h2> {% trans "Name" %}</h2>
+<p> {% trans "Here is where we put the name of our product this is what will appear in all of the drop-down boxes in the program, so it is recommended that the name be concise and unique. Try using a single noun first followed by a size or other adjectives that distiguish it from all of the other items. Avoid putting part numbers here, since they usually don't mean much to us human beings. All the other details can be put into the description field" %}</p>
+<span id="location"></span>
+<h2> {% trans "Location" %}</h2>
+<p> {% trans "This is an optional field that allows you to specify where you physically have the item stored in your warehouse. This field is useful when new employees are hired and haven't had a chance to learn where all of the items are stored. It also helps to destinguish two similar items when their descriptions are similar. It is recommended that you use standardized shelving. One practical naming scheme assigns a letter to each asile, a 2 digit number to each rack, and a letter to each shelf. You could optionally use a second number to specify which item on the shelf counting from left to right. For example: location \"D04F03\" would mean we would go to aisle \"D\", rack number \"4\", shelf \"F\"(which would be the 6th from the bottom since F is the sixth letter in the alphabet) and take the third item from the left. This is a tried and tested method in large warehouses which should work equally well in small stores as well." %}</p>
+<span id="unit"></span>
+<h2> {% trans "Unit of Measure" %}</h2>
+<p> {% trans "Although with some items the default unit of measure 'each' is sufficient, in other cases it is important to destinguish the unit of measure. For example: Is rope measured in yards, meters, or feet. In some cases you may wish to have to items for the same product, but with different units of measure. For example you could sell nails by the pound or by the box. In this case be sure to include this information in the name as well." %}</p>
+<span id="bar-code"></span>
+<h2> {% trans "Bar Code" %}</h2>
+<p> {% trans "Bar codes allow us to identify items quickly. If you have a bar code scanner, put your cursor in this field and scan the code. Be carefull that you don't scan a serial number, since they will change. If the vendor changes the bar code, don't worry you can always update the bar code here and all of the previous sales will still be linked correctly. If you wish to print the bar codes, see Chapter 5: Purchases" %}</p>
+<span id="minmax"></span>
+<h2> {% trans "Minimum and Maximum" %}</h2>
+<p> {% trans "Minimum and maximum are guidelines of how much inventory we should have on hand for each item. Later in this chapter you will learn how to generate a report of items that we have little of and should be reordered. When deciding these levels consider how long it takes to get more of the product from the time you realize it's low until the moment you get it in stock again. If you always want to have the item available, your minimum should be the amount you normally sell in that time. For example: If I sell 10 boxes a week and it will take 2 weeks for me to order and receive the order, then I should have at least 2 weeks worth of stock, 20 boxes as my minimum. The maximum should indicate how much to buy when the stock reaches the minimum." %}</p>
+<span id="inventory"></span>
+<h2> {% trans "Stock Level" %}</h2>
+<p> {% trans "Although it's not a field, the current stock level appears below the minimum and maximum fields. If you just created the product, it will probably be 0." %}</p>
+<span id="description"></span>
+<h2> {% trans "Description" %}</h2>
+<p> {% trans "The description is an all-purpose field to hold all of the details about the item, specifications, compatibility, etc. Anything the client may ask about the product should be here." %}</p>
+<span id="image"></span>
+<h2> {% trans "Image" %}</h2>
+<p> {% trans "Having images of your products may seem unimportant, but it is useful to identify some products. Just imagine having 10 different styles of black office chairs. They definitely speak a thousand words and can save much time in the long run. Having images of your items on hand is also useful for when you are putting together flyers or quotes. To add an image, click on the Browse button, browse to an image on your hard drive and click Open. Now click on the Save link below and a thumbnail of the image should soon appear. If the thumbnail does not appear, try using a different image format such as png or jpg. See <a href=\"#TODO\">Chapter 11: Reports</a> for more information on including images in quotes and other reports." %}</p>
+<span id="prices"></span>
+<h1> {% trans "Prices" %}</h1>
+<p> {% trans "Jade comes ready to go with two price groups: Retail and Wholesale. Once the item is saved you can change its price if you have permission to see costs and change items. Prices in Jade are designed to fit many different situations and needs. Jade uses the following formula to calculate a price: Cost X Relative + Fixed. Here are four common ways of taking advantage of the flexibility Jade allows us:" %}</p>
+<span id="fixed"></span>
+<h2> {% trans "Simple Fixed Price" %}</h2>
+<p> {% trans "This is the simplest of the methods. Set relative to zero and set fixed to the price. The item will stay at that price until it is changed." %}</p>
+<span id="relative"></span>
+<h2> {% trans "Relative Price" %}</h2>
+<p> {% trans "When the cost of the product changes, it would be nice if Jade adjusted the price for us automaticly. Suppose we always want a 25% markup. Just set relative to 1.25 (1.25 = 125%) and set fixed to 0.  Since Jade will multiply the cost by the relative value, our price will always be 25% more than our cost. Easy as that!" %}</p>
+<span id="relative-and-fixed"></span>
+<h2> {% trans "Relative and Fixed" %}</h2>
+<p> {% trans "This is a more complex situation. Imagine we want to always earn $10.00 when we sell an item, but the cost doesn't include the tax we paid when we bought it, so we want the price to be cost + tax + $10. We can do this by setting the relative value equal to the tax rate+1 and set fixed to $10, the amount we want to earn." %}</p>
+<p> {% trans "Be sure to click on the Save link to the right of the prices to save any changes you may make." %}</p>
+<span id="garantees"></span>
+<h1> {% trans "Garantees" %}</h1>
+<p> {% trans "This section allows you to set up prices for different warranty periods like 3, 6, and 12 months. Just click add, and type in the number of months the warranty will last. On the right fill in the price and click 'Save'. If a salesperson creates a garantee for this product for the period specified, Jade will automaticly enter the price you filled in here. If you create a garantee here with a price of $0.00, Jade will automaticly add the garantee anytime this product is sold." %}</p>
+<span id="entries"></span>
+<h1> {% trans "Entries" %}</h1>
+<p> {% trans "At the bottom of the Item page is a list of <a href=\"/manual/transactions/#entries\">transaction entries</a>. If you wish to change these transactions, click on the cooresponding document number. The values listed may not add up to the current inventory of the item since you may not have sufficient rights to see all if the entries." %}</p>
+{% endblock %}

@@ -1,0 +1,77 @@
+{% extends "manual/base.html" %}
+{% load i18n %}
+{% block chapters %}
+    <li class="chapter"><a href="/manual/items">{% trans "Chapter" %} {% trans "1: Items" %}</a></li>
+    <li class="chapter"><a href="/manual/sales">{% trans "Chapter" %} {% trans "2: Sales" %}</a></li>
+    <li class="chapter"><a href="/manual/transactions">{% trans "Chapter" %} {% trans "3: Transactions" %}</a></li>
+    <li class="subheading"><a href="#exploring">{% trans "Exploring Transactions" %}</a></li>
+    <li class="subsubheading"><a href="#document-number">{% trans "Document Number" %}</a></li>
+    <li class="subsubheading"><a href="#entries">{% trans "Entries" %}</a></li>
+    <li class="subsubheading"><a href="#activate">{% trans "Activate/Deactivate" %}</a></li>
+    <li class="subsubheading"><a href="#delivered">{% trans "Delivered/Undelivered" %}</a></li>
+    <li class="subsubheading"><a href="#details">{% trans "Details" %}</a></li>
+    <li class="subsubheading"><a href="#edit">{% trans "Edit, Save, & Cancel" %}</a></li>
+    <li class="subsubheading"><a href="#print">{% trans "Print" %}</a></li>
+    <li class="subsubheading"><a href="#trash">{% trans "Trash" %}</a></li>
+    <li class="subheading"><a href="#searching">{% trans "Searching" %}</a></li>
+    <li class="subsubheading"><a href="#by-doc-number">{% trans "By Document Number" %}</a></li>
+    <li class="subsubheading"><a href="#by-date">{% trans "By Date" %}</a></li>
+    <li class="subsubheading"><a href="#clear-doc-number">{% trans "Clear Document Number Field" %}</a></li>
+    <li class="chapter"><a href="/manual/accounts">{% trans "Chapter" %} {% trans "4: Accounts" %}</a></li>
+    <li class="chapter"><a href="/manual/purchases">{% trans "Chapter" %} {% trans "5: Purchases" %}</a></li>
+    <li class="chapter"><a href="/manual/counts">{% trans "Chapter" %} {% trans "6: Physical Counts" %}</a></li>
+    <li class="chapter"><a href="/manual/transfers">{% trans "Chapter" %} {% trans "7: Transfers" %}</a></li>
+    <li class="chapter"><a href="/manual/production">{% trans "Chapter" %} {% trans "8: Production" %}</a></li>
+    <li class="chapter"><a href="/manual/groups">{% trans "Chapter" %} {% trans "9: Tax Groups and Price Groups" %}</a></li>
+    <li class="chapter"><a href="/manual/users">{% trans "Chapter" %} {% trans "10: Users and Rights" %}</a></li>
+    <li class="chapter"><a href="/manual/reports">{% trans "Chapter" %} {% trans "11: Reports" %}</a></li>
+{% endblock %}
+{% block main %}
+<span id="exploring"></span>
+<h1> {% trans "Exploring Transactions" %}</h1>
+<p> {% trans "Let's go over some basic principals that Jade uses thoughout the system. A sale is just one type of Transaction that Jade handles some other examples are: Payments, Returns, Physical Counts and Production. All transactions have some common traits." %}</p>
+<span id="document-number"></span>
+<h2> {% trans "Document Number" %}</h2>
+<p> {% trans "Document Numbers are used to group transactions. A Sale, Payment, Return and Garantee are all different types of Transactions, but we can group them together by giving them all the same document number. But we must be careful that we keep them unique. For example: if I were to sell a block to Susan and another to Fred, if I give them both the same document number, they would both show up on the same receipt ... probably not what we want. Stick with a simple numbering scheme and you won't have any problem." %}</p>
+<span id="entries"></span>
+<h2> {% trans "Entries" %}</h2>
+<p> {% trans "Transactions a made up of entries. Entries are the building blocks of Jade's accounting system. Jade makes these entries for us automaticly, and we can't change them directly, but if you want to see exactly what is going on behind the scenes, click on the list icon <img src=\"/media/img/list.png\"> and Jade will show you the entries for the transaction in question. You'll be happy to know that Jade treats inventory just as an accountant treats money. It is all done with double-entry bookkeeping methods so we can be sure that as long as we enter the information, it's all accounted for." %}</p>
+<span id="activate"></span>
+<h2> {% trans "Activate/Deactivate <img src=\"/media/img/on.png\">" %}</h2>
+<p> {% trans "If you want Jade to 'ignore' the price or cost of a certain transaction, click on the light bulb <img src=\"/media/img/on.png\"> and it will turn off <img src=\"/media/img/off.png\">. As long as the light bulb is off, the value of the transaction will not be taken into account in the accounting aspect of the system.  You might want to do this if the client wants a quote but is not sure yet if he really wants to make the purchase. Leave the light bulb off until he decides, then you can either delete the transaction or turn the light bulb back on. As a matter of fact, if you click on the printer icon for a sale, and Jade notices that all of the transactions with that document number are deactivated, it will produce a quote for you instead of the normal receipt." %}</p>
+<span id="delivered"></span>
+<h2> {% trans "Delivered/Undelivered <img src=\"/media/img/delivered.png\">" %}</h2>
+<p> {% trans "Just as the deactivate option controls whether or not the transaction is taken into consideration in the accounting, the Devered option controls whether or not the quantity is applied to the inventory. For example: perhaps a purchase has already been made, but has not yet been received. How do we keep the quantity from showing up in our inventory? Click on the Delivered icon which is normally a box with a green check <img src=\"/media/img/delivered.png\"> and it will change the icon to a box with a red 'x' <img src=\"/media/img/undelivered.png\">. Now the items will not appear in our inventory until we mark it as delivered." %}</p>
+<span id="details"></span>
+<h2> {% trans "Details <img src=\"/media/img/next.png\">" %}</h2>
+<p> {% trans "Sometimes, to make the system faster, Jade will only show us a preview of a transaction, the date, account, item, quantity, and value, and it will leave out some of the details like the cost, tax, and discount. If you want to see those details for a certain transaction, just click on the blue arrow <img src=\"/media/img/next.png\"> and Jade will fetch all of those details for you." %}</p>
+<span id="edit"></span>
+<h2> {% trans "Edit <img src=\"/media/img/edit.png\">, Save <img src=\"/media/img/save.png\">, & Cancel <img src=\"/media/img/cancel.png\">" %}</h2>
+<p> {% trans "If you see that you made a mistake, don't worry, just click on the icon of a paper and pencil <img src=\"/media/img/edit.png\">. This icon allows you to edit the sale again. When you are finished making your changes, click on the diskette <img src=\"/media/img/save.png\"> and your changes will be saved. If you don't want to save your changes click on the red 'X' <img src=\"/media/img/cancel.png\"> to cancel any changes made." %}</p>
+<span id="print"></span>
+<h2> {% trans "Print <img src=\"/media/img/print.png\">" %}</h2>
+<p> {% trans "Most transactions have some sort of printed copy to accompany them. The following is a list the type of report Jade will generate for different types of transactions:" %}</p>
+<ul>
+    <li> {% trans "Active Sale" %} - {% trans "Receipt" %}</li>
+    <li> {% trans "Inactive Sale" %} - {% trans "Quote" %}</li>
+    <li> {% trans "Client Garantee" %} - {% trans "Garantee Report" %}</li>
+    <li> {% trans "Purchase" %} - {% trans "Purchase Order" %}</li>
+    <li> {% trans "Physical Count" %} - {% trans "Count Sheet" %}</li>
+    <li> {% trans "Production Job" %} - {% trans "Job Order" %}</li>
+    <li> {% trans "Production Process" %} - {% trans "Process Information" %}</li>
+</ul>
+<span id="trash"></span>
+<h2> {% trans "Trash <img src=\"/media/img/trash.png\">" %}</h2>
+<p> {% trans "You can probably guess what this icon does, it deletes the transaction. Just be carefull, because it's not a recycle bin!" %}</p>
+<span id="searching"></span>
+<h1> {% trans "Searching" %}</h1>
+<span id="by-doc-number"></span>
+<h2> {% trans "By Document Number" %}</h2>
+<p> {% trans "You can search for transactions with a given document number either by clicking on the number somwhere on the page, or by typing the number into document number field and clicking on the binoculars <img src=\"/media/img/find.png\">." %}</p>
+<span id="by-date"></span>
+<h2> {% trans "By Date" %}</h2>
+<p> {% trans "If you want to see all of the transactions within a certain date range, you can put in those dates in the fields labeled From: and Till:. A handy calander will pop out to make it easier to select the date range." %}</p>
+<span id="clear-doc-number"></span>
+<h2> {% trans "Clear Document Number Field" %}</h2>
+<p> {% trans "If you want to clear the Document number field to show all document numbers, click on the broom <img src=\"/media/img/clear.png\"> and then on the search icon <img src=\"/media/img/find.png\">." %}</p>
+{% endblock %}

@@ -32,6 +32,7 @@ urlpatterns = patterns('',
 
     (r'^admin/', include(admin.site.urls)), 
     (r'^inventory/', include('jade.inventory.urls')), 
+    (r'^manual/', include('jade.manual.urls')), 
     (r'^production/', include('jade.production.urls')), 
     (r'^blocked/$',direct_to_template, {'template': 'blocked.html'},"blocked"),
     (r'^login/$', 'django.contrib.auth.views.login', {'template_name': 'login.html'}, "login"),

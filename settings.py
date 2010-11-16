@@ -100,6 +100,7 @@ INSTALLED_APPS = (
     'django.contrib.admin',
     'jade.inventory',
     'jade.production',
+    'jade.manual',
     'django.contrib.markup',
     'django_extensions',
     'django.contrib.databrowse',

@@ -1,0 +1,80 @@
+{% extends "manual/base.html" %}
+{% load i18n %}
+{% block chapters %}
+    <li class="chapter"><a href="/manual/items">{% trans "Chapter" %} {% trans "1: Items" %}</a></li>
+    <li class="chapter"><a href="/manual/sales">{% trans "Chapter" %} {% trans "2: Sales" %}</a></li>
+    <li class="subheading"><a href="#creating-a-sale">{% trans "Creating a Sale" %}</a></li>
+    <li class="subsubheading"><a href="#document-number">{% trans "Document Number" %}</a></li>
+    <li class="subsubheading"><a href="#client-name">{% trans "Client Name" %}</a></li>
+    <li class="subsubheading"><a href="#item-name">{% trans "Item Name" %}</a></li>
+    <li class="subheading"><a href="#changing-a-sale">{% trans "Changing a Sale" %}</a></li>
+    <li class="subsubheading"><a href="#quantity">{% trans "Quantity" %}</a></li>
+    <li class="subsubheading"><a href="#cost">{% trans "Cost" %}</a></li>
+    <li class="subsubheading"><a href="#tax">{% trans "Tax" %}</a></li>
+    <li class="subsubheading"><a href="#discount">{% trans "Discount" %}</a></li>
+    <li class="subsubheading"><a href="#price">{% trans "Price" %}</a></li>
+    <li class="subsubheading"><a href="#serial-number">{% trans "Serial Number" %}</a></li>
+    <li class="subsubheading"><a href="#edit-and-save">{% trans "Edit & Save" %}</a></li>
+    <li class="subheading"><a href="#garantees">{% trans "Garantees" %}</a></li>
+    <li class="subheading"><a href="#returns">{% trans "Returns" %}</a></li>
+    <li class="subheading"><a href="#end-of-day">{% trans "End of Day" %}</a></li>
+    <li class="subheading"><a href="#whats-next">{% trans "What's Next?" %}</a></li>
+    <li class="chapter"><a href="/manual/transactions">{% trans "Chapter" %} {% trans "3: Transactions" %}</a></li>
+    <li class="chapter"><a href="/manual/accounts">{% trans "Chapter" %} {% trans "4: Accounts" %}</a></li>
+    <li class="chapter"><a href="/manual/purchases">{% trans "Chapter" %} {% trans "5: Purchases" %}</a></li>
+    <li class="chapter"><a href="/manual/counts">{% trans "Chapter" %} {% trans "6: Physical Counts" %}</a></li>
+    <li class="chapter"><a href="/manual/transfers">{% trans "Chapter" %} {% trans "7: Transfers" %}</a></li>
+    <li class="chapter"><a href="/manual/production">{% trans "Chapter" %} {% trans "8: Production" %}</a></li>
+    <li class="chapter"><a href="/manual/groups">{% trans "Chapter" %} {% trans "9: Tax Groups and Price Groups" %}</a></li>
+    <li class="chapter"><a href="/manual/users">{% trans "Chapter" %} {% trans "10: Users and Rights" %}</a></li>
+    <li class="chapter"><a href="/manual/reports">{% trans "Chapter" %} {% trans "11: Reports" %}</a></li>
+{% endblock %}
+{% block main %}
+<span id="creating-a-sale"></span>
+<h1> {% trans "Creating a Sale" %}</h1>
+<p> {% trans " Creating a sale is simple, click on the green sales tab on the left side of the page and click on \"New\".  This will cause a small window to appear in the lower-left corner of your screen.  There you will find three fields: Doc Number, Client, and Item.  " %}</p>
+<span id="document-number"></span>
+<h2> {% trans "Document Number" %}</h2>
+<p> {% trans "We will use the Document number to group all of the transactions that belong to this sale.  If you leave it blank, Jade will create a number for you following a sequence.  If you want, the Document Number can also contain letters and some symbols as well, but no spaces are permitted. If this field already has a number in it and you want it clear, it may be quicker to just click on the broom <img src=\"/media/img/clear.png\">. This will clear the field and leave your cursor there ready to type." %}</p>
+<span id="client-name"></span>
+<h2> {% trans "Client Name" %}</h2>
+<p> {% trans "Here you can type in the name of the client.  If the client's name already exists in the database, it will appear along with some other options in a drop-down menu while you are typing.  Either type the complete name, or select it from the list.  If the client's not in the database yet, no problem, Jade will add it automaticly and put the client in the default groups when you create the sale." %}</p>
+<span id="item-name"></span>
+<h2> {% trans "Item Name" %}</h2>
+<p> {% trans "Now we type in the name of the item or scan it's barcode.  Be sure the item already exists in the database, because its not possible to create items from this page.  If you need to add the item to the database first, see <a href=\"/manual/items\">Chapter 1:Items</a>.  If this field already has a number in it and you want it clear, it may be quicker to just click on the broom <img src=\"/media/img/clear.png\">. This will clear the field and leave your cursor there ready to type. Now, either press Enter from the item field or click on the \"Create\" button.  Your new sale will appear in the main window. That was easy!" %}</p>
+<span id="changing-a-sale"></span>
+<h1> {% trans "Changing a Sale" %}</h1>
+<span id="quantity"></span>
+<h2> {% trans "Quantity" %}</h2>
+<p> {% trans "After you create a sale, you'll find that your cursor is now on the quantity field, waiting for you to type the quantity of the item to be sold." %}</p>
+<span id="cost"></span>
+<h2> {% trans "Cost" %}</h2>
+<p>{% trans "You may not have access to see costs, but if you do, you can adjust the cost of the items being sold. This is important for accounting. Usually it's best to let Jade handle this one. If it seems too high or too low, it will usually even out with time. If it's too far off, it may be time to do a physical count. If so, see the chapter of the manual entitled <a href=\"#TODO\">'Physical Counts'</a>" %}</p>
+<span id="tax"></span>
+<h2> {% trans "Tax" %}</h2>
+<p> {% trans "You can type the amount of tax to be charged to the client per unit by typing it into the \"Tax\" field. You may however, prefer to let Jade calculate the tax automaticly. If so, just leave this blank for now and Jade will calculate the amout of tax due based on the tax group the client is in. It may also reduce the amount you type into the price field if the client's tax group is configured to have the tax included in the price. For more information see the <a href=\"#TODO\">Tax Groups and Price Groups</a>" %}</p>
+<span id="discount"></span>
+<h2> {% trans "Discount" %}</h2>
+<p> {% trans "If you are giving the client a discount and wish for that to be reported in the accounting, type in the value under the column \"Discount\" this will be subtracted from the price the client will be charged. Notice that this value should be entered per unit since it will later be multiplied by the quantity. For example, if we wanted to sell 3 blocks and give the client a $1.00 discount on each one, we would type in a \"1\" in this field; Jade will handle the rest of the math." %}</p>
+<span id="price"></span>
+<h2> {% trans "Price" %}</h2>
+<p> {% trans "Once you've put in the quantity, you may want to change the price.  Jade already put in the normal price for the item.  If you have more than one <a href=\"#TODO\">price group</a> configured then Jade created the sale with the price appropiate to the price group of the client specified.  But no matter what the normal price is you can change it here.  As before, be sure to type the price per unit. If you wish to change the price for an item, you can do that on the <a href=\"/inventory/items\">Item</a> page.  You can get more information about changing prices in <a href=\"/manual/items/\">Chapter 1: Items</a>." %}</p>
+<span id="serial-number"></span>
+<h2> {% trans "Serial Number" %}</h2>
+<p> {% trans "Jade will not require you to type a serial number even if the item has them, but if you do, later you'll be able to see a complete history of your serial numbers by simply clicking on them." %}</p>
+<span id="edit-and-save"></span>
+<h2> {% trans "Edit & Save" %}</h2>
+<p> {% trans "Of course you can still change the document number, date, client, and item fields if they're not right. When you're done just click on the diskette <img src=\"/media/img/save.png\"> image and the Sale will be saved, the appearance of the sale will change, and you'll receive a nice message confirming that your sale as been saved successfully. Notice that Jade now shows you the total price, total discount, and total tax, and total cost, (if you have <a href=\"#TODO\">access</a> to see costs) multiplying the values we provided by the quantity. " %}</p>
+<span id="garantees"></span>
+<h2> {% trans "Garantees" %}</h2>
+<p> {% trans "TODO" %}</p>
+<span id="returns"></span>
+<h2> {% trans "Returns" %}</h2>
+<p> {% trans "TODO" %}</p>
+<span id="end-of-day"></span>
+<h1> {% trans "End of Day" %}</h1>
+<p> {% trans "At the end of the day you'll probably want a report of the sales made during the day. You can get this report by clicking on the sales tab and then on 'End of Day'. Be sure to prepare the template for this report. More information on formatting reports is found in <a href=\"#TODO\">Chapter 11: Reports</a>" %}</p>
+<span id="whats-next"></span>
+<h1> {% trans "What's Next?" %}</h1>
+<p> {% trans "If this is your first time reading this manual, we recommend you read <a href=\"#TODO\">Chapter 3: Transactions<a>" %}</p>
+{% endblock %}

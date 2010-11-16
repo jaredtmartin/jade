@@ -1,0 +1,61 @@
+{% extends "manual/base.html" %}
+{% load i18n %}
+{% block chapters %}
+    <li class="chapter"><a href="/manual/items">{% trans "Chapter" %} {% trans "1: Items" %}</a></li>
+    <li class="chapter"><a href="/manual/sales">{% trans "Chapter" %} {% trans "2: Sales" %}</a></li>
+    <li class="chapter"><a href="/manual/transactions">{% trans "Chapter" %} {% trans "3: Transactions" %}</a></li>
+    <li class="chapter"><a href="/manual/accounts">{% trans "Chapter" %} {% trans "4: Accounts" %}</a></li>
+    <li class="subheading"><a href="#add-clients-and-vendors">{% trans "Adding Clients and Vendors" %}</a></li>
+    <li class="subsubheading"><a href="#number">{% trans "Account Number" %}</a></li>
+    <li class="subsubheading"><a href="#multiplier">{% trans "Multiplier" %}</a></li>
+    <li class="subsubheading"><a href="#taxgroup">{% trans "Tax Group" %}</a></li>
+    <li class="subsubheading"><a href="#pricegroup">{% trans "Price Group" %}</a></li>
+    <li class="subsubheading"><a href="#creditdays">{% trans "Credit Days" %}</a></li>
+    <li class="subsubheading"><a href="#balance">{% trans "Balance" %}</a></li>
+    <li class="subsubheading"><a href="#user">{% trans "User" %}</a></li>
+    <li class="subsubheading"><a href="#other">{% trans "Other fields" %}</a></li>
+    <li class="subheading"><a href="#unpaid">{% trans "Unpaid and Overdue Transactions" %}</a></li>
+    <li class="subheading"><a href="#recent">{% trans "Recent Transactions" %}</a></li>
+    <li class="chapter"><a href="/manual/purchases">{% trans "Chapter" %} {% trans "5: Purchases" %}</a></li>
+    <li class="chapter"><a href="/manual/counts">{% trans "Chapter" %} {% trans "6: Physical Counts" %}</a></li>
+    <li class="chapter"><a href="/manual/transfers">{% trans "Chapter" %} {% trans "7: Transfers" %}</a></li>
+    <li class="chapter"><a href="/manual/production">{% trans "Chapter" %} {% trans "8: Production" %}</a></li>
+    <li class="chapter"><a href="/manual/groups">{% trans "Chapter" %} {% trans "9: Tax Groups and Price Groups" %}</a></li>
+    <li class="chapter"><a href="/manual/users">{% trans "Chapter" %} {% trans "10: Users and Rights" %}</a></li>
+    <li class="chapter"><a href="/manual/reports">{% trans "Chapter" %} {% trans "11: Reports" %}</a></li>
+{% endblock %}
+{% block main %}
+<span id="add-clients-and-vendors"></span>
+<h1> {% trans "Adding Clients and Vendors" %}</h1>
+<p> {% trans "To add a client or a vendor, click on the 'Accounts' tab and then on the Account type, either 'Client' or 'Vendor' and then click 'New'. Type in the persons name and click 'Save'. The alternative is to simply create a sale or a purchase for the person. The person will automaticly be added to the database. See <a href=\"/manual/#client-name\">Chapter 2: Sales</a> Now let's go over some of the other fields on this page. Since the fields for vendors and clients are the same. We'll consider both situations at the same time." %}</p>
+<span id="number"></span>
+<h2> {% trans "Account Number" %}</h2>
+<p> {% trans "The account number is very important because it is used to calculate the balance on an account. For example: By default Jade comes with a 'Clients' account which has an account number '0103'. The balance for that account will not only include transactions with that account number but for <b>any</b> account that starts with '0103'. So if we want our new client's balance to be included in the total, our clients account number must start with '0103'. By default, if we create a client without specifing an account number, Jade will take care of things and assign the client an appropriate account number. The same principle applies to Vendors." %}</p>
+<span id="multiplier"></span>
+<h2> {% trans "Multiplier" %}</h2>
+<p> {% trans "The multiplier is a peice of accounting and is either Credit or Debit. Clients will always be Debit accounts and Vendors will always be Credit accounts. The reasons why is beyond the scope of this manual and is best explained by an accountant. For a little more information see the section <a href=\"#account-multiplier\">'Creating an account'</a> later in this chapter." %}</p>
+<span id="taxgroup"></span>
+<h2> {% trans "Tax Group" %}</h2>
+<p> {% trans "The account's Tax Group determines not only how much tax he is charged but also whether or not the tax is included in the price. For more information about Tax Groups see <a href=\"#account-multiplier\">Chapter 9: Tax Groups & Price Groups</a>" %}</p>
+<span id="pricegroup"></span>
+<h2> {% trans "Price Group" %}</h2>
+<p> {% trans "This is the name of the Price Group the client or Vendor belongs to. When products are sold to this person, prices will be retreived for this price group. By default Jade comes with two price groups: Retail and Wholesale." %}</p>
+<span id="creditdays"></span>
+<h2> {% trans "Credit Days" %}</h2>
+<p> {% trans "When a sale is made without a payment, the sale will appear in the Unpaid Sales section. If the number of days specified by Credit Days has passed since the Sale was made the Transaction will appear in the Overdue section" %}</p>
+<span id="balance"></span>
+<h2> {% trans "Balance" %}</h2>
+<p> {% trans "The total amount that this client owes us, or in the case of a Vendor, the total amount that we owe them. Extra note: that this is the sum of the values of all of the transactions with account numbers starting whith this persons account number" %}</p>
+<span id="user"></span>
+<h2> {% trans "User" %}</h2>
+<p> {% trans "The name of the user responsible for dealing with this client or vendor." %}</p>
+<span id="other"></span>
+<h2> {% trans "Other fields" %}</h2>
+<p> {% trans "The other fields are not used by Jade and are optional. The information from these fields may be used on quotes and receipts. See <a href=\"#TODO\">Chapter 11: Reports</a>" %}</p>
+<span id="unpaid"></span>
+<h1> {% trans "Unpaid and Overdue Transactions" %}</h1>
+<p> {% trans "When a sale is made without a payment, the sale will appear in the Unpaid Sales section. If the number of days specified by Credit Days has passed since the Sale was made the Transaction will appear in the Overdue section. To change these entries, click on the document number of the transaction in question." %}</p>
+<span id="recent"></span>
+<h1> {% trans "Recent Transactions" %}</h1>
+<p> {% trans "A list of some of the most recent transactions for this account. Note that not all entries may appear if you do not have sufficient rights to view certain transaction types." %}</p>
+{% endblock %}
