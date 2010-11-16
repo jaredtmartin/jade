@@ -2,10 +2,10 @@
 {% load i18n %}
 {% block heading %}{% trans 'Production' %} {% endblock%}
 {% block actions %}      
-    {% if perms.production.view_process %}
+    {% if perms.inventory.view_process %}
         <div class="actiontab" ><a href="/production/process/list/?{% if q %}q={{q}}&{% endif %}{% if start %}start={{start}}&{% endif %}{% if end %}end={{end}}{% endif %}" class="action">{% trans 'Processes' %}</a></div>
     {% endif %}
-    <div class="actiontab" ><a href="/production/job/list/?{% if q %}q={{q}}&{% endif %}{% if start %}start={{start}}&{% endif %}{% if end %}end={{end}}{% endif %}" class="action">{% trans 'Jobs' %}</a></div>
+    {% if perms.inventory.view_job %}<div class="actiontab" ><a href="/production/job/list/?{% if q %}q={{q}}&{% endif %}{% if start %}start={{start}}&{% endif %}{% if end %}end={{end}}{% endif %}" class="action">{% trans 'Jobs' %}</a></div>{% endif %}
 {% endblock%}
 {% block pre-table %}
 

@@ -6,7 +6,7 @@
     <td id="id_transaction-{{ object.pk }}-account" class="account"><a href="{{object.subclass.account.url}}">{{object.subclass.account|default:''}}</a></td>
     <td id="id_transaction-{{ object.pk }}-item" class="item" class="inventory-details">{% if object.subclass.item %}<a href="{{object.subclass.item.url}}">{{object.subclass.item}}</a>{% endif %}</td>
     <td id="id_transaction-{{object.pk}}-quantity" class="quantity inventory-details"> {{object.subclass.quantity|floatformat:-2}}</td>
-    <td/><td/><td/><td/>
+    <td/><td/><td/>{% if perms.inventory.view_cost %}<td/>{% endif %}
     <td id="id_transaction-{{object.pk}}-value" class="money">${{object.subclass.value|floatformat:2}}</td>
     <td>
         <a onclick="getTransaction({{ object.pk }},'/inventory/transaction/{{object.pk}}/get/'); return false;" href="#" title="{% trans 'Retreive more details' %}" id="id_transaction-{{ object.pk }}-show" style=""><img src="{{MEDIA_URL}}/img/next.png"/></a>
