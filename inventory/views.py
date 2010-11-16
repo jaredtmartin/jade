@@ -166,7 +166,7 @@ def search_and_paginate_transactions(request, model, template='inventory/transac
 # Purchase Views
 ######################################################################################
 @login_required
-@permission_required('inventory.view_sale', login_url="/blocked/")
+@permission_required('inventory.view_purchase', login_url="/blocked/")
 def list_purchases(request): # GET ONLY
     return search_and_paginate_transactions(request, Purchase,'inventory/purchases.html')
 
