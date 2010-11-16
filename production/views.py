@@ -57,7 +57,7 @@ def process_report(request, doc_number):
 
 
 @login_required
-@permission_required('production.add_process', login_url="/blocked/")
+@permission_required('inventory.add_process', login_url="/blocked/")
 def process_new(request): # POST ONLY
     form=NewProcessForm(request.POST)
     if form.is_valid():
@@ -70,17 +70,17 @@ def process_new(request): # POST ONLY
     return _r2r(request,'inventory/results.html', {'edit_mode':True,'objects':[process], 'error_list':{}, 'info_list':info_list})
     
 @login_required
-@permission_required('production.change_process', login_url="/blocked/")
+@permission_required('inventory.change_process', login_url="/blocked/")
 def process_edit(request, object_id): # AJAX POST ONLY
     return edit_object(request, object_id, Process, ProcessForm, "process")
     
 @login_required
-@permission_required('production.delete_process', login_url="/blocked/")
+@permission_required('inventory.delete_process', login_url="/blocked/")
 def process_delete(request, object_id):
     return delete_object(request, object_id, Process, 'process')
     
 @login_required
-@permission_required('production.add_job', login_url="/blocked/")
+@permission_required('inventory.add_job', login_url="/blocked/")
 def job_new(request):
     form=SearchForm(request.GET, validate=True)
     try: times=int(request.GET['quantity'])
@@ -123,12 +123,12 @@ def job_new(request):
     return http.HttpResponseRedirect('/production/job/list/?q=%s' % new_number)
     
 @login_required
-@permission_required('production.delete_job', login_url="/blocked/")
+@permission_required('inventory.delete_job', login_url="/blocked/")
 def job_delete(request, object_id):
     return delete_object(request, object_id, Job, 'job')
     
 @login_required
-@permission_required('production.start_production', login_url="/blocked/")
+@permission_required('inventory.start_production', login_url="/blocked/")
 def job_start(request):
     form=SearchForm(request.GET, validate=True)
     q=form.cleaned_data['q']
@@ -146,7 +146,7 @@ def job_start(request):
     return http.HttpResponseRedirect('/production/job/list/?q=%s' % q)
     
 @login_required
-@permission_required('production.finish_production', login_url="/blocked/")
+@permission_required('inventory.finish_production', login_url="/blocked/")
 def job_finish(request):
     form=SearchForm(request.GET, validate=True)
     q=form.cleaned_data['q']
@@ -161,6 +161,6 @@ def job_finish(request):
     return http.HttpResponseRedirect('/production/job/list/?q=%s' % q)
     
 @login_required
-@permission_required('production.change_job', login_url="/blocked/")
+@permission_required('inventory.change_job', login_url="/blocked/")
 def job_edit(request, object_id): # AJAX POST ONLY
     return edit_object(request, object_id, Job, JobForm, "job")
