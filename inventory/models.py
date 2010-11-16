@@ -2039,6 +2039,7 @@ class Transfer(Transaction):
         proxy = True
         permissions = (
             ("view_transfer", "Can view transfers"),
+            ("view_site", "Can view sites"),
         )
     
     def __init__(self, *args, **kwargs):
