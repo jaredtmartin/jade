@@ -706,7 +706,7 @@ def item_image_upload(request, object_id):
     return _r2r(request,'inventory/item_image.html', {'item':item})
         
 @login_required
-@permission_required('inventory.create_item', login_url="/blocked/")
+@permission_required('inventory.add_item', login_url="/blocked/")
 def new_item(request):
     return new_object(request, ItemForm, "item", 'inventory/item_show.html', tipo='Item')
 
