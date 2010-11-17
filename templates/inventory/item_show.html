@@ -140,8 +140,39 @@
                 success: update_garanteeoffer
             });
         }
+        function new_linkeditem(object_id){
+            jQuery("#last_id").val(object_id);
+            jQuery.ajax({
+                url: '/inventory/item/'+object_id+'/addlinkeditem/',
+                type:'POST',
+                data:{ 
+                    item:$('#new_linkeditem_name').val(),
+                },
+                success: update_linkeditem
+            });
+        }
+        function save_linkeditem(object_id){
+            jQuery("#last_id").val(object_id);
+            $.ajax({
+                url: '/inventory/linkeditem/'+object_id+'/' ,
+                type:'POST',
+                data:{ 
+                    item:jQuery('#id_linkeditem-'+object_id+'-item').val(),
+                    quantity:jQuery('#id_linkeditem-'+object_id+'-quantity').val(),
+                },
+                success: update_linkeditem
+            });
+        }
+        function delete_linkeditem(object_id){
+            jQuery("#last_id").val(object_id);
+            jQuery.get( '/inventory/linkeditem/'+object_id+'/delete/', {}, update_linkeditem);
+            jQuery("#linkeditem-"+object_id).remove();
+        }
         function update_item(data){
             update('item',data);
+        }
+        function update_linkeditem(data){
+            update('linkeditem',data);
         }
         function update_garanteeoffer(data){
             update('garanteeoffer',data);

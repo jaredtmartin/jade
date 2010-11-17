@@ -45,15 +45,12 @@ urlpatterns = patterns('',
     (r'^transfer/new/$', 'jade.inventory.views.new_transfer'),
     (r'^transfer/(?P<object_id>\d+)/delete/$', 'jade.inventory.views.delete_transfer'),
     
-    #Transfer Returns
-#    (r'^transferreturn/(?P<object_id>\d+)/$', 'jade.inventory.views.edit_transferreturn'),
-#    (r'^transferreturn/(?P<object_id>\d+)/new/$', 'jade.inventory.views.new_transferreturn'),
-#    (r'^transferreturn/(?P<object_id>\d+)/delete/$', 'jade.inventory.views.delete_transferreturn'),
     # Accounting
     (r'^accounting/$', 'jade.inventory.views.list_accounting'),
     (r'^accounting/(?P<object_id>\d+)/$', 'jade.inventory.views.edit_accounting'),
     (r'^accounting/new/$', 'jade.inventory.views.new_accounting'),
     (r'^accounting/(?P<object_id>\d+)/delete/$', 'jade.inventory.views.delete_accounting'),
+    
     #Purchase Returns
     (r'^purchasereturn/(?P<object_id>\d+)/$', 'jade.inventory.views.edit_purchasereturn'),
     (r'^purchasereturn/(?P<object_id>\d+)/new/$', 'jade.inventory.views.new_purchasereturn'),
@@ -141,6 +138,12 @@ urlpatterns = patterns('',
     (r'^garanteeoffer/(?P<object_id>\d+)/$', 'jade.inventory.views.edit_garanteeoffer'),
     (r'^garanteeoffer/new/$', 'jade.inventory.views.new_garanteeoffer'),
     (r'^garantee_price/$', 'jade.inventory.views.garantee_price'),
+    
+    # LinkedItems
+    
+    (r'^linkeditem/(?P<object_id>\d+)/delete/$', 'jade.inventory.views.delete_linkeditem'),
+    (r'^linkeditem/(?P<object_id>\d+)/$', 'jade.inventory.views.edit_linkeditem'),
+    (r'^item/(?P<object_id>\d+)/addlinkeditem/$', 'jade.inventory.views.new_linkeditem'),
     
     # Transactions
     (r'^transactions/movements.pdf$', 'jade.inventory.views.movements_report'),

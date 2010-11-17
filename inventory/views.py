@@ -1324,36 +1324,6 @@ def separate_by_tax_group(documents):
     groups={}
     for doc in documents: update_dict_list(groups, {doc.client.tax_group.name:doc})
     return groups.values()
-#class SeriesCollection():
-#    def __init__(self, documents):
-#        
-#    def __getitem__(self, index):
-#        return self.series[index]
-#    def __repr__(self):
-#        return repr(str(self.series))
-        
-#def group_trans_by_doc_number(trans):
-#    d={}
-#    for t in trans:
-#        update_dict_list(d, {t.doc_number:t})
-#    return d
-
-#def group_docs(docs):
-#    result=[]
-#    last=0
-#    price=0
-#    for doc in docs:
-#        if result==[]:
-#            result.append([doc])
-#            l=re.split("(\d*)", doc[0].doc_number)
-#            prefix=l[0:-2]
-#            last=int(l[-2])
-#        else:
-#            x=int(re.split("(\d*)", doc[0].doc_number)[-2])
-#            if x-1==last or x==last: result[-1].append(doc)
-#            else: result.append([doc])
-#            last=x
-#    return result
             
 @login_required
 @permission_required('inventory.view_sale', login_url="/blocked/")
@@ -1490,6 +1460,23 @@ def new_transfer(request): # AJAX POST ONLY
     if len(error_list)==0:
         transfer.save()
     return _r2r(request,'inventory/results.html', {'edit_mode':True, 'objects':[transfer],'prefix':'transfer','line_template':"inventory/transaction.html",'error_list':error_list, 'info_list':{}})
-
+@login_required
+@permission_required('inventory.delete_transfer', login_url="/blocked/")
 def delete_transfer(request, object_id):
     return delete_object(request, object_id, Transfer, 'transfer')
+
+@login_required
+@permission_required('inventory.add_linkeditem', login_url="/blocked/")
+def new_linkeditem(request, object_id):
+    item=None
+    try:
+        item=Item.objects.fetch(request.POST['item'])
+    except Item.MultipleObjectsReturned: 
+        error_list['item']=['There are more than one %ss with the name %s. Try using a bar code.' % ('item', request.POST['item'])]
+    except Item.DoesNotExist: 
+        if request.POST['item']!='': error_list['item']=["Unable to find '%s' in the list of items." % (request.POST['item'], )]
+    link=LinkedItem(item=item, quantity=1)
+    link.save()    
+    if not error_list: info_list=['The linked item has been added successfully.',]
+    return _r2r(request,'inventory/linkeditem.html', {'object':link,'error_list':{}, 'info_list':{}})
+

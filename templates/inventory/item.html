@@ -32,27 +32,44 @@
     <hr class="clear-contentunit" />
     <a href="#" onclick="save_item({{form.instance.id|default:"''"}}); return false;">{% trans 'Save' %}</a>
     {% if form.instance.pk %}
-        <h2>{% trans 'Prices' %}</h2>
+        <div class="item-block" id="prices-block">
+            <h2>{% trans 'Prices' %}</h2>
+            <input type="hidden" id="last_id" value="">
+            <table id="price-table">
+                <thead><tr><th>{% trans 'Item' %}</th><th>{% trans 'Group' %}</th>{% if perms.inventory.view_cost %}<th>{% trans 'Cost' %}</th>{% endif %}<th>{% trans 'Unit' %}</th>{% if perms.inventory.view_cost %}<th>{% trans 'Relative' %}</th><th>{% trans 'Fixed' %}</th>{% endif %}<th>{% trans 'Total' %}</th></tr></thead>
+                <tbody id="prices">
+                    {% for object in form.instance.price_set.all %}
+                        {% include "inventory/price.html" %}
+                    {% endfor %}
+                </tbody>
+                <tfoot><tr>{% block table_footer %}{% endblock%}</tr></tfoot>
+            </table><hr>
+        </div>
+        <div class="item-block" id="linkeditems-block">
+       <h2>{% trans 'Linked Items' %}</h2>
         <input type="hidden" id="last_id" value="">
-        <table id="price-table">
-            <thead><tr><th>{% trans 'Item' %}</th><th>{% trans 'Group' %}</th>{% if perms.inventory.view_cost %}<th>{% trans 'Cost' %}</th>{% endif %}<th>{% trans 'Unit' %}</th>{% if perms.inventory.view_cost %}<th>{% trans 'Relative' %}</th><th>{% trans 'Fixed' %}</th>{% endif %}<th>{% trans 'Total' %}</th></tr></thead>
-            <tbody id="prices">
-                {% for object in form.instance.price_set.all %}
-                    {% include "inventory/price.html" %}
-                {% endfor %}
-            </tbody>
-            <tfoot><tr>{% block table_footer %}{% endblock%}</tr></tfoot>
-        </table>
-        <h2>Garantees</h2>
-        <table>
-            <thead><tr><th>{% trans 'Months' %}</th><th>{% trans 'Price' %}</th></tr></thead>
-            <tbody id="garanteeoffers">
-                {% for object in form.instance.garanteeoffer_set.all %}
-                    {% include "inventory/garantee_offer.html" %}
+        <table id="linked-table">
+            <thead><tr><th>{% trans 'Item' %}</th><th>{% trans 'Quantity' %}</th>{% if perms.inventory.view_cost %}<th>{% trans 'Cost' %}</th>{% endif %}{% if perms.inventory.view_cost %}<th>{% trans 'Relative' %}</th><th>{% trans 'Fixed' %}</th>{% endif %}<th>{% trans 'Price' %}</th></tr></thead>
+            <tbody id="linked-items">
+                {% for object in form.instance.linkeditem_set.all %}
+                    {% include "inventory/linkeditem.html" %}
                 {% endfor %}
             </tbody>
         </table>
-        <a href="#" onclick="new_garanteeoffer({{form.instance.id}}); return false;">{% trans 'New' %}</a>
+        <input type="text" id="new_linkeditem_name" class="field"> <a href="#" onclick="new_linkeditem({{form.instance.id}}); return false;"><img src="/media/img/list-add.png">{% trans 'Add' %}</a>
+        </div>
+        <div class="item-block" id="garantees-block">
+            <h2>Garantees</h2>
+            <table>
+                <thead><tr><th>{% trans 'Months' %}</th><th>{% trans 'Price' %}</th></tr></thead>
+                <tbody id="garanteeoffers">
+                    {% for object in form.instance.garanteeoffer_set.all %}
+                        {% include "inventory/garantee_offer.html" %}
+                    {% endfor %}
+                </tbody>
+            </table>
+            <a href="#" onclick="new_garanteeoffer({{form.instance.id}}); return false;"><img src="/media/img/list-add.png">{% trans 'Add' %}</a>
+        </div>
     {% endif %}
 </div>
 </td></tr>

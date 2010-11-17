@@ -103,7 +103,6 @@ class Item(models.Model):
     location = models.CharField(_('location'), max_length=32, blank=True, default='')
     description = models.CharField(_('description'), max_length=1024, blank=True, default="")
     unit = models.ForeignKey(Unit, default=DEFAULT_UNIT, blank=True)
-    #    cost = models.DecimalField(_('cost'), max_digits=8, decimal_places=2, default=Decimal('0.00'), blank=True)
     auto_bar_code = models.BooleanField(_('automatic bar code'), default=False)
     tipo = models.CharField(_('type'), max_length=16, choices=ITEM_TYPES, default='Product')
     objects=ItemManager()
@@ -122,7 +121,6 @@ class Item(models.Model):
     def barcode_url(self):
         return "/%s%s.png" % (settings.BARCODES_FOLDER, self.bar_code)
     def _get_total_cost(self):
-    #        return self.cost*self.stock
         return Entry.objects.filter(item=self, account=INVENTORY_ACCOUNT, active=True).aggregate(total=models.Sum('value'))['total'] or Decimal('0.00')
     total_cost=property(_get_total_cost)
     def price(self, client):
@@ -147,7 +145,6 @@ class Item(models.Model):
         return self.total_cost/stock
     cost=property(_get_cost)
 
-
 def create_prices_for_product(sender, **kwargs):
     if kwargs['instance'].bar_code != '':
         if subprocess.call('ls %s%s' % (settings.BARCODES_FOLDER,kwargs['instance'].bar_code), shell=True)!=0:
@@ -157,6 +154,13 @@ def create_prices_for_product(sender, **kwargs):
             Price.objects.create(item=kwargs['instance'], group=group, site=Site.objects.get_current())
 post_save.connect(create_prices_for_product, sender=Item, dispatch_uid="jade.inventory.models")
 
+class LinkedItem(models.Model):
+    parent = models.ForeignKey(Item, related_name ='parent_id')
+    child = models.ForeignKey(Item, related_name ='child_id')
+    quantity = models.DecimalField(_('quantity'), max_digits=8, decimal_places=2, default=1)
+    fixed = models.DecimalField(_('fixed'), max_digits=8, decimal_places=2, default=settings.DEFAULT_FIXED_PRICE)
+    relative = models.DecimalField(_('relative'), max_digits=8, decimal_places=2, default=settings.DEFAULT_RELATIVE_PRICE)
+    
 class PriceGroup(models.Model):
     name = models.CharField(_('name'), max_length=32)
     def __unicode__(self):
