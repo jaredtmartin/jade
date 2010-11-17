@@ -15,7 +15,7 @@ import jade
 import subprocess
 from django.contrib.sites.models import Site
 from django.contrib.sites.managers import CurrentSiteManager
-from jade.inventory.managers import CurrentMultiSiteManager, AccountManager
+from jade.inventory.managers import *
 
 """
 
@@ -92,24 +92,6 @@ def increment_string_number(number, default='1001', zfill=True):
         number="".join(number)
         return number
     except: return default
-class ItemManager(models.Manager):
-    def next_bar_code(self):
-        try:
-            number=super(ItemManager, self).get_query_set().all().order_by('-bar_code')[0].bar_code
-            number=increment_string_number(number)
-            while Item.objects.filter(bar_code=number).count()>0:
-                number=increment_string_number(number)
-            return number
-        except: return '1'
-    def find(self, q):
-        query=super(ItemManager, self).get_query_set()
-        for key in q.split():
-            query=query.filter(Q(name__icontains=key) | Q(bar_code__icontains=key)|Q(description__icontains=key))
-        return query
-    def fetch(self, q):
-        return super(ItemManager, self).get_query_set().get(Q(name=q) | Q(bar_code=q))
-    def low_stock(self):
-        return list(Item.objects.raw("select id from (select inventory_item.*, sum(quantity) total from inventory_item left join inventory_entry on inventory_item.id=inventory_entry.item_id where (inventory_entry.delivered=True and account_id=%i) or (inventory_entry.id is null) group by inventory_item.id) asd where (total<minimum) or (total is null and minimum>0);" % INVENTORY_ACCOUNT.pk))
 class Item(models.Model):
     """
     """
@@ -213,11 +195,6 @@ class Price(models.Model):
         
     def __unicode__(self):
         return self.item.name + " para " + self.group.name
-
-class AccountManager(models.Manager):
-    def next_number(self):
-        number=super(AccountManager, self).get_query_set().all().order_by('-number')[0].number
-        return increment_string_number(number)
 
 class Account(models.Model):
     ACCOUNT_TYPES=(
@@ -466,26 +443,6 @@ class TaxGroup(models.Model):
     def __unicode__(self):
         return self.name
 
-class ClientManager(models.Manager):
-    def default(self):
-        return super(ClientManager, self).get_query_set().get(name=settings.DEFAULT_CLIENT_NAME)
-    def next_number(self):
-        number=super(ClientManager, self).get_query_set().filter(tipo="Client").order_by('-number')[0].number
-        return increment_string_number(number)
-    def get_or_create_by_name(self, name):
-        try:
-            return super(ClientManager, self).get_query_set().get(name=name)
-        except:
-            if name and name != '':
-                if settings.AUTOCREATE_CLIENTS:
-                    price_group=PriceGroup.objects.get(name=settings.DEFAULT_PRICE_GROUP_NAME)
-                    tax_group=TaxGroup.objects.get(name=settings.DEFAULT_TAX_GROUP_NAME)
-                    number=Client.objects.next_number()
-                    return super(ClientManager, self).create(name=name,price_group=price_group,tax_group=tax_group, number=number)
-            else:
-                return super(ClientManager, self).get_query_set().get(name=settings.DEFAULT_CLIENT_NAME)
-    def get_query_set(self):
-        return super(ClientManager, self).get_query_set().filter(tipo="Client")
 class Client(Account):
     def save(self, *args, **kwargs):
         self.tipo="Client"
@@ -500,25 +457,7 @@ class Client(Account):
         )
 post_save.connect(add_contact, sender=Client, dispatch_uid="jade.inventory.models")
 post_save.connect(add_contact, sender=Account, dispatch_uid="jade.inventory.models")
-class VendorManager(models.Manager):
-    def default(self):
-        return super(VendorManager, self).get_query_set().get(name=settings.DEFAULT_VENDOR_NAME)
-    def get_query_set(self):
-        return super(VendorManager, self).get_query_set().filter(tipo="Vendor")
-    def next_number(self):
-        number=super(VendorManager, self).get_query_set().filter(tipo="Vendor").order_by('-number')[0].number
-        return increment_string_number(number)
-    def get_or_create_by_name(self, name):    
-        try:
-            return super(VendorManager, self).get_query_set().get(name=name)
-        except:
-            if name and name != '':
-                if settings.AUTOCREATE_VENDORS:
-                    price_group=PriceGroup.objects.get(name=settings.DEFAULT_PRICE_GROUP_NAME)
-                    tax_group=TaxGroup.objects.get(name=settings.DEFAULT_TAX_GROUP_NAME)
-                    return super(VendorManager, self).create(name=name,price_group=price_group,tax_group=tax_group)
-            else:
-                return super(VendorManager, self).get_query_set().get(name=settings.DEFAULT_VENDOR_NAME)
+
 class Vendor(Account):
     def save(self, *args, **kwargs):
         self.tipo="Vendor"
@@ -665,13 +604,6 @@ TRANSACTION_TYPES=(
         ('Process', 'Process'),
         ('Job', 'Job'),
         )
-class TransactionManager(CurrentMultiSiteManager):
-    def unbalanced(self):
-        # TODO: Find a way to make a sql query to return all unbalanced transactions
-        """
-        select * from (select inventory_transaction.id, sum(value) as total from inventory_transaction left join inventory_entry on transaction_id=inventory_transaction.id group by transaction_id) as zoom where total !=0;
-        """
-        return []
 
 class Transaction(models.Model):
     _date = models.DateTimeField(default=datetime.now())
@@ -776,9 +708,6 @@ class Transaction(models.Model):
             self.garantee.save()
     garantee_months = property(_get_garantee_months, _set_garantee_months)
 
-class EntryManager(models.Manager):
-    def get_query_set(self):
-        return super(EntryManager, self).get_query_set().filter(site=Site.objects.get_current())
 class Entry(models.Model):
     """
     """
@@ -836,33 +765,10 @@ class ExtraValue(models.Model):
     value = models.DecimalField(max_digits=8, decimal_places=2, null=True, blank=True)
     transaction = models.ForeignKey(Transaction)
 
-class BaseManager(models.Manager):
-    def __init__(self, tipo):
-        super(BaseManager, self).__init__()
-        self.tipo=tipo
-    def get_query_set(self):
-        return super(BaseManager, self).get_query_set().filter(tipo=self.tipo)
-    def next_doc_number(self):
-        try: 
-            number = super(BaseManager, self).get_query_set().filter(tipo=self.tipo).order_by('-pk')[0].doc_number
-            number=re.split("(\d*)", number)
-            if number[-1]=='':
-                number[-2]=("%%0%id" % len(number[-2])) % (int(number[-2])+1)
-            return "".join(number)
-        except: return "1001"    
-
  ######################################################################################
  # Sales
  ######################################################################################
-class SaleManager(BaseManager):
-    def next_doc_number(self):
-        try: 
-            number = super(BaseManager, self).get_query_set().filter(tipo=self.tipo).order_by('-pk')[0].doc_number
-            number=re.split("(\d*)", number)
-            if number[-1]=='':
-                number[-2]=("%%0%id" % len(number[-2])) % (int(number[-2])+1)
-            return "".join(number)
-        except: return "1001"    
+
 class Sale(Transaction):
     class Meta:
         proxy = True
@@ -1413,13 +1319,10 @@ class SaleReturn(Sale):
 
 post_save.connect(add_sale_entries, sender=SaleReturn, dispatch_uid="jade.inventory.models")
         
-class PurchaseReturnManager(models.Manager):
-  def get_query_set(self):
-    return super(PurchaseReturnManager, self).get_query_set().filter(tipo="PurchaseReturn")
 class PurchaseReturn(Purchase):
     class Meta:
         proxy = True
-    objects = PurchaseReturnManager()
+    objects = BaseManager('PurchaseReturn')
     def __init__(self, *args, **kwargs):
         super(PurchaseReturn, self).__init__(*args, **kwargs)
         self.template='inventory/purchase_return.html'
@@ -1715,17 +1618,51 @@ class CountDetail(models.Model):
     count = models.DecimalField(max_digits=8, decimal_places=2, null=True, blank=True)
     unit_cost = models.DecimalField(max_digits=8, decimal_places=2, default=Decimal('0.00'))
     transaction = models.OneToOneField(Transaction)
-
+class CountManager(BaseManager):
+    def __init__(self):
+        super(CountManager,self).__init__('Count')
+    def post_as_sale(self, pk):
+        sale=None
+        print "looking for count"
+        count=self.get(pk=pk)
+        print "count = " + str(count)
+        print "type(count) = " + str(type(count))
+        if (count.count or 0) - count.item.stock + count.quantity<0:
+            quantity=((count.count or 0) - count.item.stock + count.quantity)*-1
+            if quantity==0: price = count.item.price(DEFAULT_CLIENT)
+            else: price = count.item.price(DEFAULT_CLIENT) * quantity
+            if DEFAULT_CLIENT.tax_group.price_includes_tax: price=price/(DEFAULT_CLIENT.tax_group.value+1)
+            tax=price*DEFAULT_CLIENT.tax_group.value
+            
+            sale=Sale(pk=count.pk,
+            doc_number=count.doc_number,
+            client=DEFAULT_CLIENT, 
+            quantity=quantity,
+            item=count.item,
+            cost=count.unit_cost * quantity,
+            price=price,
+            tax=tax)
+            count.delete()
+            sale.save()
+            try:
+                if not sale.errors: sale.errors={}
+            except:
+                sale.errors={}
+            return sale
+        else:
+            count.errors={'Quantity':[u'Only counts with quantities lower than current stock levels can be converted into sales.',]}
+            return count
 class Count(Transaction):
     class Meta:
         proxy = True
         permissions = (
             ("view_count", "Can view counts"),
             ("post_count", "Can post counts"),
+            ("post_count_sale", "Can post counts as sales"),
         )
     def print_url(self):
         return '/inventory/count/%s/sheet.pdf'% self.doc_number
-    objects = BaseManager('Count')
+    objects = CountManager()
     def __init__(self, *args, **kwargs):
         self.template='inventory/count.html'
     #        print "kwargs=" + str(kwargs)
@@ -1875,12 +1812,26 @@ class Count(Transaction):
         if not self.item: 
             self.errors={'Item':[u'cannot be empty.',]}
             return False
-        # NOTE: This could be done faster in SQL
-        self.quantity = self.count - Item.objects.get(pk=self.item.pk).stock + self.quantity
+        self.quantity = self.count - self.item.stock + self.quantity
         self.value = self.unit_cost * self.quantity
         self.save()
         self.errors={}
         return True
+        
+    def post_as_sale(self):
+        self.errors={}
+        if not self.item: 
+            self.errors={'Item':[u'cannot be empty.',]}
+            return False
+        s=Sale(doc_number=self.doc_number,
+            client=DEFAULT_CLIENT, 
+            quantity=self.count - Item.objects.get(pk=self.item.pk).stock + self.quantity,
+            item=self.item,
+            cost=self.unit_cost * self.quantity,
+            )
+        s.save()
+        if not self.errors: return s
+        else: return None
 def add_count_details(sender, **kwargs):
     if kwargs['created']:
         l=kwargs['instance']

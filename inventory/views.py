@@ -497,9 +497,30 @@ def delete_count(request, object_id):
 def post_count(request, object_id):
     count = get_object_or_404(Count, pk=object_id)
     success=count.post()
-    if success: info_list=['The count has been posted successfully.',]
+    if success: info_list=[_('The count has been posted successfully.'),]
     else: info_list=[]
     return _r2r(request,'inventory/results.html', {'objects':[count],'prefix':'count','line_template':"inventory/transaction.html", 'error_list':count.errors, 'info_list':info_list})
+@login_required
+@permission_required('inventory.post_count_sale', login_url="/blocked/")
+def post_count_as_sale(request, object_id):
+    result=Count.objects.post_as_sale(object_id)
+    print "type(result) = " + str(type(result))
+    print "result = " + str(result)
+    if not result.errors: 
+        info_list=[_('The count has been posted as a sale successfully.'),]
+        print "passed"
+        return _r2r(request,'inventory/results.html', {
+            'objects':[result],
+            'prefix':'sale',
+            'line_template':"inventory/transaction.html",
+            'error_list':{}, 
+            'info_list':info_list})
+    else: 
+        print "failing"
+        info_list=[]
+        return _r2r(request,'inventory/results.html', {'objects':[result],'prefix':'count','line_template':"inventory/transaction.html", 'error_list':result.errors, 'info_list':info_list})
+    
+
 ######################################################################################
 # Accounts Views
 ######################################################################################

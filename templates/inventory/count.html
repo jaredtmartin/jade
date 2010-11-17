@@ -28,5 +28,8 @@
         <a class="show" id="id_transaction-{{object.pk}}-deliver" title="{% trans 'Mark as Delivered' %}" href="#" onclick="markTransaction('/inventory/transaction/{{object.pk}}/deliver/'); return false;"><img src="{{MEDIA_URL}}/img/undelivered.png"/></a>
     {% endif %}
     <a class="show" id="id_transaction-{{object.pk}}-post" title="{% trans 'Post Count' %}" href="#" onclick="postCount({{object.pk}}); return false;"><img src="{{MEDIA_URL}}/img/post.png"/></a>
+    {% if perms.inventory.post_count_sale %}
+        <a class="show" id="id_transaction-{{object.pk}}-post_count_sale" title="{% trans 'Post Count as Sale' %}" href="#" onclick="getTransaction({{object.pk}},'/inventory/count/{{object.pk}}/post-as-sale/'); return false;"><img src="{{MEDIA_URL}}/img/post_count_sale.png"/></a>
+    {% endif %}
 {% endblock %}
 

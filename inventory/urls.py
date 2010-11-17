@@ -85,6 +85,7 @@ urlpatterns = patterns('',
     (r'^count/new/$', 'jade.inventory.views.new_count'),
     (r'^count/(?P<object_id>\d+)/delete/$', 'jade.inventory.views.delete_count'),
     (r'^count/(?P<object_id>\d+)/post/$', 'jade.inventory.views.post_count'),
+    (r'^count/(?P<object_id>\d+)/post-as-sale/$', 'jade.inventory.views.post_count_as_sale'),
     (r'^count/(?P<doc_number>\w+)/sheet.pdf$', 'jade.inventory.views.count_sheet'),
     
     #Labels
