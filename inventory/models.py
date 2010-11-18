@@ -100,6 +100,7 @@ class Item(models.Model):
     image=ImageWithThumbsField(_('image'), upload_to='uploaded_images', sizes=((75,75),(150,150)), null=True, blank=True)
     minimum = models.DecimalField(_('minimum'), max_digits=8, decimal_places=2, default=Decimal('0.00'), blank=True)
     maximum = models.DecimalField(_('maximum'), max_digits=8, decimal_places=2, default=Decimal('0.00'), blank=True)
+    default_cost = models.DecimalField(_('default_cost'), max_digits=8, decimal_places=2, default=Decimal('0.00'), blank=True)
     location = models.CharField(_('location'), max_length=32, blank=True, default='')
     description = models.CharField(_('description'), max_length=1024, blank=True, default="")
     unit = models.ForeignKey(Unit, default=DEFAULT_UNIT, blank=True)
@@ -147,7 +148,7 @@ class Item(models.Model):
         # Returns the cost of the item NOT including the cost of any linked items
         # this should be used as the cost on a sale
         stock=abs(self.stock)
-        if not stock or stock==0: stock=1
+        if not stock or stock==0: return self.default_cost
         return self.total_cost/stock
     individual_cost=property(_get_individual_cost)
     
