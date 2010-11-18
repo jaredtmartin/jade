@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2010-11-17 12:14-0600\n"
+"POT-Creation-Date: 2010-11-18 13:44-0600\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -16,56 +16,57 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 
-#: inventory/forms.py:400 templates/inventory/account.html:28
+#: inventory/forms.py:439 templates/inventory/account.html:28
 msgid "Address"
 msgstr "Dirección"
 
-#: inventory/forms.py:401 templates/inventory/account.html:29
+#: inventory/forms.py:440 templates/inventory/account.html:29
 msgid "State"
 msgstr "Estado/Provincia"
 
-#: inventory/forms.py:402 templates/inventory/account.html:30
+#: inventory/forms.py:441 templates/inventory/account.html:30
 msgid "Country"
 msgstr "Pais"
 
-#: inventory/forms.py:403
+#: inventory/forms.py:442
 msgid "Home Phone"
 msgstr "Fijo"
 
-#: inventory/forms.py:404
+#: inventory/forms.py:443
 msgid "Cell Phone"
 msgstr "Celular"
 
-#: inventory/forms.py:405
+#: inventory/forms.py:444
 msgid "Work Phone"
 msgstr "Oficina"
 
-#: inventory/forms.py:406 templates/inventory/account.html:22
+#: inventory/forms.py:445 templates/inventory/account.html:22
 msgid "Fax"
 msgstr "Fax"
 
-#: inventory/forms.py:407
+#: inventory/forms.py:446
 msgid "Tax ID Number"
 msgstr "NIT"
 
-#: inventory/forms.py:408 templates/inventory/item_list.html:17
+#: inventory/forms.py:447 templates/inventory/item_list.html:18
+#: templates/inventory/service_list.html:17
 msgid "Description"
 msgstr "Descripción"
 
-#: inventory/forms.py:409 templates/inventory/account.html:23
+#: inventory/forms.py:448 templates/inventory/account.html:23
 msgid "Email"
 msgstr "Correo E."
 
-#: inventory/forms.py:410 templates/inventory/account.html:13
+#: inventory/forms.py:449 templates/inventory/account.html:13
 msgid "Registration"
 msgstr "Registro"
 
-#: inventory/forms.py:411 templates/base.html:24
+#: inventory/forms.py:450 templates/base.html:24
 #: templates/inventory/account.html:35
 msgid "User"
 msgstr "Usuario"
 
-#: inventory/forms.py:412
+#: inventory/forms.py:451
 msgid "Days of Credit"
 msgstr "Dias de credito"
 
@@ -77,7 +78,7 @@ msgstr "reporte"
 msgid "body"
 msgstr "cuerpo"
 
-#: inventory/models.py:52 inventory/models.py:100
+#: inventory/models.py:52 inventory/models.py:124
 msgid "image"
 msgstr "imagen"
 
@@ -97,125 +98,134 @@ msgstr "Producto"
 msgid "Service"
 msgstr "Servicio"
 
-#: inventory/models.py:98 inventory/models.py:161 inventory/models.py:209
+#: inventory/models.py:122 inventory/models.py:240 inventory/models.py:288
 msgid "name"
 msgstr "nombre"
 
-#: inventory/models.py:99
+#: inventory/models.py:123
 msgid "bar code"
 msgstr "código de barra"
 
-#: inventory/models.py:101
+#: inventory/models.py:125
 msgid "minimum"
 msgstr "minimo"
 
-#: inventory/models.py:102
+#: inventory/models.py:126
 msgid "maximum"
 msgstr "maximo"
 
-#: inventory/models.py:103
+#: inventory/models.py:127
+msgid "default_cost"
+msgstr "costo predeterminado"
+
+#: inventory/models.py:128
 msgid "location"
 msgstr "locación"
 
-#: inventory/models.py:104
+#: inventory/models.py:129
 msgid "description"
 msgstr "descripción"
 
-#: inventory/models.py:107
+#: inventory/models.py:131
 msgid "automatic bar code"
 msgstr "código de barra automático"
 
-#: inventory/models.py:108 inventory/models.py:212
+#: inventory/models.py:132 inventory/models.py:291
 msgid "type"
 msgstr "tipo"
 
-#: inventory/models.py:177
-msgid "fixed discount"
-msgstr "descuento fijo"
+#: inventory/models.py:228
+msgid "quantity"
+msgstr "qantidad"
 
-#: inventory/models.py:178
-msgid "relative discount"
-msgstr "descuento relativo"
-
-#: inventory/models.py:179
+#: inventory/models.py:229 inventory/models.py:258
 msgid "fixed"
 msgstr "fijo"
 
-#: inventory/models.py:180
+#: inventory/models.py:230 inventory/models.py:259
 msgid "relative"
 msgstr "relativo"
 
-#: inventory/models.py:184 templates/inventory/item.html:48
-#: templates/inventory/item_list.html:17
+#: inventory/models.py:256
+msgid "fixed discount"
+msgstr "descuento fijo"
+
+#: inventory/models.py:257
+msgid "relative discount"
+msgstr "descuento relativo"
+
+#: inventory/models.py:263 templates/inventory/item.html:47
+#: templates/inventory/item.html.py:72 templates/inventory/item_list.html:18
+#: templates/inventory/service_list.html:17
 #: templates/inventory/transactions.html:95
 msgid "Price"
 msgstr "Precio"
 
-#: inventory/models.py:201 templates/inventory/oldsales.html:16
+#: inventory/models.py:280 templates/inventory/oldsales.html:16
 #: templates/inventory/sales.html:16
 msgid "Client"
 msgstr "Cliente"
 
-#: inventory/models.py:202 templates/inventory/purchases.html:13
+#: inventory/models.py:281 templates/inventory/purchases.html:13
 msgid "Vendor"
 msgstr "Proveedor"
 
-#: inventory/models.py:203 templates/inventory/account_show.html:32
+#: inventory/models.py:282 templates/inventory/account_show.html:32
 #: templates/inventory/entries.html:4 templates/inventory/entry_list.html:6
 #: templates/inventory/transaction_entry_list.html:5
 #: templates/inventory/transactions.html:86
 msgid "Account"
 msgstr "Cuenta"
 
-#: inventory/models.py:206
+#: inventory/models.py:285
 msgid "Debito"
 msgstr "Debito"
 
-#: inventory/models.py:207
+#: inventory/models.py:286
 msgid "Credito"
 msgstr "Credito"
 
-#: inventory/models.py:210
+#: inventory/models.py:289
 msgid "number"
 msgstr "Numero"
 
-#: inventory/models.py:211
+#: inventory/models.py:290
 msgid "multiplier"
 msgstr "multiplicado"
 
-#: inventory/views.py:339 inventory/views.py:352 inventory/views.py:376
-#: inventory/views.py:399 inventory/views.py:653 inventory/views.py:668
-#: inventory/views.py:681 inventory/views.py:1181 inventory/views.py:1424
+#: inventory/views.py:342 inventory/views.py:355 inventory/views.py:379
+#: inventory/views.py:402 inventory/views.py:656 inventory/views.py:671
+#: inventory/views.py:691 inventory/views.py:1214 inventory/views.py:1427
 #: production/views.py:35 production/views.py:50
 #, python-format
 msgid "Unable to find a report template with the name \"%s\""
 msgstr "No se pudo encontrar una plantilla de reporte con el nombre \"%s\""
 
-#: inventory/views.py:349 inventory/views.py:372 inventory/views.py:396
+#: inventory/views.py:352 inventory/views.py:375 inventory/views.py:399
 msgid "Unable to find sales with the specified document number."
 msgstr "No se pudo encontrar ventas con el numero de documento especificado"
 
-#: inventory/views.py:425
+#: inventory/views.py:428
 msgid "Unable to find counts or purchases with the specified document number."
 msgstr "No se pudo encontrar ventas con el numero de documento especificado"
 
-#: inventory/views.py:500
+#: inventory/views.py:503
 msgid "The count has been posted successfully."
 msgstr "La cuenta ha sido procesado exitosamente."
 
-#: inventory/views.py:510
+#: inventory/views.py:513
 msgid "The count has been posted as a sale successfully."
 msgstr "La cuenta ha sido convertido en venta exitosamente."
 
-#: inventory/views.py:1148
+#: inventory/views.py:1181
 msgid "Cannot be marked delivered or active"
 msgstr "No se pudo marcar entregado o activo"
 
-#: inventory/views.py:1151
+#: inventory/views.py:1184
 msgid "You do not have sufficient rights to start production"
 msgstr "No tiene los derechos suficientes para iniciar la producción"
 
-#: inventory/views.py:1153
+#: inventory/views.py:1186
 msgid "You do not have sufficient rights to finish production"
 msgstr "No tiene los derechos suficientes para terminar la producción"
 
@@ -481,7 +491,8 @@ msgstr "No se pudo encontrar un orden con el numero de documento especificado"
 
 #: production/views.py:47
 msgid "Unable to find process with the specified document number."
-msgstr "No se pudo encontrar un proceso con el numero de documento especificado"
+msgstr ""
+"No se pudo encontrar un proceso con el numero de documento especificado"
 
 #: production/views.py:65
 msgid "The process has been created."
@@ -562,7 +573,8 @@ msgid "to log in again."
 msgstr "para engresarse de nuevo."
 
 #: templates/inventory/account.html:6 templates/inventory/account_list.html:5
-#: templates/inventory/item_list.html:17
+#: templates/inventory/item.html:8 templates/inventory/item_list.html:18
+#: templates/inventory/service_list.html:17
 msgid "Name"
 msgstr "Nombre"
 
@@ -607,9 +619,8 @@ msgid "Balance"
 msgstr "Saldo"
 
 #: templates/inventory/account.html:40
-#: templates/inventory/account_show.html:70
-#: templates/inventory/garantee_offer.html:6 templates/inventory/item.html:33
-#: templates/inventory/item_form.html:6 templates/inventory/price.html:15
+#: templates/inventory/account_show.html:70 templates/inventory/item.html:41
+#: templates/inventory/item_form.html:6
 msgid "Save"
 msgstr "Guardar"
 
@@ -635,9 +646,9 @@ msgstr "Tipo"
 #: templates/inventory/account_show.html:27
 #: templates/inventory/all_accounts_list.html:8
 #: templates/inventory/client_list.html:8 templates/inventory/counts.html:6
-#: templates/inventory/item.html:55 templates/inventory/item_list.html:6
-#: templates/inventory/item_show.html:7 templates/inventory/low_stock.html:10
-#: templates/inventory/purchases.html:5 templates/inventory/sales.html:5
+#: templates/inventory/item_list.html:6 templates/inventory/item_show.html:7
+#: templates/inventory/low_stock.html:10 templates/inventory/purchases.html:5
+#: templates/inventory/sales.html:5 templates/inventory/service_list.html:6
 #: templates/inventory/show.html:11 templates/inventory/transactions.html:10
 #: templates/inventory/transfers.html:5 templates/inventory/vendor_list.html:8
 msgid "New"
@@ -646,7 +657,6 @@ msgstr "Nuevo"
 #: templates/inventory/account_show.html:14
 #: templates/inventory/account_show.html:22
 #: templates/inventory/account_show.html:28
-#: templates/inventory/garantee_offer.html:7
 #: templates/inventory/item_show.html:10
 msgid "Delete"
 msgstr "Borrar"
@@ -679,8 +689,9 @@ msgstr "No. de Documento"
 
 #: templates/inventory/account_show.html:32 templates/inventory/counts.html:24
 #: templates/inventory/entries.html:4 templates/inventory/entry_list.html:6
-#: templates/inventory/item.html:38 templates/inventory/oldsales.html:19
-#: templates/inventory/purchases.html:14 templates/inventory/sales.html:17
+#: templates/inventory/item.html:47 templates/inventory/item.html.py:60
+#: templates/inventory/oldsales.html:19 templates/inventory/purchases.html:14
+#: templates/inventory/sales.html:17
 #: templates/inventory/transaction_entry_list.html:5
 #: templates/inventory/transactions.html:87
 #: templates/inventory/transfers.html:14
@@ -689,7 +700,7 @@ msgid "Item"
 msgstr "Producto"
 
 #: templates/inventory/account_show.html:32 templates/inventory/entries.html:4
-#: templates/inventory/entry_list.html:6
+#: templates/inventory/entry_list.html:6 templates/inventory/item.html:60
 #: templates/inventory/transaction_entry_list.html:5
 #: templates/inventory/transactions.html:88
 msgid "Quantity"
@@ -808,8 +819,9 @@ msgid "Delete Sale"
 msgstr "Borrar Ventas"
 
 #: templates/inventory/bare_transaction.html:21
-#: templates/inventory/counts.html:9 templates/inventory/item_list.html:9
+#: templates/inventory/counts.html:9 templates/inventory/item_list.html:10
 #: templates/inventory/low_stock.html:12
+#: templates/inventory/service_list.html:9
 msgid "Print"
 msgstr "Imprimir"
 
@@ -1019,46 +1031,83 @@ msgstr "Cantidad de producto"
 msgid "Serial number of item (if applicable)"
 msgstr "Numero de serie de producto (cuando aplicable)"
 
-#: templates/inventory/item.html:18 templates/inventory/item_list.html:17
+#: templates/inventory/item.html:10 templates/inventory/item_list.html:18
+msgid "Location"
+msgstr "Locación"
+
+#: templates/inventory/item.html:11
+msgid "Default Cost"
+msgstr "Costo Predeterminado"
+
+#: templates/inventory/item.html:15 templates/inventory/item.html.py:25
+#: templates/inventory/item.html:47 templates/inventory/item_list.html:18
+#: templates/inventory/service_list.html:17
+msgid "Unit"
+msgstr "Unidad"
+
+#: templates/inventory/item.html:16
+msgid "Bar Code"
+msgstr "Código de Barra"
+
+#: templates/inventory/item.html:21
+msgid "Minimum"
+msgstr "Minimo"
+
+#: templates/inventory/item.html:22
+msgid "Maximum"
+msgstr "Maximo"
+
+#: templates/inventory/item.html:23 templates/inventory/item_list.html:18
 msgid "Stock"
 msgstr "Inventario"
 
-#: templates/inventory/item.html:28
+#: templates/inventory/item.html:36
 msgid "Upload"
 msgstr "Guardar"
 
-#: templates/inventory/item.html:35 templates/inventory/item_list.html:7
+#: templates/inventory/item.html:44 templates/inventory/item_list.html:7
 #: templates/inventory/low_stock.html:11
+#: templates/inventory/service_list.html:7
 msgid "Prices"
 msgstr "Precios"
 
-#: templates/inventory/item.html:38
+#: templates/inventory/item.html:47
 msgid "Group"
 msgstr "Grupo"
 
-#: templates/inventory/item.html:38 templates/inventory/item_list.html:17
+#: templates/inventory/item.html:47 templates/inventory/item.html.py:60
+#: templates/inventory/item_list.html:18
 #: templates/inventory/transactions.html:74
 #: templates/inventory/transactions.html:91
 msgid "Cost"
 msgstr "Costo"
 
-#: templates/inventory/item.html:38 templates/inventory/item_list.html:17
-msgid "Unit"
-msgstr "Unidad"
-
-#: templates/inventory/item.html:38
+#: templates/inventory/item.html:47
 msgid "Relative"
 msgstr "Relativo"
 
-#: templates/inventory/item.html:38
+#: templates/inventory/item.html:47
 msgid "Fixed"
 msgstr "Fijo"
 
-#: templates/inventory/item.html:38
+#: templates/inventory/item.html:47
 msgid "Total"
 msgstr "Total"
 
-#: templates/inventory/item.html:48
+#: templates/inventory/item.html:47 templates/inventory/item.html.py:60
+#: templates/inventory/item.html:72 templates/inventory/transactions.html:98
+msgid "Actions"
+msgstr "Acciones"
+
+#: templates/inventory/item.html:57
+msgid "Linked Items"
+msgstr "Enlaces a otros Productos"
+
+#: templates/inventory/item.html:67 templates/inventory/item.html.py:79
+msgid "Add"
+msgstr "Añadir"
+
+#: templates/inventory/item.html:72
 msgid "Months"
 msgstr "Meses"
 
@@ -1067,43 +1116,54 @@ msgid "List"
 msgstr "Lista"
 
 #: templates/inventory/item_list.html:8
+msgid "Services"
+msgstr "Servicios"
+
+#: templates/inventory/item_list.html:9
+#: templates/inventory/service_list.html:8
 msgid "Low Stock"
 msgstr "Baja Inv."
 
-#: templates/inventory/item_list.html:12
+#: templates/inventory/item_list.html:13
 msgid "List of Items"
 msgstr "Lista de Productos"
 
-#: templates/inventory/item_list.html:15 templates/inventory/item_show.html:33
+#: templates/inventory/item_list.html:16 templates/inventory/item_show.html:41
+#: templates/inventory/service_list.html:15
 msgid "Item Name or Bar Code"
 msgstr "Nombre o Código"
 
-#: templates/inventory/item_list.html:17
+#: templates/inventory/item_list.html:18
+#: templates/inventory/service_list.html:17
 msgid "Image"
 msgstr "Imagen"
 
-#: templates/inventory/item_list.html:17
+#: templates/inventory/item_list.html:18
 msgid "Min"
 msgstr "Min"
 
-#: templates/inventory/item_list.html:17
+#: templates/inventory/item_list.html:18
 msgid "Max"
 msgstr "Max"
 
-#: templates/inventory/item_list.html:17
-msgid "Location"
-msgstr "Locación"
-
-#: templates/inventory/item_show.html:20 templates/inventory/item_show.html:28
+#: templates/inventory/item_show.html:21 templates/inventory/item_show.html:34
 #: templates/inventory/price_list.html:4
 msgid "New Item"
 msgstr "Nuevo Producto"
 
-#: templates/inventory/item_show.html:161
-msgid "Details"
-msgstr "Detalles"
+#: templates/inventory/item_show.html:23 templates/inventory/item_show.html:36
+msgid "New Service"
+msgstr "Nuevo Servicio"
 
-#: templates/inventory/item_show.html:166
+#: templates/inventory/item_show.html:218
+msgid "Item Details"
+msgstr "Detalles de Producto"
+
+#: templates/inventory/item_show.html:220
+msgid "Service Details"
+msgstr "Detalles de Servicio"
+
+#: templates/inventory/item_show.html:227
 msgid "Entries"
 msgstr "Entradas"
 
@@ -1213,6 +1273,10 @@ msgstr "Corte"
 msgid "Create sale"
 msgstr "Crear Venta"
 
+#: templates/inventory/service_list.html:12
+msgid "List of Services"
+msgstr "Lista de Servicios"
+
 #: templates/inventory/show.html:21
 msgid "Recent Transactions"
 msgstr "Transacciones Recientes"
@@ -1290,10 +1354,6 @@ msgstr "Descuento"
 #: templates/inventory/transactions.html:71
 msgid "Revenue"
 msgstr "Ingreso"
-
-#: templates/inventory/transactions.html:98
-msgid "Actions"
-msgstr "Acciones"
 
 #: templates/inventory/transfer.html:28
 msgid "Return transfer"
@@ -1514,14 +1574,8 @@ msgstr "Producción"
 #~ msgid "Unable to find a report template with the name\"%s\""
 #~ msgstr "No se pudo encontrar una plantilla de reporte con el nombre \"%s\""
 
-#~ msgid "Bar Code"
-#~ msgstr "Código de Barra"
-
 #~ msgid "for"
 #~ msgstr "para"
-
-#~ msgid "default cost"
-#~ msgstr "costo predeterminado"
 
 #~ msgid "Can view costs"
 #~ msgstr "Puede ver costos"
