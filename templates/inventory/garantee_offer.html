@@ -3,7 +3,6 @@
 <tr id="garanteeoffer-{{ object.pk }}" class="garanteeoffer">
     <td><input type="text" id="id_garanteeoffer-{{ object.pk }}-months" value="{{ object.months }}" name="garanteeoffer-{{ object.pk }}-months"></td>
     <td><input type="text" id="id_garanteeoffer-{{ object.pk }}-price" value="{{ object.price }}" name="garanteeoffer-{{ object.pk }}-price"></td>
-    <td><a href="#" onclick="save_garanteeoffer({{object.id}}); return false;">{% trans 'Save' %}</a></td>
-    <td><a href="#" onclick="delete_garanteeoffer({{object.id}}); return false;">{% trans 'Delete' %}</a></td>
+    <td><a href="#" onclick="save_garanteeoffer({{object.id}}); return false;"><img src="/media/img/save.png"></a><a href="#" onclick="delete_garanteeoffer({{object.id}}); return false;"><img src="/media/img/delete.png"></a></td>
 </tr>
 

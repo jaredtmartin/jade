@@ -1,0 +1,10 @@
+{% load i18n %}
+{% load tags %}
+<tr id="linkeditem-{{ object.pk }}" class="linkeditem">
+    <td>{% link object.item %}</td>
+    <td><input type="text" id="id_linkeditem-{{ object.pk }}-quantity" value="{{ object.quantity|floatformat:-2 }}" name="linkeditem-{{ object.pk }}-quantity"></td>
+    {% if perms.inventory.view_cost %}
+        <td>{{ object.item.cost|floatformat:2 }}</td>
+    {% endif %}
+    <td><a href="#" onclick="save_linkeditem({{object.pk}}); return false;"><img src="/media/img/save.png"></a><a href="#" onclick="delete_linkeditem({{object.pk}}); return false;"><img src="/media/img/delete.png"></a></td>
+</tr>

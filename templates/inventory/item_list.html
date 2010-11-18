@@ -5,6 +5,7 @@
 {% block actions %}
         {% if perms.inventory.add_item %}<div class="actiontab" ><a href="/inventory/item/" class="action">{% trans 'New' %}</a></div>{% endif %}
         {% if perms.inventory.view_price %}<div class="actiontab" ><a href="/inventory/items/prices.pdf?q={{q}}" class="action">{% trans 'Prices' %}</a></div>{% endif %}
+        {% if perms.inventory.view_service %}<div class="actiontab" ><a href="/inventory/services/" class="action">{% trans 'Services' %}</a></div>{% endif %}
         <div class="actiontab" ><a href="/inventory/items/low_stock/" class="action">{% trans 'Low Stock' %}</a></div>
         <div class="actiontab" ><a href="/inventory/items/inventory.pdf?q={{q}}" class="action">{% trans 'Print' %}</a></div>
 {% endblock%}

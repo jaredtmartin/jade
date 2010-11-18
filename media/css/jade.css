@@ -30,6 +30,7 @@ img.barcode{}
 h1 {font-size:30px;}
 h2 {color:#666666; font-size:14px; margin:0 0 0.2em; padding:0 6px 0 0;}
 table{width:100%;}
+.item-block{margin-top:20px;}
 /*td{-moz-border-radius:4px;color:white; background:#96c0bd; overflow:hidden; margin:1px;}*/
 /*td>a:link,td>a:visited{color:#666666}*/
 /*td>a:hover{color:black}*/

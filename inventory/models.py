@@ -100,10 +100,10 @@ class Item(models.Model):
     image=ImageWithThumbsField(_('image'), upload_to='uploaded_images', sizes=((75,75),(150,150)), null=True, blank=True)
     minimum = models.DecimalField(_('minimum'), max_digits=8, decimal_places=2, default=Decimal('0.00'), blank=True)
     maximum = models.DecimalField(_('maximum'), max_digits=8, decimal_places=2, default=Decimal('0.00'), blank=True)
+    default_cost = models.DecimalField(_('default_cost'), max_digits=8, decimal_places=2, default=Decimal('0.00'), blank=True)
     location = models.CharField(_('location'), max_length=32, blank=True, default='')
     description = models.CharField(_('description'), max_length=1024, blank=True, default="")
     unit = models.ForeignKey(Unit, default=DEFAULT_UNIT, blank=True)
-    #    cost = models.DecimalField(_('cost'), max_digits=8, decimal_places=2, default=Decimal('0.00'), blank=True)
     auto_bar_code = models.BooleanField(_('automatic bar code'), default=False)
     tipo = models.CharField(_('type'), max_length=16, choices=ITEM_TYPES, default='Product')
     objects=ItemManager()
@@ -122,10 +122,10 @@ class Item(models.Model):
     def barcode_url(self):
         return "/%s%s.png" % (settings.BARCODES_FOLDER, self.bar_code)
     def _get_total_cost(self):
-    #        return self.cost*self.stock
         return Entry.objects.filter(item=self, account=INVENTORY_ACCOUNT, active=True).aggregate(total=models.Sum('value'))['total'] or Decimal('0.00')
     total_cost=property(_get_total_cost)
     def price(self, client):
+        # fetches the price for the given client
         if type(client)==PriceGroup: group=client
         elif type(client) in (Account, Client, Vendor):group=client.price_group
         else: group=client.get_profile().price_group
@@ -136,27 +136,78 @@ class Item(models.Model):
             price=Price.objects.create(item=self,group=group, site=Site.objects.get_current())
         return Decimal(str(round(self.cost*price.relative + price.fixed,2)))
     def discount(self, client):
+        # fetches how much of a discount is given for the given client
         price=Price.objects.get(item=self, group=client.price_group)
         return Decimal(str(round(self.cost*price.relative_discount + price.fixed_discount,2)))
     def _get_stock(self):
+        # How much of the item do we have in stock?
         return Entry.objects.filter(item=self, account=INVENTORY_ACCOUNT, delivered=True).aggregate(total=models.Sum('quantity'))['total'] or Decimal('0.00')
     stock=property(_get_stock)
-    def _get_cost(self):
+    
+    def _get_individual_cost(self):
+        # Returns the cost of the item NOT including the cost of any linked items
+        # this should be used as the cost on a sale
         stock=abs(self.stock)
-        if not stock or stock==0: stock=1
+        if not stock or stock==0: return self.default_cost
         return self.total_cost/stock
+    individual_cost=property(_get_individual_cost)
+    
+    def all_linked_items(self):
+        # A list of all of the items received when this one is added
+        # used to make sure we don't get circulating dependancies
+        items=(self,)
+        for link in self.links:
+            items+=link.item.all_linked_items()
+        return items
+        
+    def _get_cost(self):
+        # Returns the cost of the item and any linked items
+        # this should be used in most cases
+        cost=self.individual_cost
+        for link in self.links:
+            cost+=(link.item.cost or 0) * link.quantity 
+        return cost       
     cost=property(_get_cost)
-
-
-def create_prices_for_product(sender, **kwargs):
+    def _get_links(self):
+        # returns all of the LinkedItems for this item
+        return LinkedItem.objects.filter(parent=self)
+    links=property(_get_links)
+    
+class Service(Item):
+    objects=ItemManager('Service')
+    class Meta:
+        proxy = True
+        permissions = (
+            ("view_service", "Can view services"),
+        )
+    def save(self, *args, **kwargs):
+        self.tipo='Service'
+        super(Service, self).save(*args, **kwargs)
+        
+def create_prices_for_item(sender, **kwargs):
     if kwargs['instance'].bar_code != '':
         if subprocess.call('ls %s%s' % (settings.BARCODES_FOLDER,kwargs['instance'].bar_code), shell=True)!=0:
             create_barcode(kwargs['instance'].bar_code, settings.BARCODES_FOLDER)
     if kwargs['created']:
         for group in PriceGroup.objects.all():
             Price.objects.create(item=kwargs['instance'], group=group, site=Site.objects.get_current())
-post_save.connect(create_prices_for_product, sender=Item, dispatch_uid="jade.inventory.models")
+post_save.connect(create_prices_for_item, sender=Item, dispatch_uid="jade.inventory.models")
+post_save.connect(create_prices_for_item, sender=Service, dispatch_uid="jade.inventory.models")
 
+class LinkedItem(models.Model):
+    parent = models.ForeignKey(Item, related_name ='parent_id')
+    child = models.ForeignKey(Item, related_name ='child_id')
+    quantity = models.DecimalField(_('quantity'), max_digits=8, decimal_places=2, default=1)
+    fixed = models.DecimalField(_('fixed'), max_digits=8, decimal_places=2, default=settings.DEFAULT_FIXED_PRICE)
+    relative = models.DecimalField(_('relative'), max_digits=8, decimal_places=2, default=settings.DEFAULT_RELATIVE_PRICE)
+    def _get_item(self):
+        return self.child
+    def _set_item(self, value):
+        self.child=value
+    item=property(_get_item)
+    def _get_tipo(self):
+        return "LinkedItem"
+    tipo=property(_get_tipo)
 class PriceGroup(models.Model):
     name = models.CharField(_('name'), max_length=32)
     def __unicode__(self):
@@ -835,19 +886,18 @@ class Sale(Transaction):
         try: return [self.entry(e).update('delivered',value) for e in ['Inventory','Client']]
         except AttributeError: self._delivered=value
     delivered = property(_get_delivered, _set_delivered)
-    ################ ################ ################  Account   ################ ################ ################
 
+    ################ ################ ################  Account   ################ ################ ################
     def _get_account(self):
         return self.client
     account=property(_get_account)
-    ################ ################ ################  Value   ################ ################ ################
 
+    ################ ################ ################  Value   ################ ################ ################
     def _get_value(self):
         return self.charge
     value=property(_get_value)
 
     ################ ################ ################  Item   ################ ################ ################
-
     def _get_item(self):
         try: return self.entry('Client').item
         except AttributeError: return self._item
@@ -861,13 +911,6 @@ class Sale(Transaction):
         try: return self.entry('Client').quantity
         except AttributeError: return self._quantity
     def _set_quantity(self, value):
-#        recalculate_tax=False
-#        print "changing quantity"
-#        print "self.calculated_tax = " + str(self.calculated_tax)
-#        print "self.unit_tax = " + str(self.unit_tax)
-#        if self.calculated_tax==round(self.unit_tax,2): 
-#            recalculate_tax=True
-#        print "recalculate_tax = " + str(recalculate_tax)
         value=(value or 0)
         try:
             if not self.pk: raise AttributeError('You must save the sale first')
@@ -910,9 +953,13 @@ class Sale(Transaction):
     client = property(_get_client, _set_client)
     ################ ################ ################  Cost  ################ ################ ################
     def _get_cost(self):
+        if self.item:
+            if self.item.tipo=="Service": return 0
         try: return self.entry('Expense').value
         except AttributeError: return self._cost
     def _set_cost(self, value):
+        if self.item:
+            if self.item.tipo=="Service": return None
         value = (value or 0)
         try:
             if not self.pk: raise AttributeError('You must save the sale first')
@@ -1066,7 +1113,7 @@ def add_sale_entries(sender, **kwargs):
         if not l._tax: l._tax=0
         if not l._price: l.price=0
         if not l._discount: l._discount=0
-        if not l._cost: l._cost=0
+        if not l.cost: l.cost=0
         if not l._quantity: l._quantity=0
 
         l.create_related_entry(
@@ -1093,21 +1140,21 @@ def add_sale_entries(sender, **kwargs):
                 value       = l._discount)
         if l.quantity==0: ExtraValue.objects.create(transaction = l, name = 'CalculatedTax', value = l.tax)
         else: ExtraValue.objects.create(transaction = l, name = 'CalculatedTax', value = l.tax/l.quantity)
-        if (l._quantity!=0 or l._cost!=0) and l._delivered:
+        if (l._quantity!=0 or l.cost!=0) and l._delivered:
     #            print "creating inventory entry"
     #            print "l.item = " + str(l.item)
             l.create_related_entry(
                 account     = INVENTORY_ACCOUNT,
                 tipo        = 'Inventory',
-                value       = -l._cost,
+                value       = -l.cost,
                 item        = l._item,
                 quantity    = -l._quantity,
                 serial      = l._serial)
-            if l._cost!=0:
+            if l.cost!=0:
                 l.create_related_entry(
                     account = EXPENSE_ACCOUNT,
                     tipo = 'Expense',
-                    value = l._cost)
+                    value = l.cost)
 
 post_save.connect(add_sale_entries, sender=Sale, dispatch_uid="jade.inventory.models:add_sale_entries")
 
