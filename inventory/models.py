@@ -172,14 +172,35 @@ class Item(models.Model):
         return LinkedItem.objects.filter(parent=self)
     links=property(_get_links)
 
-def create_prices_for_product(sender, **kwargs):
+class Service(Item):
+    objects=BaseManager('Service')
+    class Meta:
+        permissions = (
+            ("view_service", "Can view services"),
+        )
+    def save(self, *args, **kwargs):
+        self.tipo='Service'
+        super(Service, self).save(*args, **kwargs)
+class Product(Item):
+    objects=BaseManager('Product')
+    class Meta:
+        permissions = (
+            ("view_product", "Can view products"),
+        )
+    def save(self, *args, **kwargs):
+        self.tipo='Product'
+        super(Product, self).save(*args, **kwargs)
+        
+def create_prices_for_item(sender, **kwargs):
     if kwargs['instance'].bar_code != '':
         if subprocess.call('ls %s%s' % (settings.BARCODES_FOLDER,kwargs['instance'].bar_code), shell=True)!=0:
             create_barcode(kwargs['instance'].bar_code, settings.BARCODES_FOLDER)
     if kwargs['created']:
         for group in PriceGroup.objects.all():
             Price.objects.create(item=kwargs['instance'], group=group, site=Site.objects.get_current())
-post_save.connect(create_prices_for_product, sender=Item, dispatch_uid="jade.inventory.models")
+post_save.connect(create_prices_for_item, sender=Item, dispatch_uid="jade.inventory.models")
+post_save.connect(create_prices_for_item, sender=Product, dispatch_uid="jade.inventory.models")
+post_save.connect(create_prices_for_item, sender=Service, dispatch_uid="jade.inventory.models")
 
 class LinkedItem(models.Model):
     parent = models.ForeignKey(Item, related_name ='parent_id')
@@ -873,19 +894,18 @@ class Sale(Transaction):
         try: return [self.entry(e).update('delivered',value) for e in ['Inventory','Client']]
         except AttributeError: self._delivered=value
     delivered = property(_get_delivered, _set_delivered)
-    ################ ################ ################  Account   ################ ################ ################
 
+    ################ ################ ################  Account   ################ ################ ################
     def _get_account(self):
         return self.client
     account=property(_get_account)
-    ################ ################ ################  Value   ################ ################ ################
 
+    ################ ################ ################  Value   ################ ################ ################
     def _get_value(self):
         return self.charge
     value=property(_get_value)
 
     ################ ################ ################  Item   ################ ################ ################
-
     def _get_item(self):
         try: return self.entry('Client').item
         except AttributeError: return self._item
@@ -899,13 +919,6 @@ class Sale(Transaction):
         try: return self.entry('Client').quantity
         except AttributeError: return self._quantity
     def _set_quantity(self, value):
-#        recalculate_tax=False
-#        print "changing quantity"
-#        print "self.calculated_tax = " + str(self.calculated_tax)
-#        print "self.unit_tax = " + str(self.unit_tax)
-#        if self.calculated_tax==round(self.unit_tax,2): 
-#            recalculate_tax=True
-#        print "recalculate_tax = " + str(recalculate_tax)
         value=(value or 0)
         try:
             if not self.pk: raise AttributeError('You must save the sale first')
@@ -948,9 +961,13 @@ class Sale(Transaction):
     client = property(_get_client, _set_client)
     ################ ################ ################  Cost  ################ ################ ################
     def _get_cost(self):
+        if self.item:
+            if self.item.tipo=="Service": return 0
         try: return self.entry('Expense').value
         except AttributeError: return self._cost
     def _set_cost(self, value):
+        if self.item:
+            if self.item.tipo=="Service": return None
         value = (value or 0)
         try:
             if not self.pk: raise AttributeError('You must save the sale first')
@@ -1104,7 +1121,7 @@ def add_sale_entries(sender, **kwargs):
         if not l._tax: l._tax=0
         if not l._price: l.price=0
         if not l._discount: l._discount=0
-        if not l._cost: l._cost=0
+        if not l.cost: l.cost=0
         if not l._quantity: l._quantity=0
 
         l.create_related_entry(
@@ -1131,21 +1148,21 @@ def add_sale_entries(sender, **kwargs):
                 value       = l._discount)
         if l.quantity==0: ExtraValue.objects.create(transaction = l, name = 'CalculatedTax', value = l.tax)
         else: ExtraValue.objects.create(transaction = l, name = 'CalculatedTax', value = l.tax/l.quantity)
-        if (l._quantity!=0 or l._cost!=0) and l._delivered:
+        if (l._quantity!=0 or l.cost!=0) and l._delivered:
     #            print "creating inventory entry"
     #            print "l.item = " + str(l.item)
             l.create_related_entry(
                 account     = INVENTORY_ACCOUNT,
                 tipo        = 'Inventory',
-                value       = -l._cost,
+                value       = -l.cost,
                 item        = l._item,
                 quantity    = -l._quantity,
                 serial      = l._serial)
-            if l._cost!=0:
+            if l.cost!=0:
                 l.create_related_entry(
                     account = EXPENSE_ACCOUNT,
                     tipo = 'Expense',
-                    value = l._cost)
+                    value = l.cost)
 
 post_save.connect(add_sale_entries, sender=Sale, dispatch_uid="jade.inventory.models:add_sale_entries")
 

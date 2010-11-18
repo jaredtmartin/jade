@@ -3,14 +3,21 @@
 <tr id="price-{{ object.pk }}" class="price">
     <td>{% link object.item %}</td>
     <td>{{ object.group }}</td>
-    {% if perms.inventory.view_cost %}
-        <td>{{ object.item.cost|floatformat:2 }}</td>
+    {% if object.item.tipo == 'Item' %}
+        {% if perms.inventory.view_cost %}
+            <td>{{ object.item.cost|floatformat:2 }}</td>
+        {% endif %}
     {% endif %}
     <td>{{ object.item.unit }}</td>
-    {% if perms.inventory.view_cost %}
-    <td><input type="text" id="id_price-{{ object.pk }}-relative" value="{{ object.relative|floatformat:2 }}" name="price-{{ object.pk }}-relative"></td>
-    <td><input type="text" id="id_price-{{ object.pk }}-fixed" value="{{ object.fixed|floatformat:2 }}" name="price-{{ object.pk }}-fixed"></td>
+    {% if object.item.tipo == 'Item' %}
+        {% if perms.inventory.view_cost %}
+            <td><input type="text" id="id_price-{{ object.pk }}-relative" value="{{ object.relative|floatformat:2 }}" name="price-{{ object.pk }}-relative"></td>
+            <td><input type="text" id="id_price-{{ object.pk }}-fixed" value="{{ object.fixed|floatformat:2 }}" name="price-{{ object.pk }}-fixed"></td>
+        {% endif %}
+        <td><input id="id_price-{{ object.pk }}-total" disabled="true" value="${{ object.total|floatformat:2 }}"></td>
+    {% else %}
+        <input type="hidden" id="id_price-{{ object.pk }}-relative" value="0" name="price-{{ object.pk }}-relative">
+        <td><input type="text" id="id_price-{{ object.pk }}-fixed" value="{{ object.fixed|floatformat:2 }}" name="price-{{ object.pk }}-fixed"></td>
     {% endif %}
-    <td><input id="id_price-{{ object.pk }}-total" disabled="true" value="${{ object.total|floatformat:2 }}"></td>
     <td><a href="#" onclick="save_price({{object.pk}}); return false;"><img src="/media/img/save.png"></a></td>
 </tr>

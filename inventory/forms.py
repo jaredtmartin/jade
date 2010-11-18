@@ -316,6 +316,8 @@ class ItemForm(forms.ModelForm):
         exclude = ('tipo',)
     unit=forms.CharField(widget=AutoCompleteInput(url="/inventory/unit_list/"), required=False)
     description=forms.CharField(widget=Textarea(),required=False)
+    minimum = forms.CharField(required=False, initial='0')
+    maximum = forms.CharField(required=False, initial='0')
     def save(self, commit=True, tipo=None):        
         model = super(ItemForm, self).save(commit=False)
         if tipo: model.tipo=tipo
@@ -344,8 +346,36 @@ class ItemForm(forms.ModelForm):
         except Unit.DoesNotExist: 
             raise forms.ValidationError('Unable to find %s in the list of %ss.' % (data, 'unit'))
         return data
-        
-
+    def clean_minimum(self):
+        try:
+            data=self.cleaned_data['minimum']
+            if data=='undefined': return 0
+            return Decimal(data)
+        except:
+            raise forms.ValidationError('Enter a number')
+            return data
+    def clean_maximum(self):
+        try:
+            data=self.cleaned_data['maximum']
+            if data=='undefined': return 0
+            return Decimal(data)
+        except:
+            raise forms.ValidationError('Enter a number')
+            return data
+    def clean_location(self):
+        data=self.cleaned_data['location']
+        if data=='undefined': return ''
+        return data
+class ServiceForm(ItemForm):
+    class Meta:
+        model = Service
+        exclude = ('tipo',)
+    def save(self, commit=True, tipo=None):        
+        model = super(ServiceForm, self).save(commit=False)
+        if tipo: model.tipo=tipo
+        if commit: model.save()
+        return model
+    
 class PriceForm(forms.ModelForm):
     class Meta:
         model = Price

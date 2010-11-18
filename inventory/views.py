@@ -53,7 +53,7 @@ def edit_object(request, object_id, model, form, prefix, tipo=None, extra_contex
         info_list=[]
         error_list=f.errors
         updated_form=form(instance=obj, prefix=prefix+'-'+str(obj.pk))
-    extra_context.update({'objects':[obj],'form':updated_form,'info_list':info_list,'error_list':error_list,'prefix':prefix,'line_template':"inventory/transaction.html"})
+    extra_context.update({'objects':[obj],'form':updated_form,'info_list':info_list,'error_list':error_list,'prefix':prefix,'line_template':"inventory/transaction.html",'tipo':tipo})
     return _r2r(request,'inventory/results.html', extra_context)
     
 def delete_object(request, object_id, model, prefix, tipo=None):
@@ -90,7 +90,7 @@ def new_object(request, form, prefix, template='', tipo=None, extra_context={}):
     else:
         form=form(prefix=prefix+'-')
         if not tipo: tipo=prefix
-        extra_context.update({'form':form,'prefix':tipo})
+        extra_context.update({'form':form,'prefix':tipo,'tipo':tipo})
         return _r2r(request,template, extra_context)
     
 def search_entries(user, form, tipo=None):
@@ -700,6 +700,7 @@ def item_show(request, object_id):
             extra_context = {
                 'entry_page': _paginate(request, Entry.objects.filter(item=item, account=INVENTORY_ACCOUNT)),
                 'form': form,
+                'tipo':item.tipo,
             }
         )
 @login_required
@@ -735,7 +736,11 @@ def new_item(request):
 @permission_required('inventory.change_item', login_url="/blocked/")
 def edit_item(request, object_id):
     return edit_object(request, object_id, Item, ItemForm, "item")
-    
+@login_required
+@permission_required('inventory.add_service', login_url="/blocked/")
+def new_service(request):
+    print "creating a new service"
+    return new_object(request, ItemForm, "item", 'inventory/item_show.html', tipo='Service')
 ######################################################################################
 # Price Views
 ######################################################################################
@@ -888,7 +893,7 @@ def new_sale(request):
         for link in item.links:
             cost = link.item.individual_cost
             # no price or tax for linked items
-            s=Sale(doc_number=doc_number, date=date, client=client, item=link.item, cost=cost, quantity=1)
+            s=Sale(doc_number=doc_number, date=date, client=client, item=link.item, cost=cost, quantity=link.quantity)
             s.save()
             objects.append(s)
     try: 

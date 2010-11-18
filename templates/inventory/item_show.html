@@ -17,17 +17,26 @@
     <link rel="stylesheet" type="text/css" href="{{MEDIA_URL}}/css/jquery.lightbox-0.5.css" media="screen" />
 {% endblock %}
 {% block pre-table %}
-    <a href="/inventory/item/" class="action"><b>{% trans 'New Item' %} </b><img src="{{MEDIA_URL}}/img/add.png"/></a>
+    <a href="/inventory/item/" class="action">
+    {% if tipo == 'Item' %}
+        <b>{% trans 'New Item' %} </b>
+    {% else %}
+        <b>{% trans 'New Service' %} </b>
+    {% endif %}
+    <img src="{{MEDIA_URL}}/img/add.png"/></a>
 {% endblock%}
 {% block top %}
     <h1>
         {% block heading %}
             {% if object %}
-                {{object.tipo}}: {{object.name}} #{{object.pk}}
+                {{object.name|trunc:40}}
             {% else %}
-                {% trans 'New Item' %}
+                {% if tipo == 'Item' %}
+                    {% trans 'New Item' %}
+                {% else %}
+                    {% trans 'New Service' %}
+                {% endif %}
             {% endif %}
-            
         {% endblock %}
     </h1>
     {% trans 'Item Name or Bar Code' %}: <input id="search_field" type="text" value="{{q}}" >
@@ -43,15 +52,31 @@
                 type:'POST',
                 data:{
                     bar_code:       jQuery('#id_item-'+object_id+'-bar_code').val(),
-                    cost:   jQuery('#id_item-'+object_id+'-cost').val(),
+                    cost:           jQuery('#id_item-'+object_id+'-cost').val(),
                     description:    jQuery('#id_item-'+object_id+'-description').val(),
                     location:       jQuery('#id_item-'+object_id+'-location').val(),
-                    description:    jQuery('#id_item-'+object_id+'-description').val(),
                     maximum:        jQuery('#id_item-'+object_id+'-maximum').val(),
                     minimum:        jQuery('#id_item-'+object_id+'-minimum').val(),
                     name:           jQuery('#id_item-'+object_id+'-name').val(),
                     unit:           jQuery('#id_item-'+object_id+'-unit').val(),
-                    image:           jQuery('#id_item-'+object_id+'-image').val(),
+                    image:          jQuery('#id_item-'+object_id+'-image').val(),
+                },
+                success: update_item
+            });
+        }
+        function save_service(object_id){
+            jQuery("#last_id").val(object_id);
+            $.ajax({
+                url: '/inventory/service/'+object_id+'/',
+                type:'POST',
+                data:{
+                    bar_code:       jQuery('#id_item-'+object_id+'-bar_code').val(),
+                    description:    jQuery('#id_item-'+object_id+'-description').val(),
+                    name:           jQuery('#id_item-'+object_id+'-name').val(),
+                    maximum:        jQuery('#id_item-'+object_id+'-maximum').val(),
+                    minimum:        jQuery('#id_item-'+object_id+'-minimum').val(),
+                    unit:           jQuery('#id_item-'+object_id+'-unit').val(),
+                    image:          jQuery('#id_item-'+object_id+'-image').val(),
                 },
                 success: update_item
             });
@@ -188,15 +213,20 @@
     <input type="hidden" id="last_id" value="">
     <input type="hidden" id="item_id" value="{{object.pk}}">
     
-    
-    <h2>{% trans 'Details' %}</h2>
+    {% if tipo == 'Item' %}
+        <h2>{% trans 'Item Details' %}</h2>
+    {% else %}
+        <h2>{% trans 'Service Details' %}</h2>
+    {% endif %}
     <div id="items">
         {% include "inventory/item.html" %}
     </div>
+    <div class="item-block" id="entrys-block">
     {% if entry_page %}
         <h2>{% trans 'Entries' %}</h2>
         {% pages entry_page %}
         {% include "inventory/entries.html" %}
         {% pages entry_page %}
     {% endif %}
+    </div>
 {% endblock %}
