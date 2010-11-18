@@ -144,6 +144,9 @@ class Item(models.Model):
         if not stock or stock==0: stock=1
         return self.total_cost/stock
     cost=property(_get_cost)
+    def _get_links(self):
+        return LinkedItem.objects.filter(parent=self)
+    links=property(_get_links)
 
 def create_prices_for_product(sender, **kwargs):
     if kwargs['instance'].bar_code != '':
@@ -160,7 +163,14 @@ class LinkedItem(models.Model):
     quantity = models.DecimalField(_('quantity'), max_digits=8, decimal_places=2, default=1)
     fixed = models.DecimalField(_('fixed'), max_digits=8, decimal_places=2, default=settings.DEFAULT_FIXED_PRICE)
     relative = models.DecimalField(_('relative'), max_digits=8, decimal_places=2, default=settings.DEFAULT_RELATIVE_PRICE)
-    
+    def _get_item(self):
+        return self.child
+    def _set_item(self, value):
+        self.child=value
+    item=property(_get_item)
+    def _get_tipo(self):
+        return "LinkedItem"
+    tipo=property(_get_tipo)
 class PriceGroup(models.Model):
     name = models.CharField(_('name'), max_length=32)
     def __unicode__(self):

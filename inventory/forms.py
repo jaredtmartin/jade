@@ -358,7 +358,12 @@ class GaranteeOfferForm(forms.ModelForm):
     class Meta:
         model = GaranteeOffer
         fields=('item', 'months','price')
-
+        
+class LinkedItemForm(forms.ModelForm):
+    class Meta:
+        model = LinkedItem
+        fields=('quantity',)
+ 
 class AccountForm(forms.ModelForm):
     class Meta:
         model = Account

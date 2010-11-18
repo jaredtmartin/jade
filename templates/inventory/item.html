@@ -4,17 +4,17 @@
     <form id="item_form" method="post" action="/inventory/item/{{object.pk}}{% if object.pk %}/{% endif %}">
         <input id="my_pk" type="hidden" value="{{object.pk}}">
         <div class="three-column">
-            <p>{{form.name.label}}: {{form.name}}</p>
-            <p>{{form.location.label}}: {{form.location}}</p>
+            <p>{% trans 'Name' %}: {{form.name}}</p>
+            <p>{% trans 'Location' %}: {{form.location}}</p>
         </div>
         <div class="three-column">
-            <p>{{form.unit.label}}: {{form.unit}}</p>
-            <p>{{form.bar_code.label}}: {{form.bar_code}}</p>
+            <p>{% trans 'Unit' %}: {{form.unit}}</p>
+            <p>{% trans 'Bar Code' %}: {{form.bar_code}}</p>
             <p><img class="barcode" src={{object.barcode_url}}></p>
         </div>
         <div class="three-column">
-            <p>{{form.minimum.label}}: {{form.minimum}}</p>
-            <p>{{form.maximum.label}}: {{form.maximum}}</p>
+            <p>{% trans 'Minimum' %}: {{form.minimum}}</p>
+            <p>{% trans 'Maximum' %}: {{form.maximum}}</p>
             <p><b>{% trans 'Stock' %}: {{form.instance.stock|floatformat:-2}}</b></p>
         </div>
         <hr class="clear-contentunit" />
@@ -49,9 +49,9 @@
        <h2>{% trans 'Linked Items' %}</h2>
         <input type="hidden" id="last_id" value="">
         <table id="linked-table">
-            <thead><tr><th>{% trans 'Item' %}</th><th>{% trans 'Quantity' %}</th>{% if perms.inventory.view_cost %}<th>{% trans 'Cost' %}</th>{% endif %}{% if perms.inventory.view_cost %}<th>{% trans 'Relative' %}</th><th>{% trans 'Fixed' %}</th>{% endif %}<th>{% trans 'Price' %}</th></tr></thead>
-            <tbody id="linked-items">
-                {% for object in form.instance.linkeditem_set.all %}
+            <thead><tr><th>{% trans 'Item' %}</th><th>{% trans 'Quantity' %}</th>{% if perms.inventory.view_cost %}<th>{% trans 'Cost' %}</th>{% endif %}<th>{% trans 'Actions' %}</th></tr></thead>
+            <tbody id="linkeditems">
+                {% for object in form.instance.links %}
                     {% include "inventory/linkeditem.html" %}
                 {% endfor %}
             </tbody>
@@ -61,7 +61,7 @@
         <div class="item-block" id="garantees-block">
             <h2>Garantees</h2>
             <table>
-                <thead><tr><th>{% trans 'Months' %}</th><th>{% trans 'Price' %}</th></tr></thead>
+                <thead><tr><th>{% trans 'Months' %}</th><th>{% trans 'Price' %}</th><th>{% trans 'Actions' %}</th></tr></thead>
                 <tbody id="garanteeoffers">
                     {% for object in form.instance.garanteeoffer_set.all %}
                         {% include "inventory/garantee_offer.html" %}
