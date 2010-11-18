@@ -80,4 +80,20 @@
         </div>
     {% endif %}
 </div>
+<script type="text/javascript">
+    $(document).ready(function(){
+        jQuery('#search_field').keydown(function(e){
+            if (e.keyCode == 13) {
+                window.location = '/inventory/items/?q='+$('#search_field').val(); return false;
+            }
+        });
+        jQuery('#new_linkeditem_name').keydown(function(e){
+            if (e.keyCode == 13) {
+                new_linkeditem({{form.instance.id}});
+                return false;
+            }
+        });
+        $('#new_linkeditem_name').autocomplete('/inventory/item_list/', {matchSubset:0, autoFill:1,});
+    });
+</script>
 </td></tr>

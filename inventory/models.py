@@ -46,6 +46,7 @@ class TransactionTipo(models.Model):
     obj = models.CharField('obj', max_length=64)
     def __unicode__(self):
         return self.name
+        
 class Report(models.Model):
     name = models.CharField(_('report'), max_length=32)
     body = models.TextField(_('body'), blank=True, default="")
