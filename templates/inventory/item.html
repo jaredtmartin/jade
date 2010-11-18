@@ -6,8 +6,10 @@
         <input id="my_pk" type="hidden" value="{{object.pk}}">
         <div class="three-column">
             <p>{% trans 'Name' %}: {{form.name}}</p>
-            {% if tipo == 'Item' %}<p>{% trans 'Location' %}: {{form.location}}</p>{% endif %}
-            {% if perms.inventory.view_cost %}<p>{% trans 'Default Cost'%}: {{form.default_cost}}</p>{% endif %}
+            {% if tipo == 'Item' %}
+                <p>{% trans 'Location' %}: {{form.location}}</p>
+                {% if perms.inventory.view_cost %}<p>{% trans 'Default Cost'%}: {{form.default_cost}}</p>{% endif %}
+            {% endif %}
         </div>
         <div class="three-column">
             {% if tipo == 'Item' %}<p>{% trans 'Unit' %}: {{form.unit}}</p>{% endif %}

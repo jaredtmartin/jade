@@ -23,7 +23,16 @@ def clean_lookup(form, name, model, by_pk=False, title=None):
     except model.DoesNotExist: 
         raise forms.ValidationError('Unable to find %s in the list of %ss.' % (data, title))
     return data
-    
+def clean_number(form, name, default=0):
+    try:
+        data=form.cleaned_data[name]
+        if data=='undefined' or data=='': 
+            print "%s was blank returning %i" % (name, default)
+            return default
+        return Decimal(data)
+    except:
+        raise forms.ValidationError('Enter a number')
+        return data
 def clean_bar_code(form, name, model):
     data = form.cleaned_data[name]
     if (not data) and (not form.fields[name].required): return None
@@ -318,9 +327,13 @@ class ItemForm(forms.ModelForm):
     description=forms.CharField(widget=Textarea(),required=False)
     minimum = forms.CharField(required=False, initial='0')
     maximum = forms.CharField(required=False, initial='0')
-    def save(self, commit=True, tipo=None):        
+    default_cost = forms.CharField(required=False, initial='0')
+    def save(self, commit=True, tipo=None):
         model = super(ItemForm, self).save(commit=False)
         if tipo: model.tipo=tipo
+        if not model.minimum: model.minimum=0
+        if not model.maximum: model.maximum=0
+        if not model.default_cost: model.default_cost=0
         if commit: model.save()
         return model
     def __init__(self, *args, **kwargs):
@@ -347,21 +360,11 @@ class ItemForm(forms.ModelForm):
             raise forms.ValidationError('Unable to find %s in the list of %ss.' % (data, 'unit'))
         return data
     def clean_minimum(self):
-        try:
-            data=self.cleaned_data['minimum']
-            if data=='undefined': return 0
-            return Decimal(data)
-        except:
-            raise forms.ValidationError('Enter a number')
-            return data
+        clean_number(self, 'minimum')
     def clean_maximum(self):
-        try:
-            data=self.cleaned_data['maximum']
-            if data=='undefined': return 0
-            return Decimal(data)
-        except:
-            raise forms.ValidationError('Enter a number')
-            return data
+        clean_number(self, 'maximum')
+    def clean_default_cost(self):
+        clean_number(self, 'default_cost')
     def clean_location(self):
         data=self.cleaned_data['location']
         if data=='undefined': return ''

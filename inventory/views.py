@@ -72,6 +72,8 @@ def new_object(request, form, prefix, template='', tipo=None, extra_context={}):
         if f.is_valid():      
             print "valid"
             print "tipo = " + str(tipo)
+            m=f.save(commit=False)
+            print "m.minimum = " + str(m.minimum)
             if tipo:obj=f.save(tipo=tipo)
             else:obj=f.save()
             updated_form=form(instance=obj, prefix=prefix+'-'+str(obj.pk))

@@ -15,8 +15,7 @@
     <script type="text/javascript" src="{{MEDIA_URL}}/js/ajaxfileupload.js"></script>  
     <script type="text/javascript" src="{{MEDIA_URL}}/js/jquery.lightbox-0.5.min.js"></script>
     <link rel="stylesheet" type="text/css" href="{{MEDIA_URL}}/css/jquery.lightbox-0.5.css" media="screen" />
-{% endblock %}
-{% block pre-table %}
+{% endblock %}{% block pre-table %}
     <a href="/inventory/item/" class="action">
     {% if tipo == 'Item' %}
         <b>{% trans 'New Item' %} </b>
@@ -78,6 +77,7 @@
                     minimum:        jQuery('#id_item-'+object_id+'-minimum').val(),
                     unit:           jQuery('#id_item-'+object_id+'-unit').val(),
                     image:          jQuery('#id_item-'+object_id+'-image').val(),
+                    default_cost:   jQuery('#id_item-'+object_id+'-default_cost').val(),
                 },
                 success: update_item
             });
