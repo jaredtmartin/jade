@@ -124,6 +124,7 @@ class Item(models.Model):
         return Entry.objects.filter(item=self, account=INVENTORY_ACCOUNT, active=True).aggregate(total=models.Sum('value'))['total'] or Decimal('0.00')
     total_cost=property(_get_total_cost)
     def price(self, client):
+        # fetches the price for the given client
         if type(client)==PriceGroup: group=client
         elif type(client) in (Account, Client, Vendor):group=client.price_group
         else: group=client.get_profile().price_group
@@ -134,17 +135,40 @@ class Item(models.Model):
             price=Price.objects.create(item=self,group=group, site=Site.objects.get_current())
         return Decimal(str(round(self.cost*price.relative + price.fixed,2)))
     def discount(self, client):
+        # fetches how much of a discount is given for the given client
         price=Price.objects.get(item=self, group=client.price_group)
         return Decimal(str(round(self.cost*price.relative_discount + price.fixed_discount,2)))
     def _get_stock(self):
+        # How much of the item do we have in stock?
         return Entry.objects.filter(item=self, account=INVENTORY_ACCOUNT, delivered=True).aggregate(total=models.Sum('quantity'))['total'] or Decimal('0.00')
     stock=property(_get_stock)
-    def _get_cost(self):
+    
+    def _get_individual_cost(self):
+        # Returns the cost of the item NOT including the cost of any linked items
+        # this should be used as the cost on a sale
         stock=abs(self.stock)
         if not stock or stock==0: stock=1
         return self.total_cost/stock
+    individual_cost=property(_get_individual_cost)
+    
+    def all_linked_items(self):
+        # A list of all of the items received when this one is added
+        # used to make sure we don't get circulating dependancies
+        items=(self,)
+        for link in self.links:
+            items+=link.item.all_linked_items()
+        return items
+        
+    def _get_cost(self):
+        # Returns the cost of the item and any linked items
+        # this should be used in most cases
+        cost=self.individual_cost
+        for link in self.links:
+            cost+=(link.item.cost or 0) * link.quantity 
+        return cost       
     cost=property(_get_cost)
     def _get_links(self):
+        # returns all of the LinkedItems for this item
         return LinkedItem.objects.filter(parent=self)
     links=property(_get_links)
 

@@ -867,7 +867,7 @@ def new_sale(request):
     tax=price=cost=0
     try:
         item = Item.objects.fetch(request.POST['item'])
-        cost = item.cost
+        cost = item.individual_cost
         price = item.price(client)
         if client.tax_group.price_includes_tax:
             price = price/(client.tax_group.value+1)
@@ -879,9 +879,18 @@ def new_sale(request):
         if request.POST['item']!='': error_list['item']=["Unable to find '%s' in the list of items." % (request.POST['item'], )]
 #        raise forms.ValidationError("Unable to find '%s' in the list of items." % (data, ))
     if not client: error_list['client']=[unicode('Unable to find a client with the name specified.')]
-    sale=Sale(doc_number=doc_number, date=date, client=client, item=item, cost=cost, price=price, tax=tax)
+    # create the sale
+    sale=Sale(doc_number=doc_number, date=date, client=client, item=item, cost=cost, price=price, tax=tax, quantity=1)
     sale.save()
     objects=[sale]
+    # add any linked items
+    if item:
+        for link in item.links:
+            cost = link.item.individual_cost
+            # no price or tax for linked items
+            s=Sale(doc_number=doc_number, date=date, client=client, item=link.item, cost=cost, quantity=1)
+            s.save()
+            objects.append(s)
     try: 
         offer=sale.item.garanteeoffer_set.filter(price=0)[0]
         garantee=ClientGarantee(doc_number=sale.doc_number, date=sale.date, client=sale.client, item=sale.item, quantity=offer.months, serial=sale.serial)
