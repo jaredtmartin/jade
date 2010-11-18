@@ -17,8 +17,7 @@ from django.template import Template, Context, RequestContext
 import cgi
 from django.views.generic import list_detail
 from django.contrib.auth.decorators import permission_required, login_required
-#from jade.settings import settings.APP_LOCATION, settings.COMPANY_NAME, settings.CORTE_REPORT_NAME, settings.MOVEMENTS_REPORT_NAME, settings.PRICE_REPORT_NAME, settings.INVENTORY_REPORT_NAME, settings.MEDIA_URL, settings.APP_LOCATION, settings.RECEIPT_REPORT_NAME_SUFFIX, settings.RECEIPT_REPORT_NAME_PREFIX, settings.COUNT_SHEET_REPORT_NAME, settings.LABEL_SHEET_REPORT_NAME
-from jade import settings
+from django.conf import settings
 
 def root(response):
     return HttpResponseRedirect('/inventory/sales/')
@@ -314,6 +313,8 @@ def fetch_resources(uri, rel):
 def render_to_pdf(template_src, context_dict):
     template = get_template(template_src)
     context = Context(context_dict)
+    from datetime import datetime
+    context_dict.update({'company_name':settings.COMPANY_NAME,'date_printed':datetime.now()})
     html  = template.render(context)
     result = StringIO.StringIO()
     pdf = pisa.pisaDocument(StringIO.StringIO(html.encode("ISO-8859-1")), dest=result, link_callback=fetch_resources)
@@ -323,6 +324,8 @@ def render_to_pdf(template_src, context_dict):
     
 def render_string_to_pdf(template, context_dict):
     context = Context(context_dict)
+    from datetime import datetime
+    context_dict.update({'company_name':settings.COMPANY_NAME,'date_printed':datetime.now()})
     html  = template.render(context)
     result = StringIO.StringIO()
     pdf = pisa.pisaDocument(StringIO.StringIO(html.encode("ISO-8859-1")), dest=result, link_callback=fetch_resources)
@@ -649,12 +652,13 @@ def low_stock(request, errors=[]):
 @permission_required('inventory.view_item', login_url="/blocked/")
 def low_stock_report(request):
     items=Item.objects.low_stock()
+    count=items.count()
     try:report=Report.objects.get(name=settings.LOW_STOCK_REPORT_NAME)
     except Report.DoesNotExist: 
         request.GET=request.GET.copy()
         errors={'Report':[unicode(_('Unable to find a report template with the name "%s"') % (settings.LOW_STOCK_REPORT_NAME,))]}
         return low_stock(request, errors=errors)
-    return render_string_to_pdf(Template(report.body), {'items':items, 'user':request.user})  
+    return render_string_to_pdf(Template(report.body), {'items':items, 'user':request.user, 'count':count})  
     
 
 
@@ -676,13 +680,20 @@ def inventory_report(request):
     try: q=request.GET['q']
     except KeyError: q=''
     items=Item.objects.find(q)
-    print "items = " + str(items)
+    count=items.count()
+    total_cost=0
+    total_total_cost=0
+    total_stock=0
+    for item in items:
+        total_cost+=item.cost
+        total_total_cost+=item.total_cost
+        total_stock+=item.stock
     try:report=Report.objects.get(name=settings.INVENTORY_REPORT_NAME)
     except Report.DoesNotExist: 
         request.GET=request.GET.copy()
         errors={'Report':[unicode(_('Unable to find a report template with the name "%s"') % (settings.INVENTORY_REPORT_NAME,))]}
         return item_list(request, errors=errors)
-    return render_string_to_pdf(Template(report.body), {'items':items, 'user':request.user})  
+    return render_string_to_pdf(Template(report.body), {'items':items, 'user':request.user, 'total_cost':total_cost, 'total_total_cost':total_total_cost, 'total_stock':total_stock,'count':count})  
     
     
 @login_required

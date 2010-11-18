@@ -331,9 +331,10 @@ class ItemForm(forms.ModelForm):
     def save(self, commit=True, tipo=None):
         model = super(ItemForm, self).save(commit=False)
         if tipo: model.tipo=tipo
-        if not model.minimum: model.minimum=0
-        if not model.maximum: model.maximum=0
-        if not model.default_cost: model.default_cost=0
+#        print "self.cleaned_data['minimum'] = " + str(self.cleaned_data['minimum'])
+#        model.minimum =  self.cleaned_data['minimum'] or 0
+#        model.maximum =  self.cleaned_data['maximum'] or 0
+#        model.default_cost =  self.cleaned_data['default_cost'] or 0
         if commit: model.save()
         return model
     def __init__(self, *args, **kwargs):
@@ -360,11 +361,11 @@ class ItemForm(forms.ModelForm):
             raise forms.ValidationError('Unable to find %s in the list of %ss.' % (data, 'unit'))
         return data
     def clean_minimum(self):
-        clean_number(self, 'minimum')
+        return clean_number(self, 'minimum')
     def clean_maximum(self):
-        clean_number(self, 'maximum')
+        return clean_number(self, 'maximum')
     def clean_default_cost(self):
-        clean_number(self, 'default_cost')
+        return clean_number(self, 'default_cost')
     def clean_location(self):
         data=self.cleaned_data['location']
         if data=='undefined': return ''
