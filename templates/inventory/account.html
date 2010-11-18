@@ -1,6 +1,6 @@
 {% load i18n %}
 <tr><td>
-<div id=account-{{form.instance.pk}} class="account{% if form.instance.pk %}{% else %} new{% endif %} ">
+    <div id=account-{{form.instance.pk}} class="account{% if form.instance.pk %}{% else %} new{% endif %} ">
         <input id="last_id" type="hidden" value="{{form.instance.pk}}">
         <div class="three-column">
             <p>{% trans 'Name'%}: {{form.name}}</p>
@@ -34,9 +34,8 @@
             {% if tipo != 'account' %}   
                 <p>{% trans 'User' %}: {{form.user}}</p>
             {% endif %}
-        </div>
-        
-<div class="clear-contentunit"></div>
+        </div>            
+        <div class="clear-contentunit"></div>
         <a href="#" onclick="save_account({{form.instance.pk|default:"''"}},'/inventory/{{prefix.lower}}/{{form.instance.pk|default:''}}/'); return false;">{% trans 'Save' %}</a>
-</div>
+    </div>
 </tr></td>

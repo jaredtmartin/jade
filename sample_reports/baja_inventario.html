@@ -16,9 +16,13 @@
                 font-size:36px;
                 line-height:1em;
                 min-width:500px;
-                padding-top:34px;
                 text-align:center;
+                padding-top:20px;
                 text-shadow:0 1px 0 #E4F2FD;
+            }
+            .company_name {
+                height: 20px;
+                font-size:20px;
             }
             th{text-align:left;}
             .row1{  
@@ -45,20 +49,42 @@
                 top: 1cm;
                 left: 1cm;
                 right: 1.7cm;
+                @frame pagenum {
+                  -pdf-frame-content: pagenum;
+                  bottom: 2cm;
+                  right: 1cm;
+                  height: .5cm;
+                }
+                @frame printdate {
+                  -pdf-frame-content: printdate;
+                  bottom: 2cm;
+                  left:1cm;
+                  height: .5cm;
+                }
             }
         </style>
     </head>
     <body>
-        <h1>Lista de Inventario</h1>
+        <h1>
+            <span class="company_name">{{company_name}}</span><br>
+            Lista de Inventario Baja
+        </h1>
         <table id="tableContent">
             <thead>
-                <tr><th>Nombre</th><th>Locacion</th><th>Cantidad</th><th>Unidad</th><th>Costo</th><th>Minimo</th><th>Maximo</th></tr>
+                <tr><th>Nombre</th><th>Locacion</th><th>Unidad</th><th>Min</th><th>Max</th><th>Surgerido</th><th>Inventario</th></tr>
             </thead>
             <tbody>
                 {% for object in items %}
-                     <tr class="{% cycle "row1" "row2" %}"><td>{{object.name}}</td><td>{{object.location}}</td><td>{{object.stock}}</td><td>{{object.unit}}</td><td>${{object.cost|default:0|floatformat:2}}</td><td>{{object.minimum|default:0|floatformat:-2}}</td><td>{{object.maximum|default:0|floatformat:-2}}</td></tr>                    
+                     <tr class="{% cycle "row1" "row2" %}"><td>{{object.name}}</td><td>{{object.location}}</td><td>{{object.unit}}</td><td>{{object.minimum}}</td><td>{{object.maximum}}</td><td>{{object.recommended}}</td><td>{{object.stock}}</td></tr>                    
                 {%endfor%}
+<tr class="{% cycle "row1" "row2" %}"><th>Total de productos: {{count}}</th></tr>   
+
+<tr class="{% cycle "row1" "row2" %}"><th>Total</th><th></th><th>{{total_stock}}</th><th></th><th>${{total_cost|default:0|floatformat:2}}</th><th>${{total_total_cost|default:0|floatformat:2}}</th></tr>  
             </tbody>            
         </table>
+    <div id="printdate" style="text-align:left;">{{date_printed|date:"d/m/Y"}}</div>
+    <div id="pagenum" style="text-align:right;"> <pdf:pagenumber> </div>
+
+
     </body>
 </html>

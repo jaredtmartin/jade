@@ -604,12 +604,13 @@ def account_show(request, object_id, errors={}):
 def account_statement(request, object_id): # GET ONLY
     account = get_object_or_404(Account, pk=object_id)
     entries=list(account.entry_set.all().order_by('date'))
+    if not request.user.has_perm('inventory.view_client') and account.tipo=="Client": return http.HttpResponseRedirect("/blocked/")
+    if not request.user.has_perm('inventory.view_vendor') and account.tipo=="Vendor": return http.HttpResponseRedirect("/blocked/")
+    entries=list(Entry.objects.raw("select inventory_entry.id, doc_number, inventory_transaction.tipo, value, sum(value), date from inventory_entry inner join inventory_transaction on transaction_id = inventory_transaction.id where account_id=%i group by inventory_transaction.tipo, date order by date" % account.pk))
     total=0
     for entry in entries:
         total+=entry.value
-        entry.total=total    
-    if not request.user.has_perm('inventory.view_client') and account.tipo=="Client": return http.HttpResponseRedirect("/blocked/")
-    if not request.user.has_perm('inventory.view_vendor') and account.tipo=="Vendor": return http.HttpResponseRedirect("/blocked/")
+        entry.total=total
     return render_report(request, settings.ACCOUNT_STATEMENT_REPORT_NAME, {'account':account,'entries':entries})
 @login_required
 @permission_required('inventory.change_client', login_url="/blocked/")
@@ -660,8 +661,6 @@ def low_stock_report(request):
         return low_stock(request, errors=errors)
     return render_string_to_pdf(Template(report.body), {'items':items, 'user':request.user, 'count':count})  
     
-
-
 @login_required
 @permission_required('inventory.view_item', login_url="/blocked/")
 def price_report(request):
@@ -1259,6 +1258,11 @@ class Document():
             self._client = Entry.objects.filter(transaction__doc_number=self.number, tipo='Client')[0].account
         return self._client
     client=property(_get_client)
+    def _get_date(self):
+        if not self._date:
+            self._date = self.transactions[0].date
+        return self._date
+    date=property(_get_date)
         
 def update_dict_list(x, y):
     for k in y.keys():
@@ -1267,14 +1271,14 @@ def update_dict_list(x, y):
         else:
             x[k]=[y[k]]
             
-def create_documents(trans):
-    d={}
-    for t in trans:
-        update_dict_list(d, {t.doc_number:t})
-    documents=[]
-    for doc in d:
-        documents.append(Document(doc))
-    return documents
+#def create_documents(trans):
+#    d={}
+#    for t in trans:
+#        update_dict_list(d, {t.doc_number:t})
+#    documents=[]
+#    for doc in d:
+#        documents.append(Document(doc))
+#    return documents
 def create_documents_from_entries(entries):
     d={}
     for e in entries:
