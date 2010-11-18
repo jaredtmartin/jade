@@ -741,6 +741,15 @@ def edit_item(request, object_id):
 def new_service(request):
     print "creating a new service"
     return new_object(request, ItemForm, "item", 'inventory/item_show.html', tipo='Service')
+@login_required
+@permission_required('inventory.view_service', login_url="/blocked/")
+def list_services(request, errors=[]):
+    try: q=request.GET['q']
+    except KeyError: q=''
+    items=Service.objects.find(q)
+    if items.count()==1: return item_show(request, items[0].pk)
+    return _r2r(request,'inventory/service_list.html', {'page':_paginate(request, items),'q':q, 'error_list':errors, 'boxform':BoxForm(),'tipo':'Service'})
+
 ######################################################################################
 # Price Views
 ######################################################################################

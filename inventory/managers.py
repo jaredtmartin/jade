@@ -113,6 +113,9 @@ class SaleManager(BaseManager):
 #    def aggregate(self, *args, **kwargs):
 #        return self.get_query_set().filter(Q(site__id__exact=settings.SITE_ID)|Q(tipo__in=('Client','Branch','Vendor'))).aggregate(*args, **kwargs)
 class ItemManager(models.Manager):
+    def __init__(self, tipo=None):
+        super(ItemManager, self).__init__()
+        self.tipo=tipo
     def next_bar_code(self):
         try:
             number=super(ItemManager, self).get_query_set().all().order_by('-bar_code')[0].bar_code
@@ -123,11 +126,13 @@ class ItemManager(models.Manager):
         except: return '1'
     def find(self, q):
         query=super(ItemManager, self).get_query_set()
+        if self.tipo: query=query.filter(tipo=self.tipo)
         for key in q.split():
             query=query.filter(Q(name__icontains=key) | Q(bar_code__icontains=key)|Q(description__icontains=key))
         return query
     def fetch(self, q):
-        return super(ItemManager, self).get_query_set().get(Q(name=q) | Q(bar_code=q))
+        query=super(ItemManager, self).get_query_set()
+        if self.tipo: query=query.filter(tipo=self.tipo)
+        return query.get(Q(name=q) | Q(bar_code=q))
     def low_stock(self):
         return list(Item.objects.raw("select id from (select inventory_item.*, sum(quantity) total from inventory_item left join inventory_entry on inventory_item.id=inventory_entry.item_id where (inventory_entry.delivered=True and account_id=%i) or (inventory_entry.id is null) group by inventory_item.id) asd where (total<minimum) or (total is null and minimum>0);" % INVENTORY_ACCOUNT.pk))
-

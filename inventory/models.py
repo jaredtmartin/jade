@@ -171,25 +171,17 @@ class Item(models.Model):
         # returns all of the LinkedItems for this item
         return LinkedItem.objects.filter(parent=self)
     links=property(_get_links)
-
+    
 class Service(Item):
-    objects=BaseManager('Service')
+    objects=ItemManager('Service')
     class Meta:
+        proxy = True
         permissions = (
             ("view_service", "Can view services"),
         )
     def save(self, *args, **kwargs):
         self.tipo='Service'
         super(Service, self).save(*args, **kwargs)
-class Product(Item):
-    objects=BaseManager('Product')
-    class Meta:
-        permissions = (
-            ("view_product", "Can view products"),
-        )
-    def save(self, *args, **kwargs):
-        self.tipo='Product'
-        super(Product, self).save(*args, **kwargs)
         
 def create_prices_for_item(sender, **kwargs):
     if kwargs['instance'].bar_code != '':
@@ -199,7 +191,6 @@ def create_prices_for_item(sender, **kwargs):
         for group in PriceGroup.objects.all():
             Price.objects.create(item=kwargs['instance'], group=group, site=Site.objects.get_current())
 post_save.connect(create_prices_for_item, sender=Item, dispatch_uid="jade.inventory.models")
-post_save.connect(create_prices_for_item, sender=Product, dispatch_uid="jade.inventory.models")
 post_save.connect(create_prices_for_item, sender=Service, dispatch_uid="jade.inventory.models")
 
 class LinkedItem(models.Model):
