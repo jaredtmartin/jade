@@ -97,13 +97,14 @@ class ItemManager(models.Manager):
         super(ItemManager, self).__init__()
         self.tipo=tipo
     def next_bar_code(self):
-        try:
-            number=super(ItemManager, self).get_query_set().all().order_by('-bar_code')[0].bar_code
+        print "a"
+#        try:
+        number=super(ItemManager, self).get_query_set().all().order_by('-bar_code')[0].bar_code
+        number=increment_string_number(number)
+        while Item.objects.filter(bar_code=number).count()>0:
             number=increment_string_number(number)
-            while Item.objects.filter(bar_code=number).count()>0:
-                number=increment_string_number(number)
-            return number
-        except: return '1'
+        return number
+#        except: return '1'
     def find(self, q):
         query=super(ItemManager, self).get_query_set()
         if self.tipo: query=query.filter(tipo=self.tipo)

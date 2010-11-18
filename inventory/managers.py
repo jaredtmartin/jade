@@ -3,6 +3,7 @@ from django.db import models
 from django.db.models.fields import FieldDoesNotExist
 from django.db.models import Q
 from django.contrib.sites.models import Site
+import re
 class CurrentMultiSiteManager(models.Manager):
     "Use this to limit objects to those associated with the current site."
     def __init__(self, field_name='site'):
@@ -79,13 +80,19 @@ class BaseManager(models.Manager):
     def get_query_set(self):
         return super(BaseManager, self).get_query_set().filter(tipo=self.tipo)
     def next_doc_number(self):
-        try: 
+#        try: 
+            print "self.tipo = " + str(self.tipo)
+            print "super(BaseManager, self).get_query_set().filter(tipo=self.tipo).order_by('-pk')[0].doc_number = " + str(super(BaseManager, self).get_query_set().filter(tipo=self.tipo).order_by('-pk')[0].doc_number)
             number = super(BaseManager, self).get_query_set().filter(tipo=self.tipo).order_by('-pk')[0].doc_number
+            print "number = " + str(number)
+            print 're.split("(\d*)", number) = ' + str(re.split("(\d*)", number))
             number=re.split("(\d*)", number)
+            print "number1 = " + str(number)
             if number[-1]=='':
                 number[-2]=("%%0%id" % len(number[-2])) % (int(number[-2])+1)
+            print "number2 = " + str(number)
             return "".join(number)
-        except: return "1001"    
+#        except: return "1001"    
 class SaleManager(BaseManager):
     def next_doc_number(self):
         try: 
