@@ -26,13 +26,13 @@ mysqldump -uroot -pThaneM3dia --add-drop-table --no-data simplejade | grep '^DRO
 
 DEBIT=1
 CREDIT=-1
-def increment_string_number(number, default='1001', hold_places=True):
-    try:
-        number=re.split("(\d*)", number)
-        if number[-1]=='':
-            number[-2]=str(int(number[-2])+1)
-        return "".join(number)
-    except: return default
+#def increment_string_number(number, default='1001', hold_places=True):
+#    try:
+#        number=re.split("(\d*)", number)
+#        if number[-1]=='':
+#            number[-2]=str(int(number[-2])+1)
+#        return "".join(number)
+#    except: return default
     
 def create_barcode(number, folder=''):
     from jade.inventory.code128 import Code128
@@ -79,20 +79,6 @@ ITEM_TYPES=(
     )
 try: DEFAULT_UNIT=Unit.objects.get(name=settings.DEFAULT_UNIT_NAME)
 except:DEFAULT_UNIT=None
-def increment_string_number(number, default='1001', zfill=True):
-    import string
-    try:
-        number=re.split("(\d*)", number)
-        if number[-1]=='':
-            if zfill:
-                number[-2]=string.zfill(int(number[-2])+1, len(number[-2]))
-            else:
-                number[-2]=str(int(number[-2])+1)
-        else:
-            number=number[0]+'1'
-        number="".join(number)
-        return number
-    except: return default
 class ItemManager(models.Manager):
     def __init__(self, tipo=None):
         super(ItemManager, self).__init__()

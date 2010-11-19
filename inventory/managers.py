@@ -4,6 +4,21 @@ from django.db.models.fields import FieldDoesNotExist
 from django.db.models import Q
 from django.contrib.sites.models import Site
 import re
+def increment_string_number(number, default='1001', zfill=True):
+    import string
+    try:
+        number=re.split("(\d*)", number)
+        if number[-1]=='':
+            if zfill:
+                number[-2]=string.zfill(int(number[-2])+1, len(number[-2]))
+            else:
+                number[-2]=str(int(number[-2])+1)
+        else:
+            number=number[0]+'1'
+        number="".join(number)
+        return number
+    except: return default
+
 class CurrentMultiSiteManager(models.Manager):
     "Use this to limit objects to those associated with the current site."
     def __init__(self, field_name='site'):
@@ -102,21 +117,4 @@ class SaleManager(BaseManager):
                 number[-2]=("%%0%id" % len(number[-2])) % (int(number[-2])+1)
             return "".join(number)
         except: return "1001"    
-
-#class AccountManager(models.Manager):
-#    "Shows all accounts unless they are simple accounts that are not in the current site."
-##    def get_query_set(self):
-##        return super(AccountManager, self).get_query_set().filter(Q(site__id__exact=settings.SITE_ID)|Q(tipo__in=('Client','Branch','Vendor')))
-#        
-##    def all(self):
-##        return self.get_query_set().filter(Q(site__id__exact=settings.SITE_ID)|Q(tipo__in=('Client','Branch','Vendor')))
-
-#    def count(self):
-#        return self.get_query_set().filter(Q(site__id__exact=settings.SITE_ID)|Q(tipo__in=('Client','Branch','Vendor'))).count()
-#        
-#    def filter(self, *args, **kwargs):
-#        return self.get_query_set().filter(Q(site__id__exact=settings.SITE_ID)|Q(tipo__in=('Client','Branch','Vendor'))).filter(*args, **kwargs)
-
-#    def aggregate(self, *args, **kwargs):
-#        return self.get_query_set().filter(Q(site__id__exact=settings.SITE_ID)|Q(tipo__in=('Client','Branch','Vendor'))).aggregate(*args, **kwargs)
 

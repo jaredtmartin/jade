@@ -19,8 +19,8 @@
 {% endblock%}
 {% block line %}    
     <tr><td><a href="{% if object.image %}{{object.url}}{% endif %}" id="item_image">
-                    <img src="{% if object.image %}{{object.image.url_75x75}}{% endif %}">
-                </a></td><td WORD-BREAK:BREAK-ALL;>{% link object %}</td><td WORD-BREAK:BREAK-ALL;>{{object.description}}</td><td>${% price object user %}</td>{% if perms.inventory.view_cost %}<td>${{object.cost|default:0|floatformat:2}}</td>{%endif%}<td>{{object.stock|default:0|floatformat:-2}}</td><td>{{object.unit}}</td><td>{{object.minimum|default:0|floatformat:-2}}</td><td>{{object.maximum|default:0|floatformat:-2}}</td><td>{{object.location}}</td></tr>
+        <img src="{% if object.image %}{{object.image.url_75x75}}{% endif %}">
+    </a></td><td WORD-BREAK:BREAK-ALL;>{% link object %}</td><td WORD-BREAK:BREAK-ALL;>{{object.description}}</td><td>${% price object user %}</td>{% if perms.inventory.view_cost %}<td>${{object.cost|default:0|floatformat:2}}</td>{%endif%}<td>{{object.stock|default:0|floatformat:-2}}</td><td>{{object.unit}}</td><td>{{object.minimum|default:0|floatformat:-2}}</td><td>{{object.maximum|default:0|floatformat:-2}}</td><td>{{object.location}}</td></tr>
 {% endblock%}
 
 
