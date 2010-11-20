@@ -53,12 +53,7 @@ function saveTransaction(object_id, url) {
             quantity:       jQuery('#id_transaction-'+object_id+'-quantity').val(),
             serial:         jQuery('#id_transaction-'+object_id+'-serial').val(),
             value:          jQuery('#id_transaction-'+object_id+'-value').val(),
-            cost:           jQuery('#id_transaction-'+object_id+'-cost').val(),
-            tax:            jQuery('#id_transaction-'+object_id+'-tax').val(),
-            unit_tax:       jQuery('#id_transaction-'+object_id+'-unit_tax').val(),
-            unit_cost:      jQuery('#id_transaction-'+object_id+'-unit_cost').val(),
-            unit_discount:  jQuery('#id_transaction-'+object_id+'-unit_discount').val(),
-            unit_price:     jQuery('#id_transaction-'+object_id+'-unit_price').val(),
+            unit_value:     jQuery('#id_transaction-'+object_id+'-unit_value').val(),
             account2:        jQuery('#id_transaction-'+object_id+'-account2').val(),
         },
         success: updateAndSelectItemField
@@ -196,11 +191,7 @@ function updateTotal(x){
     }
 }
 function updateTotals(){
-    updateTotal('charge');
-    updateTotal('cost');
-    updateTotal('discount');
-    updateTotal('tax');
-    updateTotal('price');
+    updateTotal('value');
 }
 function update(prefix, data){
     $('.message').remove();
@@ -236,8 +227,8 @@ function updateGaranteePrice(data){
     $('#ajax-data').replaceWith('<div id="ajax-data" style="display: none;"></div>');
     var d = $('#ajax-data').append(data)
     $('.message', d).appendTo($('#messages')) //.hide().slideDown('slow');
-    price=$('#price', d).html();
-    jQuery('#id_transaction-'+object_id+'-garantee_unit_price').val(price)
+    value=$('#value', d).html();
+    jQuery('#id_transaction-'+object_id+'-garantee_unit_value').val(value)
 }
 function postCount(object_id){
     hide_entries(object_id);

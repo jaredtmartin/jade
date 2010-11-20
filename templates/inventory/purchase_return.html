@@ -2,13 +2,11 @@
 {% block other_fields_edit %}
     <td><input id="id_transaction-{{ object.pk }}-account" class="field account lookup vendor" value="{{object.subclass.vendor|default:''}}" type="text"></td>    
     {% include "inventory/inventory_base.html" %}
-    <td><input id="id_transaction-{{ object.pk }}-cost" class="field money lookup" value="{{object.subclass.cost|floatformat:2}}" type="text"></td>
-    <td/><td/><td/>
+    <td><input id="id_transaction-{{ object.pk }}-value" class="field money lookup" value="{{object.subclass.value|floatformat:2}}" type="text"></td>
 {% endblock %}
 
 {% block other_fields_show %}
     <td id="id_transaction-{{ object.pk }}-account"  value="{{object.subclass.vendor|default:''}}" class="field account lookup vendor"><a href="{{object.subclass.vendor.url}}">{{object.subclass.vendor|default:''}}</a></td>
     {% include "inventory/inventory_base.html" %}
-    <td id="id_transaction-{{object.pk}}-cost" value="{{object.subclass.cost|floatformat:2}}"  class="field money">    ${{object.subclass.cost|floatformat:2}}</td>
-    <td/><td/><td/>
+    <td id="id_transaction-{{object.pk}}-value" value="{{object.subclass.value|floatformat:2}}"  class="field money">    ${{object.subclass.value|floatformat:2}}</td>
 {% endblock %}

@@ -53,7 +53,7 @@ def clean_bar_code(form, name, model):
 class SaleForm(forms.ModelForm):
     class Meta:
         model = Sale
-        fields=('doc_number','date','account','item','quantity','serial','unit_cost','unit_tax','unit_discount','unit_price')
+        fields=('doc_number','date','account','item','quantity','serial','unit_value')
     def save(self, commit=True):
         model = super(SaleForm, self).save(commit=False)
         model.client =      self.cleaned_data['account']
@@ -61,32 +61,16 @@ class SaleForm(forms.ModelForm):
         model.quantity =    self.cleaned_data['quantity']
         model.item =        self.cleaned_data['item']
         model.serial =      self.cleaned_data['serial']
-        model.tax =         (self.cleaned_data['unit_tax'] or 0)
-        model.discount =    (self.cleaned_data['unit_discount'] or 0)
-        model.price =       self.cleaned_data['unit_price'] 
-#        if not self.cleaned_data['unit_price'] and model.item: 
-#            print "resetting price"
-#            model.price = model.item.price(model.client)
-#        print "self.cleaned_data['unit_price'] = " + str(self.cleaned_data['unit_price'])
-        
-        if self.cleaned_data['unit_cost']:
-            model.cost = self.cleaned_data['unit_cost']
-        if model.item and not model.cost: model.cost = model.item.cost
+        model.value =       self.cleaned_data['unit_value'] 
         if self.cleaned_data['quantity']!=0: 
-            model.tax=              model.tax            * self.cleaned_data['quantity']
-            model.discount=         model.discount       * self.cleaned_data['quantity']
-            model.price=            model.price          * self.cleaned_data['quantity']
-            model.cost=             model.cost           * self.cleaned_data['quantity']
+            model.value=            model.value          * self.cleaned_data['quantity']
         if commit: model.save()
         return model
     doc_number =        forms.CharField()
     account =           forms.CharField(initial=settings.DEFAULT_CLIENT_NAME)
     item =              forms.CharField(required=False)
-    unit_price =        forms.DecimalField()
+    unit_value =        forms.DecimalField()
     quantity =          forms.DecimalField()
-    unit_tax =          forms.DecimalField()
-    unit_discount =     forms.DecimalField()
-    unit_cost =         forms.CharField(required=False)#forms.DecimalField()
     date =              forms.DateField(initial=datetime.now()) #, input_formats=['%Y-%m-%d', '%d/%m/%Y',]) # Uncomment this for spanish dates
     serial =            forms.CharField(required=False)
     def clean_account(self):
@@ -94,14 +78,6 @@ class SaleForm(forms.ModelForm):
     def clean_item(self):
         x=clean_bar_code(self, 'item', Item)
         return x
-    def clean_unit_cost(self):
-        try:
-            data=self.cleaned_data['unit_cost']
-            if data=='undefined': return None
-            return Decimal(data)
-        except:
-            raise forms.ValidationError('Enter a number')
-            return data
             
 class AccountingForm(forms.ModelForm):
     class Meta:

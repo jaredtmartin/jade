@@ -3,7 +3,7 @@
 {% load i18n %}
 {% block other_fields_edit %}
     <td><input id="id_transaction-{{ object.pk }}-account" title="{% trans 'Name of client' %}" class="field account lookup client" value="{{object.subclass.source|default:''}}" type="text"></td>
-    <td/><td/><td/><td/><td/><td/>
+    <td/><td/><td/>
     <td><input id="id_transaction-{{ object.pk }}-value" title="{% trans 'Amount paid' %}" class="field money" value="{{object.subclass.value|floatformat:2}}" type="text"></td>
 {% endblock %}
 {% block other_actions_edit %}
@@ -11,7 +11,7 @@
 {% endblock %}
 {% block other_fields_show %}
     <td><a id="id_transaction-{{ object.pk }}-account" title="{% trans 'Name of client' %}"      value="{{object.subclass.source|default:''}}"                     class="field client account lookup" href="{{object.subclass.source.url}}">{{object.subclass.source|default:''}}</a></td>
-    <td/><td/><td/><td/><td/><td/>
+    <td/><td/><td/>
     <td id="id_transaction-{{object.pk}}-value"   title="{% trans 'Amount paid' %}"           value="{{object.subclass.value|floatformat:2}}"                  class="field money">    ${{object.subclass.value|floatformat:2}}</td>
 {% endblock %}
 {% block other_actions_show %}

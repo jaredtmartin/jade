@@ -6,9 +6,7 @@
     <td><input id="id_transaction-{{ object.pk }}-account" title="{% trans 'Name of vendor' %}"  class="field account lookup vendor" value="{{object.subclass.vendor|default:''}}" type="text"></td>
     
     {% include "inventory/inventory_base.html" %}
-    <td><input id="id_transaction-{{ object.pk }}-cost" title="{% trans 'Total cost' %}" class="cost field money" value="{{object.subclass.cost|floatformat:2}}" type="text"></td>
-    <td><input id="id_transaction-{{ object.pk }}-tax" title="{% trans 'Total tax' %}" class="tax field money" value="{{object.subclass.tax|neg|floatformat:2}}" type="text"></td>
-    <td/><td/>
+    <td><input id="id_transaction-{{ object.pk }}-value" title="{% trans 'Total value' %}" class="value field money" value="{{object.subclass.value|floatformat:2}}" type="text"></td>
 {% endblock %}
 {% block other_actions_edit %}
     <a style="display:none;" class="show" id="id_transaction-{{object.pk}}-return" title="Return Purchase" href="#" onclick="newTransaction('/inventory/purchasereturn/{{object.pk}}/new/'); return false;"><img src="{{MEDIA_URL}}/img/return.png"/></a>
@@ -19,9 +17,7 @@
 {% block other_fields_show %}
     <td id="id_transaction-{{ object.pk }}-account" title="{% trans 'Name of vendor' %}"  value="{{object.subclass.vendor|default:''}}" class="field account lookup vendor"><a href="{{object.subclass.vendor.url}}">{{object.subclass.vendor|default:''}}</a></td>
     {% include "inventory/inventory_base.html" %}
-    <td id="id_transaction-{{object.pk}}-cost" title="{% trans 'Total cost' %}" value="{{object.subclass.cost|floatformat:2}}"  class="cost field money">    ${{object.subclass.cost|floatformat:2}}</td>
-    <td id="id_transaction-{{object.pk}}-tax" title="{% trans 'Total tax' %}" value="{{object.subclass.tax|neg|floatformat:2}}"  class="tax field money">    ${{object.subclass.tax|neg|floatformat:2}}</td>
-    <td/><td/>
+    <td id="id_transaction-{{object.pk}}-value" title="{% trans 'Total value' %}" value="{{object.subclass.value|floatformat:2}}"  class="value field money">    ${{object.subclass.value|floatformat:2}}</td>
 {% endblock %}
 {% block other_actions_show %}
     <a class="show" id="id_transaction-{{object.pk}}-return" title="{% trans 'Return Purchase' %}" href="#" onclick="newTransaction('/inventory/purchasereturn/{{object.pk}}/new/'); return false;"><img src="{{MEDIA_URL}}/img/return.png"/></a>

@@ -5,11 +5,9 @@
     <td><input id="id_transaction-{{ object.pk }}-account" class="field account lookup vendor" value="{{object.subclass.vendor|default:''}}" type="text"></td>
     {% include "inventory/inventory_base.html" %}
     <td><input id="id_transaction-{{ object.pk }}-value" class="field money lookup" value="{{object.price|floatformat:2}}" type="text"></td>
-    <td/><td/><td/>
 {% endblock %}
 {% block other_fields_show %}
     <td id="id_transaction-{{ object.pk }}-account"      value="{{object.subclass.vendor|default:''}}"                     class="field account lookup vendor" ><a href="{{object.subclass.vendor.url}}">{{object.subclass.vendor|default:''}}</a></td>
     {% include "inventory/inventory_base.html" %}
     <td id="id_transaction-{{object.pk}}-value"             value="{{object.price|floatformat:2}}"                  class="field money">    ${{object.subclass.price|floatformat:2}}</td>
-    <td/><td/><td/>
 {% endblock %}

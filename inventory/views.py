@@ -886,33 +886,28 @@ def new_sale(request):
     except:pass
     print "client = " + str(client)
     item=None
-    tax=price=cost=0
+    value=0
+    cost=0
     try:
         item = Item.objects.fetch(request.POST['item'])
         cost = item.individual_cost
-        price = item.price(client)
-        if client.tax_group.price_includes_tax:
-            price = price/(client.tax_group.value+1)
-        tax = item.price(client)*client.tax_group.value
+        value = item.price(client)
     except Item.MultipleObjectsReturned: 
-#        raise forms.ValidationError('There are more than one %ss with the name %s. Try using a bar code.' % (name, data))
         error_list['item']=['There are more than one %ss with the name %s. Try using a bar code.' % ('item', request.POST['item'])]
     except Item.DoesNotExist: 
         if request.POST['item']!='': error_list['item']=["Unable to find '%s' in the list of items." % (request.POST['item'], )]
-#        raise forms.ValidationError("Unable to find '%s' in the list of items." % (data, ))
     if not client: error_list['client']=[unicode('Unable to find a client with the name specified.')]
     # create the sale
-    sale=Sale(doc_number=doc_number, date=date, client=client, item=item, cost=cost, price=price, tax=tax, quantity=1)
+    sale=Sale(doc_number=doc_number, date=date, client=client, item=item, cost=cost, value=value, quantity=1)
     sale.save()
     objects=[sale]
     # add any linked items
     if item:
         for link in item.links:
             cost = link.item.individual_cost
-            # no price or tax for linked items
             s=Sale(doc_number=doc_number, date=date, client=client, item=link.item, cost=cost, quantity=link.quantity)
             s.save()
-            objects.append(s)
+            objects.insert(0,s)
     try: 
         offer=sale.item.garanteeoffer_set.filter(price=0)[0]
         garantee=ClientGarantee(doc_number=sale.doc_number, date=sale.date, client=sale.client, item=sale.item, quantity=offer.months, serial=sale.serial)
@@ -993,7 +988,6 @@ def edit_salereturn(request, object_id):
 @permission_required('inventory.change_salereturn', login_url="/blocked/")
 def new_salereturn(request, object_id):
     sale = get_object_or_404(Sale, pk=object_id)
-    
     salereturn=SaleReturn(
         doc_number=sale.doc_number,
         date=sale.date,
@@ -1001,10 +995,8 @@ def new_salereturn(request, object_id):
         item=sale.item,
         quantity=-sale.quantity,
         serial=sale.serial,
-        price=-sale.price,
+        value=-sale.value,
         cost=-sale.cost,
-        tax=-sale.tax,
-        discount=-sale.discount,
     )
     salereturn.save()
     return _r2r(request,'inventory/results.html', {'edit_mode':True, 'objects':[salereturn],'prefix':'salereturn','line_template':"inventory/transaction.html",'error_list':{}, 'info_list':{}})
@@ -1027,7 +1019,7 @@ def new_purchasereturn(request, object_id):
     purchasereturn=PurchaseReturn(
         doc_number=purchase.doc_number, 
         date=purchase.date, 
-        cost=-purchase.cost,
+        value=-purchase.value,
         item=purchase.item, 
         quantity=-purchase.quantity, 
         serial=purchase.serial,
