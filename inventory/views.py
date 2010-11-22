@@ -217,7 +217,7 @@ def add_payment_to_purchase(request, object_id):
   
 
 ######################################################################################
-# Ajax Views
+#                                      Ajax Views
 ######################################################################################
 @login_required
 def serial_history(request, serial):
@@ -249,7 +249,14 @@ def ajax_unit_list(request):
     try: q=request.GET['q']
     except KeyError: q=''
     return _r2r(request,'inventory/ajax_list.html', {'object_list':Unit.objects.filter(name__icontains=q),'q':q})
-    
+
+@login_required
+@permission_required('inventory.view_tax', login_url="/blocked/")
+def ajax_tax_list(request):
+    try: q=request.GET['q']
+    except KeyError: q=''
+    return _r2r(request,'inventory/ajax_list.html', {'object_list':TaxRate.objects.filter(name__icontains=q),'q':q})
+     
 @login_required
 @permission_required('inventory.view_user', login_url="/blocked/")
 def ajax_user_list(request):
@@ -817,7 +824,7 @@ def new_garanteeoffer(request):
 
 @login_required
 @permission_required('inventory.view_garanteeoffer', login_url="/blocked/")
-def garantee_price(request): # AJAX GET ONLY
+def garantee_price(request):
     if (not request.GET['months']) or (not request.GET['item']):
         price=0
         message=None
@@ -924,6 +931,17 @@ def add_saletax(request, object_id):
 @permission_required('inventory.change_saletax', login_url="/blocked/")
 def edit_saletax(request, object_id):
     pass
+
+@login_required
+@permission_required('inventory.add_tax', login_url="/blocked/")
+def get_tax_form(request, object_id):
+    obj = get_object_or_404(Transaction, pk=object_id)
+    rate=transaction.account.default_tax_rate
+    total=Entry.objects.filter(transaction__doc_number=obj.doc_number, active=True, account=obj.subclass.account).aggregate(total=models.Sum('value'))['total'] or Decimal('0.00')
+    try: q=request.GET['q']
+    except KeyError: q=''
+    return _r2r(request,'inventory/tax_form.html', {'object_list':TaxRate.objects.filter(name__icontains=q),'q':q})
+   
     
     
 #######################################################################################

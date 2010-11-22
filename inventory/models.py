@@ -291,13 +291,16 @@ class Account(models.Model):
         self._credit_days =     kwargs.pop('credit_days', settings.DEFAULT_CREDIT_DAYS)
         self._due = self._overdue = None
         super(Account, self).__init__(*args, **kwargs)
+    def _get_default_tax_rate(self):
+        try: return self.contact.account_group.default_tax_rate
+        except: return None
+    default_tax_rate=property(_get_default_tax_rate)
     def save(self, *args, **kwargs):
         if not self.tipo: self.tipo='Account'
         try:
             if not self.site: raise Site.DoesNotExist
         except Site.DoesNotExist:
-            self.site=Site.objects.get_current()
-            
+            self.site=Site.objects.get_current()            
         super(Account, self).save(*args, **kwargs)
         try: self.contact.save()
         except: pass
@@ -478,7 +481,20 @@ def add_contact(sender, **kwargs):
             price_group=l._price_group,
             tax_group=l._tax_group,             
         )
-        
+class TaxRate(models.Model):
+    def __init__(self, *args, **kwargs):
+        super(TaxRate, self).__init__(*args, **kwargs)
+        try:
+            if not self.site: self.site=Site.objects.get_current()
+        except:
+            pass
+    name = models.CharField(max_length=32)
+    value = models.DecimalField(max_digits=3, decimal_places=2, default='0.00')
+    sales_account = models.ForeignKey(Account, related_name = 'sales_account')
+    purchases_account = models.ForeignKey(Account, related_name = 'purchases_account')
+    price_includes_tax = models.BooleanField(blank=True, default=True)
+    def __unicode__(self):
+        return self.name 
 class AccountGroup(models.Model):
     def __init__(self, *args, **kwargs):
         super(AccountGroup, self).__init__(*args, **kwargs)
@@ -491,6 +507,7 @@ class AccountGroup(models.Model):
     revenue_account = models.ForeignKey(Account, related_name = 'revenue_account')
     discounts_account = models.ForeignKey(Account, related_name = 'discounts_account')
     returns_account = models.ForeignKey(Account, related_name = 'returns_account')
+    default_tax_rate = models.ForeignKey(TaxRate)
     site = models.ForeignKey(Site)
     objects = CurrentSiteManager()
     def __unicode__(self):
@@ -704,8 +721,26 @@ class Transaction(models.Model):
     sites = models.ManyToManyField(Site)
     tipo = models.CharField(max_length=16, choices=TRANSACTION_TYPES)
     def __init__(self, *args, **kwargs):
+        self.template='inventory/accounting.html'
+        self.tipo='Transaction'
+        self._debit=None
+        self.credit=None
         self._active = kwargs.pop('active', True)
+        self.tipo = kwargs.pop('tipo', '')
+        self._debit = kwargs.pop('debit', self._debit)
+        self._credit = kwargs.pop('credit', self.credit)
+        self._account_tipo = kwargs.pop('account_tipo','Debit')
+        self._debit_tipo = kwargs.pop('debit_tipo','Debit')
+        self._credit_tipo = kwargs.pop('credit_tipo','Credit')
+        self._value_tipo = kwargs.pop('value_tipo', self._debit_tipo)
+        self._quantity = kwargs.pop('quantity', 0)
+        self._item = kwargs.pop('item', None)
+        self._serial = kwargs.pop('serial', '')
+        self._active = kwargs.pop('active', True)
+        self._delivered = kwargs.pop('delivered', True)
+        self._value = kwargs.pop('value', Decimal('0.00'))        
         super(Transaction, self).__init__(*args, **kwargs)
+        
     class Meta:
         ordering = ('-_date',)
         permissions = (
@@ -796,89 +831,6 @@ class Transaction(models.Model):
             self.garantee=Garantee(months=value)
             self.garantee.save()
     garantee_months = property(_get_garantee_months, _set_garantee_months)
-
-class Entry(models.Model):
-    """
-    """
-    ENTRY_TYPES = (
-        # Sale only entries
-        ('Client', 'Client'), # Debit
-        ('Revenue', 'Revenue'), # Credit
-        ('Tax', 'Tax'), # Credit
-        ('Discount', 'Discount'), # Credit
-        ('Inventory', 'Inventory'), # Debit
-        ('Expense', 'Expense'), # Debit
-
-        # Purchase only entries
-        ('Vendor', 'Vendor'), # Credit
-
-        # Count only entries
-        ('Count', 'Count'), # Debit
-
-        # Payment entries
-        ('Debit', 'Debit'), # Debit
-        ('Credit', 'Credit'), # Credit
-        
-        ('Production', 'Production'), # Credit
-        )
-    class Meta:
-        permissions = (
-            ("view_entry", "Can view entries"),
-            )
-        ordering = ('-date',)
-    objects=EntryManager()
-    offsite_objects=models.Manager()
-    transaction = models.ForeignKey(Transaction)
-    value = models.DecimalField(max_digits=8, decimal_places=2, default='0.00')
-    account = models.ForeignKey(Account)
-    delivered = models.BooleanField(default=True)
-    quantity = models.DecimalField(max_digits=8, decimal_places=2, default='0.00')
-    item = models.ForeignKey(Item, blank=True, null=True)
-    active = models.BooleanField(default=True)
-    tipo = models.CharField(max_length=16, choices=ENTRY_TYPES)
-    serial = models.CharField(max_length=32, null=True, blank=True)
-    date = models.DateTimeField(default=datetime.now())
-    #    sites = models.ManyToManyField(Site)
-    site = models.ForeignKey(Site)
-    #    objects = CurrentMultiSiteManager()
-    
-    def update(self, attribute, value):
-        setattr(self, attribute, value)
-        self.save()
-        
-    def __unicode__(self):
-        return str(self.account.name) +"($" + str(self.value)+") " + str(self.tipo)
-        
-class ExtraValue(models.Model):
-    name = models.CharField(max_length=32, blank=True, default="")
-    value = models.DecimalField(max_digits=8, decimal_places=2, null=True, blank=True)
-    transaction = models.ForeignKey(Transaction)
-    def __unicode__(self):
-        return str(self.name) +"(" + str(self.value)+") "
-
-class SimpleTransaction(Transaction):
-    class Meta:
-        proxy = True
-    def __init__(self, *args, **kwargs):
-        self.template='inventory/accounting.html'
-        self.tipo='SimpleTransaction'
-        self._debit=None
-        self.credit=None
-        self.tipo = kwargs.pop('tipo', '')
-        self._debit = kwargs.pop('debit', self._debit)
-        self._credit = kwargs.pop('credit', self.credit)
-        self._account_tipo = kwargs.pop('account_tipo','Debit')
-        self._debit_tipo = kwargs.pop('debit_tipo','Debit')
-        self._credit_tipo = kwargs.pop('credit_tipo','Credit')
-        self._value_tipo = kwargs.pop('value_tipo', self._debit_tipo)
-        self._quantity = kwargs.pop('quantity', 0)
-        self._item = kwargs.pop('item', None)
-        self._serial = kwargs.pop('serial', '')
-        self._active = kwargs.pop('active', True)
-        self._delivered = kwargs.pop('delivered', True)
-        self._value = kwargs.pop('value', Decimal('0.00'))        
-        super(SimpleTransaction, self).__init__(*args, **kwargs)
-    objects = BaseManager('SimpleTransaction')
     def _get_debit_entry(self):
         return self.entry(self._debit_tipo)
     debit_entry = property(_get_debit_entry)    
@@ -967,6 +919,62 @@ class SimpleTransaction(Transaction):
             self.entry(self._credit_tipo).update('quantity', -value)
         except AttributeError: self._quantity=value
     quantity = property(_get_quantity, _set_quantity)
+class Entry(models.Model):
+    """
+    """
+    ENTRY_TYPES = (
+        # Sale only entries
+        ('Client', 'Client'), # Debit
+        ('Revenue', 'Revenue'), # Credit
+        ('Tax', 'Tax'), # Credit
+        ('Discount', 'Discount'), # Credit
+        ('Inventory', 'Inventory'), # Debit
+        ('Expense', 'Expense'), # Debit
+
+        # Purchase only entries
+        ('Vendor', 'Vendor'), # Credit
+
+        # Count only entries
+        ('Count', 'Count'), # Debit
+
+        # Payment entries
+        ('Debit', 'Debit'), # Debit
+        ('Credit', 'Credit'), # Credit
+        
+        ('Production', 'Production'), # Credit
+        )
+    class Meta:
+        permissions = (
+            ("view_entry", "Can view entries"),
+            )
+        ordering = ('-date',)
+    objects=EntryManager()
+    offsite_objects=models.Manager()
+    transaction = models.ForeignKey(Transaction)
+    value = models.DecimalField(max_digits=8, decimal_places=2, default='0.00')
+    account = models.ForeignKey(Account)
+    delivered = models.BooleanField(default=True)
+    quantity = models.DecimalField(max_digits=8, decimal_places=2, default='0.00')
+    item = models.ForeignKey(Item, blank=True, null=True)
+    active = models.BooleanField(default=True)
+    tipo = models.CharField(max_length=16, choices=ENTRY_TYPES)
+    serial = models.CharField(max_length=32, null=True, blank=True)
+    date = models.DateTimeField(default=datetime.now())
+    site = models.ForeignKey(Site)
+    
+    def update(self, attribute, value):
+        setattr(self, attribute, value)
+        self.save()
+        
+    def __unicode__(self):
+        return str(self.account.name) +"($" + str(self.value)+") " + str(self.tipo)
+        
+class ExtraValue(models.Model):
+    name = models.CharField(max_length=32, blank=True, default="")
+    value = models.DecimalField(max_digits=8, decimal_places=2, null=True, blank=True)
+    transaction = models.ForeignKey(Transaction)
+    def __unicode__(self):
+        return str(self.name) +"(" + str(self.value)+") "
     
 def add_general_entries(sender, **kwargs):
     l=kwargs['instance']
@@ -992,6 +1000,7 @@ def add_general_entries(sender, **kwargs):
         serial=l._serial,
         delivered=l._delivered,
         )   
+post_save.connect(add_general_entries, sender=Transaction, dispatch_uid="jade.inventory.models:add_general_entries")
  ######################################################################################
  #                                 Sales
  ######################################################################################
@@ -1012,7 +1021,6 @@ class Sale(Transaction):
     def print_url(self):
         return '/inventory/sale/%s/receipt.pdf'% self.doc_number
     def __init__(self, *args, **kwargs):
-        self.template='inventory/sale.html'
         self._value = kwargs.pop('value',0)
         self._cost = kwargs.pop('cost', 0)
         self._date = kwargs.pop('date', datetime.now())
@@ -1022,6 +1030,7 @@ class Sale(Transaction):
         self._serial = kwargs.pop('serial', None)
         self._client = kwargs.pop('client', DEFAULT_CLIENT)
         super(Sale, self).__init__(*args, **kwargs)
+        self.template='inventory/sale.html'
         self.deliverable=True
         self.returnable=True
         self.extra_actions=[
@@ -1178,7 +1187,7 @@ post_save.connect(add_sale_entries, sender=SaleReturn, dispatch_uid="jade.invent
 #                                   Purchases
 ################################################################################################
   
-class Purchase(SimpleTransaction):
+class Purchase(Transaction):
     class Meta:
         proxy = True
         permissions = (
@@ -1242,7 +1251,7 @@ post_save.connect(add_purchase_extra_values, sender=PurchaseReturn, dispatch_uid
 ################################################################################################################
 #                                             Payments                                                         #
 ################################################################################################################
-class Payment(SimpleTransaction):
+class Payment(Transaction):
     class Meta:
         proxy = True
     def _get_timing(self):
@@ -1313,21 +1322,8 @@ post_save.connect(add_general_entries, sender=VendorRefund, dispatch_uid="jade.i
 ################################################################################################################
 #                                             Tax                                                              #
 ################################################################################################################
-class TaxRate(models.Model):
-    def __init__(self, *args, **kwargs):
-        super(TaxRate, self).__init__(*args, **kwargs)
-        try:
-            if not self.site: self.site=Site.objects.get_current()
-        except:
-            pass
-    name = models.CharField(max_length=32)
-    value = models.DecimalField(max_digits=3, decimal_places=2, default='0.00')
-    sales_account = models.ForeignKey(Account, related_name = 'sales_account')
-    purchases_account = models.ForeignKey(Account, related_name = 'purchases_account')
-    price_includes_tax = models.BooleanField(blank=True, default=True)
-    def __unicode__(self):
-        return self.name
-class SaleTax(SimpleTransaction):
+
+class SaleTax(Transaction):
     class Meta:
         proxy = True
     def __init__(self, *args, **kwargs):
@@ -1345,7 +1341,7 @@ class SaleTax(SimpleTransaction):
         self.debit=value
     client=property(_get_client,_set_client)
 post_save.connect(add_general_entries, sender=SaleTax, dispatch_uid="jade.inventory.models")
-class PurchaseTax(SimpleTransaction):
+class PurchaseTax(Transaction):
     class Meta:
         proxy = True
     def __init__(self, *args, **kwargs):
@@ -1430,7 +1426,7 @@ def add_tax_entries(sender, **kwargs):
 ################################################################################################
 #                                       Garantees
 ################################################################################################
-class Garantee(SimpleTransaction):
+class Garantee(Transaction):
     # Quantity is the number of months the Garantee will be active
     class Meta:
         proxy = True
@@ -1522,7 +1518,7 @@ class CountManager(BaseManager):
         else:
             count.errors={'Quantity':[u'Only counts with quantities lower than current stock levels can be converted into sales.',]}
             return count
-class Count(SimpleTransaction):
+class Count(Transaction):
     class Meta:
         proxy = True
         permissions = (

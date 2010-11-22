@@ -15,6 +15,7 @@ urlpatterns = patterns('',
     (r'^unit_list/$', 'jade.inventory.views.ajax_unit_list'),
     (r'^site_list/$', 'jade.inventory.views.ajax_site_list'),
     (r'^user_list/$', 'jade.inventory.views.ajax_user_list'),
+    (r'^tax_list/$', 'jade.inventory.views.ajax_tax_list'),
     (r'^transaction_entry_list/(?P<object_id>\d+)/$', 'jade.inventory.views.ajax_transaction_entry_list'),
     (r'^set-language/$', 'jade.inventory.views.set_languages'),
     
@@ -27,7 +28,8 @@ urlpatterns = patterns('',
     (r'^sale/(?P<object_id>\d+)/pay/$', 'jade.inventory.views.add_payment_to_sale'),
 
     # Tax
-    (r'^sale/(?P<object_id>\d+)/tax/$', 'jade.inventory.views.add_saletax'),
+    (r'^sale/(?P<object_id>\d+)/addtax/$', 'jade.inventory.views.add_saletax'),
+    (r'^sale/(?P<object_id>\d+)/get_tax_form/$', 'jade.inventory.views.get_tax_form'),
     (r'^saletax/(?P<object_id>\d+)/$', 'jade.inventory.views.edit_saletax'),
     # Sale Returns
     (r'^salereturn/(?P<object_id>\d+)/$', 'jade.inventory.views.edit_salereturn'),

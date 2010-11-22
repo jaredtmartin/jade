@@ -23,6 +23,34 @@
 	    </form>
     </div>
     <script>
+        function addTax(object_id){
+            jQuery("#last_id").val(object_id);
+            $.ajax({
+                url: '/inventory/sale/'+object_id+'/get-default-tax/',
+                type:'GET',
+                success: showTaxMenu
+            });
+        }
+        function showTaxMenu(){
+            $('#ajax-data').replaceWith('<div id="ajax-data" style="display: none;"></div>');
+            $('#ajax-data').append(data);
+            $("#tax-form").dialog({
+		        autoOpen: true,
+		        height: 250,
+		        width: 250,
+		        position:['right','bottom'],
+		        modal: false,
+		        buttons: {
+			        Close: function() {
+				        $(this).dialog('close');
+			        },
+		            'Add': function() {
+		                newTransaction('/sale/'+$('#last_id').val()+'/addtax/');
+		            }
+		        },
+	        });
+            $('#tax-form #tax').autocomplete('/inventory/tax_list/', {matchSubset:0, autoFill:1,});
+        }
         $(document).ready(function(){
             $("#accounting-form").dialog({
 			    autoOpen: false,
@@ -40,6 +68,7 @@
 		    });
             $('#accounting-form #debit-account').autocomplete('/inventory/account_list/', {matchSubset:0, autoFill:1,});
             $('#accounting-form #credit-account').autocomplete('/inventory/account_list/', {matchSubset:0, autoFill:1,});
+            
             $('#accounting-form #value').keydown(function(e){
                 if (e.keyCode == 13) {
                     newTransaction('/inventory/accounting/new/');
@@ -47,6 +76,7 @@
                     return false;
                 }
             });
+
         });
     </script>
 {% endblock%}

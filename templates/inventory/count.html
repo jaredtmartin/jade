@@ -6,7 +6,7 @@
     <td><input id="id_transaction-{{ object.pk }}-item" title="{% trans 'Name of item counted' %}" class="field item lookup" value="{{object.subclass.item|default:''}}" type="text"></td>
     <td><input id="id_transaction-{{ object.pk }}-quantity" title="{% trans 'Quantity of item found' %}" class="field quantity inventory-details" value="{{object.subclass.count|floatformat:-2}}" type="text"></td>
     <td><input id="id_transaction-{{ object.pk }}-serial" title="{% trans 'Serial number found (if applicable)' %}" class="field serial inventory-details" value="{{object.subclass.serial|default:''}}" type="text"></td>
-    <td><input id="id_transaction-{{ object.pk }}-value" class="field money lookup" value="{{object.subclass.unit_cost|floatformat:2}}" type="text"></td>
+    <td><input id="id_transaction-{{ object.pk }}-value" class="field money" value="{{object.subclass.unit_cost|floatformat:2}}" type="text"></td>
 {% endblock %}
 {% block other_actions_edit %}
     <a style="display:none;" class="show" id="id_transaction-{{object.pk}}-post" title="{% trans 'Post Count' %}" href="#" onclick="postCount({{object.pk}}); return false;"><img src="{{MEDIA_URL}}/img/post.png"/></a>
