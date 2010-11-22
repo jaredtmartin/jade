@@ -176,7 +176,7 @@ def edit_purchase(request, object_id):
 @permission_required('inventory.change_purchase', login_url="/blocked/")
 def new_purchase(request):
     error_list={}
-    cost=0
+    value=0
     item=None
     try: doc_number=request.POST['doc_number']
     except: doc_number='' 
@@ -197,12 +197,8 @@ def new_purchase(request):
         error_list['item']=['There are more than one %ss with the name %s. Try using a bar code.' % ('item', request.POST['item'])]
     except Item.DoesNotExist: 
         if request.POST['item']!='': error_list['item']=["Unable to find '%s' in the list of items." % (request.POST['item'], )]
-    if vendor:
-        if vendor.tax_group.price_includes_tax: cost = cost/(vendor.tax_group.value+1)
-        tax=cost*vendor.tax_group.value
-    else:
-        error_list['vendor']=[unicode('Unable to find a vendor with the name specified.')]
-    purchase=Purchase(doc_number=doc_number, date=date, vendor=vendor, item=item, cost=cost, tax=tax)
+    if not vendor: error_list['vendor']=[unicode('Unable to find a vendor with the name specified.')]
+    purchase=Purchase(doc_number=doc_number, date=date, vendor=vendor, item=item, value=value)
     purchase.save()
     return _r2r(request,'inventory/results.html', {'edit_mode':True, 'objects':[purchase],'prefix':'purchase','line_template':"inventory/transaction.html",'error_list':error_list, 'info_list':{}})
 
@@ -215,13 +211,11 @@ def add_payment_to_purchase(request, object_id):
     for transaction in doc:
         for entry in transaction.entry_set.filter(account=obj.vendor):
             if entry.active: total-=entry.value
-    payment=VendorPayment(doc_number=obj.doc_number, date=obj.date, source=PAYMENTS_MADE_ACCOUNT, dest=obj.vendor, value=total)
+    payment=VendorPayment(doc_number=obj.doc_number, date=obj.date, debit=obj.vendor, value=total)
     payment.save()
     return _r2r(request,'inventory/results.html', {'edit_mode':True, 'objects':[payment],'prefix':'vendorpayment','line_template':"inventory/transaction.html",'error_list':{}, 'info_list':{}})
   
 
-def delete_purchase(request, object_id):
-    return delete_object(request, object_id, Purchase, 'purchase')
 ######################################################################################
 # Ajax Views
 ######################################################################################
@@ -447,11 +441,11 @@ def labels(request, doc_number):
     return response
 
 ######################################################################################
-# Count Views
+#                                 Count Views
 ######################################################################################
 @login_required
 @permission_required('inventory.view_count', login_url="/blocked/")
-def list_counts(request): # GET ONLY
+def list_counts(request):
     try: q=request.GET['q']
     except KeyError: q=''
     if q=='': page=_paginate(request, Count.objects.all().order_by('-_date'))
@@ -489,11 +483,6 @@ def new_count(request):
     return _r2r(request,'inventory/results.html', {'edit_mode':True, 'objects':[count],'prefix':'count','line_template':"inventory/transaction.html",'error_list':{}, 'info_list':{}})
 
 @login_required
-@permission_required('inventory.change_count', login_url="/blocked/")
-def delete_count(request, object_id):
-    return delete_object(request, object_id, Count, 'count')
-
-@login_required
 @permission_required('inventory.post_count', login_url="/blocked/")
 def post_count(request, object_id):
     count = get_object_or_404(Count, pk=object_id)
@@ -505,11 +494,8 @@ def post_count(request, object_id):
 @permission_required('inventory.post_count_sale', login_url="/blocked/")
 def post_count_as_sale(request, object_id):
     result=Count.objects.post_as_sale(object_id)
-    print "type(result) = " + str(type(result))
-    print "result = " + str(result)
     if not result.errors: 
         info_list=[_('The count has been posted as a sale successfully.'),]
-        print "passed"
         return _r2r(request,'inventory/results.html', {
             'objects':[result],
             'prefix':'sale',
@@ -517,7 +503,6 @@ def post_count_as_sale(request, object_id):
             'error_list':{}, 
             'info_list':info_list})
     else: 
-        print "failing"
         info_list=[]
         return _r2r(request,'inventory/results.html', {'objects':[result],'prefix':'count','line_template':"inventory/transaction.html", 'error_list':result.errors, 'info_list':info_list})
     
@@ -628,7 +613,7 @@ def new_account(request):
     return new_object(request, AccountForm, "account", 'inventory/account_show.html', tipo='Account', extra_context={'tipo':'account'})
 
 ######################################################################################
-# Item Views
+#                                   Item Views
 ######################################################################################
 @login_required
 @permission_required('inventory.view_item', login_url="/blocked/")
@@ -799,11 +784,6 @@ def new_clientgarantee(request, object_id):
     garantee.save()
     return _r2r(request,'inventory/results.html', {'edit_mode':True, 'objects':[garantee],'prefix':'garantee','line_template':"inventory/transaction.html",'error_list':{}, 'info_list':{}})
 
-@login_required
-@permission_required('inventory.change_clientgarantee', login_url="/blocked/")
-def delete_clientgarantee(request, object_id):
-    return delete_object(request, object_id, ClientGarantee, 'clientgarantee')
-
 ######################################################################################
 # Vendor Garantees
 ######################################################################################
@@ -819,11 +799,6 @@ def new_vendorgarantee(request, object_id):
     garantee=VendorGarantee(doc_number=purchase.doc_number, date=purchase.date, vendor=purchase.vendor, item=purchase.item, serial=purchase.serial)
     garantee.save()
     return _r2r(request,'inventory/results.html', {'edit_mode':True, 'objects':[garantee],'prefix':'garantee','line_template':"inventory/transaction.html",'error_list':{}, 'info_list':{}})
-
-@login_required
-@permission_required('inventory.change_vendorgarantee', login_url="/blocked/")
-def delete_vendorgarantee(request, object_id):
-    return delete_object(request, object_id, VendorGarantee, 'vendorgarantee')
 
 @login_required
 @permission_required('inventory.change_garanteeoffer', login_url="/blocked/")
@@ -921,9 +896,6 @@ def get_transaction(request, object_id, edit_mode=False):
     if not request.user.has_perm('inventory.change_'+obj.tipo.lower()): return http.HttpResponseRedirect("/blocked/")
     return _r2r(request,'inventory/results.html', {'edit_mode':edit_mode, 'objects':[obj],'prefix':obj.tipo.lower(),'line_template':"inventory/transaction.html",'error_list':{}, 'info_list':{}})
 
-def delete_sale(request, object_id):
-    return delete_object(request, object_id, Sale, 'sale')
-
 @login_required
 @permission_required('inventory.change_clientpayment', login_url="/blocked/")
 def add_payment_to_sale(request, object_id):
@@ -933,49 +905,66 @@ def add_payment_to_sale(request, object_id):
     for transaction in doc:
         for entry in transaction.entry_set.filter(account=obj.client):
             if entry.active: total+=entry.value
-    payment=ClientPayment(doc_number=obj.doc_number, date=obj.date, source=obj.client, dest=PAYMENTS_RECEIVED_ACCOUNT, value=total)
+    payment=ClientPayment(doc_number=obj.doc_number, date=obj.date, credit=obj.client, debit=PAYMENTS_RECEIVED_ACCOUNT, value=total)
     payment.save()
     return _r2r(request,'inventory/results.html', {'edit_mode':True, 'objects':[payment],'prefix':'clientpayment','line_template':"inventory/transaction.html",'error_list':{}, 'info_list':{}})
-######################################################################################
-# Accounting Views
-######################################################################################
-@login_required
-@permission_required('inventory.change_accounting', login_url="/blocked/")
-def edit_accounting(request, object_id):
-    return edit_object(request, object_id, Accounting, AccountingForm, "accounting")
+    
     
 @login_required
-@permission_required('inventory.view_accounting', login_url="/blocked/")
-def list_accounting(request, errors={}): # GET ONLY
-    return search_and_paginate_transactions(request, Accounting,'inventory/accounting_list.html', errors)
+@permission_required('inventory.add_saletax', login_url="/blocked/")
+def add_saletax(request, object_id):
+    sale = get_object_or_404(Sale, pk=object_id)
+    total=Entry.objects.filter(transaction__doc_number=obj.doc_number, active=True, account=obj.client).aggregate(total=models.Sum('value'))['total'] or Decimal('0.00')
+    rate=request.POST.pop('rate',DEFAULT_TAX_RATE.rate)
+    account=request.POST.pop('account',DEFAULT_TAX_RATE.sales_account)
+    tax=SaleTax(doc_number=obj.doc_number, date=obj.date, debit=obj.client, credit=account, value=total*rate)
+    tax.save()
+    return _r2r(request,'inventory/results.html', {'edit_mode':True, 'objects':[tax],'prefix':'saletax','line_template':"inventory/tax.html",'error_list':{}, 'info_list':{}})
 @login_required
-@permission_required('inventory.change_accounting', login_url="/blocked/")
-def new_accounting(request):
-    error_list={}
-    # get the doc number
-    try: doc_number=request.POST['doc_number']
-    except: doc_number='' 
-    if doc_number=='': doc_number=Accounting.objects.next_doc_number()
-    # get the date
-    try: 
-        sample=Accounting.objects.filter(doc_number=doc_number)[0]
-        date=sample.date
-    except:
-        date=datetime.now()
-    if len(error_list)==0:
-        transaction=Accounting(
-            doc_number=doc_number, 
-            date=date, 
-            debit_account=DEFAULT_ACCOUNTING_DEBIT_ACCOUNT, 
-            credit_account=DEFAULT_ACCOUNTING_CREDIT_ACCOUNT)
-        transaction.save()
-        objects=[transaction]
-    else:
-        objects=[]
-    return _r2r(request,'inventory/results.html', {'edit_mode':True, 'objects':objects,'prefix':'accounting','line_template':"inventory/accounting.html",'error_list':error_list, 'info_list':{}})
+@permission_required('inventory.change_saletax', login_url="/blocked/")
+def edit_saletax(request, object_id):
+    pass
     
-def delete_accounting(request, object_id):
-    return delete_object(request, object_id, Accounting, 'accounting')    
+    
+#######################################################################################
+## Accounting Views
+#######################################################################################
+#@login_required
+#@permission_required('inventory.change_accounting', login_url="/blocked/")
+#def edit_accounting(request, object_id):
+#    return edit_object(request, object_id, Accounting, AccountingForm, "accounting")
+#    
+#@login_required
+#@permission_required('inventory.view_accounting', login_url="/blocked/")
+#def list_accounting(request, errors={}): # GET ONLY
+#    return search_and_paginate_transactions(request, Accounting,'inventory/accounting_list.html', errors)
+#@login_required
+#@permission_required('inventory.change_accounting', login_url="/blocked/")
+#def new_accounting(request):
+#    error_list={}
+#    # get the doc number
+#    try: doc_number=request.POST['doc_number']
+#    except: doc_number='' 
+#    if doc_number=='': doc_number=Accounting.objects.next_doc_number()
+#    # get the date
+#    try: 
+#        sample=Accounting.objects.filter(doc_number=doc_number)[0]
+#        date=sample.date
+#    except:
+#        date=datetime.now()
+#    if len(error_list)==0:
+#        transaction=Accounting(
+#            doc_number=doc_number, 
+#            date=date, 
+#            debit_account=DEFAULT_ACCOUNTING_DEBIT_ACCOUNT, 
+#            credit_account=DEFAULT_ACCOUNTING_CREDIT_ACCOUNT)
+#        transaction.save()
+#        objects=[transaction]
+#    else:
+#        objects=[]
+#    return _r2r(request,'inventory/results.html', {'edit_mode':True, 'objects':objects,'prefix':'accounting','line_template':"inventory/accounting.html",'error_list':error_list, 'info_list':{}})
+#    
+ 
 ######################################################################################
 # Return Views
 ######################################################################################
@@ -1001,10 +990,6 @@ def new_salereturn(request, object_id):
     salereturn.save()
     return _r2r(request,'inventory/results.html', {'edit_mode':True, 'objects':[salereturn],'prefix':'salereturn','line_template':"inventory/transaction.html",'error_list':{}, 'info_list':{}})
 
-@login_required
-@permission_required('inventory.delete_salereturn', login_url="/blocked/")
-def delete_salereturn(request, object_id):
-    return delete_object(request, object_id, Sale, 'sale')
 ########################################################################################
 @login_required
 @permission_required('inventory.change_purchasereturn', login_url="/blocked/")
@@ -1028,10 +1013,6 @@ def new_purchasereturn(request, object_id):
     purchasereturn.save()
     return _r2r(request,'inventory/results.html', {'edit_mode':True, 'objects':[purchasereturn],'prefix':'purchasereturn','line_template':"inventory/transaction.html",'error_list':{}, 'info_list':{}})
 
-@login_required
-@permission_required('inventory.delete_purchasereturn', login_url="/blocked/")
-def delete_purchasereturn(request, object_id):
-    return delete_object(request, object_id, PurchaseReturn, 'purchasereturn')
 ######################################################################################
 # Refunds
 ######################################################################################
@@ -1045,20 +1026,16 @@ def edit_clientrefund(request, object_id):
 @permission_required('inventory.change_clientrefund', login_url="/blocked/")
 def new_clientrefund(request, object_id):
     payment = get_object_or_404(ClientPayment, pk=object_id)
-    
     refund=ClientRefund(
         doc_number=payment.doc_number, 
         date=payment.date, 
         value=-payment.value,
-        source=payment.source,  
+        credit=payment.credit,  
     )
+    print "refund.debit = " + str(refund.debit)
     refund.save()
     return _r2r(request,'inventory/results.html', {'edit_mode':True, 'objects':[refund],'prefix':'clientrefund','line_template':"inventory/transaction.html",'error_list':{}, 'info_list':{}})
 
-@login_required
-@permission_required('inventory.delete_clientrefund', login_url="/blocked/")
-def delete_clientrefund(request, object_id):
-    return delete_object(request, object_id, ClientRefund, 'clientrefund')
 ######################################################################################
 # Vendor Refunds
 ######################################################################################
@@ -1071,20 +1048,17 @@ def edit_vendorrefund(request, object_id):
 @permission_required('inventory.change_vendorrefund', login_url="/blocked/")
 def new_vendorrefund(request, object_id):
     payment = get_object_or_404(VendorPayment, pk=object_id)
-    
+    print "payment.debit = " + str(payment.debit)
     refund=VendorRefund(
         doc_number=payment.doc_number, 
         date=payment.date, 
         value=-payment.value,
-        dest=payment.dest,  
+        debit=payment.debit,  
     )
+    print "saving"
     refund.save()
     return _r2r(request,'inventory/results.html', {'edit_mode':True, 'objects':[refund],'prefix':'vendorrefund','line_template':"inventory/transaction.html",'error_list':{}, 'info_list':{}})
 
-@login_required
-@permission_required('inventory.delete_vendorrefund', login_url="/blocked/")
-def delete_vendorrefund(request, object_id):
-    return delete_object(request, object_id, VendorRefund, 'vendorrefund')
 ######################################################################################
 # Payment Views
 ######################################################################################
@@ -1098,8 +1072,7 @@ def edit_clientpayment(request, object_id):
 @login_required
 @permission_required('inventory.change_clientpayment', login_url="/blocked/")
 def new_clientpayment(request):
-    try: doc_number=request.POST['doc_number']
-    except: doc_number='7777' # TODO This should grab the next available doc_number
+    doc_number=request.POST['doc_number']
     try: 
         sample = Sale.objects.filter(doc_number=doc_number)[0]
         date = sample.date
@@ -1111,12 +1084,9 @@ def new_clientpayment(request):
         if request.POST['client']: 
             client = Client.objects.get(name=request.POST['client'])
     except:pass
-    clientpayment=ClientPayment(doc_number=doc_number, date=date, source=client, dest=PAYMENTS_RECEIVED_ACCOUNT)
+    clientpayment=ClientPayment(doc_number=doc_number, date=date, account=client)
     clientpayment.save()
     return _r2r(request,'inventory/results.html', {'edit_mode':True, 'objects':[clientpayment],'prefix':'clientpayment','line_template':"inventory/transaction.html",'error_list':{}, 'info_list':{}})
-    
-def delete_clientpayment(request, object_id):
-    return delete_object(request, object_id, ClientPayment, 'clientpayment')
 ######################################################################################
 # Vendor Payments
 ######################################################################################
@@ -1144,8 +1114,26 @@ def new_vendorpayment(request):
     vendorpayment.save()
     return _r2r(request,'inventory/results.html', {'edit_mode':True, 'objects':[vendorpayment],'prefix':'vendorpayment','line_template':"inventory/transaction.html",'error_list':{}, 'info_list':{}})
     
-def delete_vendorpayment(request, object_id):
-    return delete_object(request, object_id, VendorPayment, 'vendorpayment')
+    
+@login_required
+@permission_required('inventory.add_tax', login_url="/blocked/")
+def new_tax(request):
+    doc_number=request.POST['doc_number']
+    try: 
+        sample = Sale.objects.filter(doc_number=doc_number)[0]
+        date = sample.date
+        client = sample.client
+    except:
+        date = datetime.now()
+        client = Client.objects.default()
+    try: 
+        if request.POST['client']:
+            client = Client.objects.get(name=request.POST['client'])
+    except:pass
+    clientpayment=ClientPayment(doc_number=doc_number, date=date, source=client, dest=PAYMENTS_RECEIVED_ACCOUNT)
+    clientpayment.save()
+    return _r2r(request,'inventory/results.html', {'edit_mode':True, 'objects':[clientpayment],'prefix':'clientpayment','line_template':"inventory/transaction.html",'error_list':{}, 'info_list':{}})
+
 ######################################################################################
 # Transaction Views
 ######################################################################################
@@ -1488,10 +1476,6 @@ def new_transfer(request):
     if len(error_list)==0:
         transfer.save()
     return _r2r(request,'inventory/results.html', {'edit_mode':True, 'objects':[transfer],'prefix':'transfer','line_template':"inventory/transaction.html",'error_list':error_list, 'info_list':{}})
-@login_required
-@permission_required('inventory.delete_transfer', login_url="/blocked/")
-def delete_transfer(request, object_id):
-    return delete_object(request, object_id, Transfer, 'transfer')
 
 @login_required
 @permission_required('inventory.add_linkeditem', login_url="/blocked/")

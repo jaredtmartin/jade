@@ -79,8 +79,8 @@
     <input type="hidden" id="last_id" value="">
 {% endblock%}
 {% block line %}
-    {% with object.subclass.tipo as tipo %}
-        {% include "inventory/bare_transaction.html" %}
+    {% with object.subclass as object %}
+        {% include "inventory/transaction.html" %}
     {% endwith %}
 {% endblock%}
 

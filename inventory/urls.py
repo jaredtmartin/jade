@@ -24,63 +24,55 @@ urlpatterns = patterns('',
     (r'^sale/new/$', 'jade.inventory.views.new_sale'),
     (r'^sale/(?P<doc_number>\w+)/receipt.pdf$', 'jade.inventory.views.sale_receipt'),
     (r'^sale/(?P<doc_number>\w+)/garantee.pdf$', 'jade.inventory.views.garantee_report'),
-    (r'^sale/(?P<object_id>\d+)/delete/$', 'jade.inventory.views.delete_sale'),
     (r'^sale/(?P<object_id>\d+)/pay/$', 'jade.inventory.views.add_payment_to_sale'),
 
+    # Tax
+    (r'^sale/(?P<object_id>\d+)/tax/$', 'jade.inventory.views.add_saletax'),
+    (r'^saletax/(?P<object_id>\d+)/$', 'jade.inventory.views.edit_saletax'),
     # Sale Returns
     (r'^salereturn/(?P<object_id>\d+)/$', 'jade.inventory.views.edit_salereturn'),
     (r'^salereturn/(?P<object_id>\d+)/new/$', 'jade.inventory.views.new_salereturn'),
-    (r'^salereturn/(?P<object_id>\d+)/delete/$', 'jade.inventory.views.delete_salereturn'),
     
     # Purchases
     (r'^purchases/$', 'jade.inventory.views.list_purchases'),
     (r'^purchase/(?P<object_id>\d+)/$', 'jade.inventory.views.edit_purchase'),
     (r'^purchase/new/$', 'jade.inventory.views.new_purchase'),
-    (r'^purchase/(?P<object_id>\d+)/delete/$', 'jade.inventory.views.delete_purchase'),
     (r'^purchase/(?P<object_id>\d+)/pay/$', 'jade.inventory.views.add_payment_to_purchase'),
     
     # Transfers
     (r'^transfers/$', 'jade.inventory.views.list_transfers'),
     (r'^transfer/(?P<object_id>\d+)/$', 'jade.inventory.views.edit_transfer'),
     (r'^transfer/new/$', 'jade.inventory.views.new_transfer'),
-    (r'^transfer/(?P<object_id>\d+)/delete/$', 'jade.inventory.views.delete_transfer'),
     
     # Accounting
-    (r'^accounting/$', 'jade.inventory.views.list_accounting'),
-    (r'^accounting/(?P<object_id>\d+)/$', 'jade.inventory.views.edit_accounting'),
-    (r'^accounting/new/$', 'jade.inventory.views.new_accounting'),
-    (r'^accounting/(?P<object_id>\d+)/delete/$', 'jade.inventory.views.delete_accounting'),
+#    (r'^accounting/$', 'jade.inventory.views.list_accounting'),
+#    (r'^accounting/(?P<object_id>\d+)/$', 'jade.inventory.views.edit_accounting'),
+#    (r'^accounting/new/$', 'jade.inventory.views.new_accounting'),
     
     #Purchase Returns
     (r'^purchasereturn/(?P<object_id>\d+)/$', 'jade.inventory.views.edit_purchasereturn'),
     (r'^purchasereturn/(?P<object_id>\d+)/new/$', 'jade.inventory.views.new_purchasereturn'),
-    (r'^purchasereturn/(?P<object_id>\d+)/delete/$', 'jade.inventory.views.delete_purchasereturn'),
     
     # Client Payments
     (r'^clientpayment/(?P<object_id>\d+)/$', 'jade.inventory.views.edit_clientpayment'),
     (r'^clientpayment/new/$', 'jade.inventory.views.new_clientpayment'),
-    (r'^clientpayment/(?P<object_id>\d+)/delete/$', 'jade.inventory.views.delete_clientpayment'),
     
     # Client Refunds
     (r'^clientrefund/(?P<object_id>\d+)/$', 'jade.inventory.views.edit_clientrefund'),
     (r'^clientrefund/(?P<object_id>\d+)/new/$', 'jade.inventory.views.new_clientrefund'),
-    (r'^clientrefund/(?P<object_id>\d+)/delete/$', 'jade.inventory.views.delete_clientrefund'),
     
     # Vendor Payments
     (r'^vendorpayment/(?P<object_id>\d+)/$', 'jade.inventory.views.edit_vendorpayment'),
     (r'^vendorpayment/new/$', 'jade.inventory.views.new_vendorpayment'),
-    (r'^vendorpayment/(?P<object_id>\d+)/delete/$', 'jade.inventory.views.delete_vendorpayment'),
     
     # Vendor Refunds
     (r'^vendorrefund/(?P<object_id>\d+)/$', 'jade.inventory.views.edit_vendorrefund'),
     (r'^vendorrefund/(?P<object_id>\d+)/new/$', 'jade.inventory.views.new_vendorrefund'),
-    (r'^vendorrefund/(?P<object_id>\d+)/delete/$', 'jade.inventory.views.delete_vendorrefund'),
     
     #Counts
     (r'^counts/$', 'jade.inventory.views.list_counts'),
     (r'^count/(?P<object_id>\d+)/$', 'jade.inventory.views.edit_count'),
     (r'^count/new/$', 'jade.inventory.views.new_count'),
-    (r'^count/(?P<object_id>\d+)/delete/$', 'jade.inventory.views.delete_count'),
     (r'^count/(?P<object_id>\d+)/post/$', 'jade.inventory.views.post_count'),
     (r'^count/(?P<object_id>\d+)/post-as-sale/$', 'jade.inventory.views.post_count_as_sale'),
     (r'^count/(?P<doc_number>\w+)/sheet.pdf$', 'jade.inventory.views.count_sheet'),
@@ -128,11 +120,9 @@ urlpatterns = patterns('',
     (r'^price/(?P<object_id>\d+)/$', 'jade.inventory.views.price_edit'),
 
     #Garantees
-    (r'^clientgarantee/(?P<object_id>\d+)/delete/$', 'jade.inventory.views.delete_clientgarantee'),
     (r'^clientgarantee/(?P<object_id>\d+)/$', 'jade.inventory.views.edit_clientgarantee'),
     (r'^clientgarantee/(?P<object_id>\d+)/new/$', 'jade.inventory.views.new_clientgarantee'),
     
-    (r'^vendorgarantee/(?P<object_id>\d+)/delete/$', 'jade.inventory.views.delete_vendorgarantee'),
     (r'^vendorgarantee/(?P<object_id>\d+)/$', 'jade.inventory.views.edit_vendorgarantee'),
     (r'^vendorgarantee/(?P<object_id>\d+)/new/$', 'jade.inventory.views.new_vendorgarantee'),
     
