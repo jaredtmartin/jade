@@ -1,0 +1,15 @@
+{% extends "inventory/transaction_base.html" %}
+{% load i18n %}
+{% block other_fields_edit %}
+    <td><input id="id_transaction-{{ object.pk }}-account" title="{% trans 'Name of debit account' %}" class="field account lookup accounting" value="{{object.subclass.debit_account|default:''}}" type="text"></td>
+    <td><input id="id_transaction-{{ object.pk }}-account2" title="{% trans 'Name of credit account' %}" class="field account lookup accounting" value="{{object.subclass.credit_account|default:''}}" type="text"></td>
+    <td/><td/><td/><td/><td/>
+    <td><input id="id_transaction-{{ object.pk }}-value" class="field money lookup" value="{{object.subclass.value|floatformat:2}}" type="text"></td>
+{% endblock %}
+{% block other_fields_show %}
+    <td>From: <a id="id_transaction-{{ object.pk }}-account" title="{% trans 'Name of debit account' %}"      value="{{object.subclass.debit_account|default:''}}"                     class="field account lookup accounting" href="{{object.subclass.debit_account.url}}">{{object.subclass.debit_account|default:''}}</a></td>
+    <td>To: <a id="id_transaction-{{ object.pk }}-account2" title="{% trans 'Name of credit account' %}"      value="{{object.subclass.credit_account|default:''}}"                     class="field account lookup accounting" href="{{object.subclass.credit_account.url}}">{{object.subclass.credit_account|default:''}}</a></td>
+    <td/><td/><td/><td/><td/>
+    <td id="id_transaction-{{object.pk}}-value" title="{% trans 'Value of transaction' %}" value="{{object.subclass.value|floatformat:2}}"  class="field money">    ${{object.subclass.value|default:0|floatformat:2}}</td>
+{% endblock %}
+
