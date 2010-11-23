@@ -329,7 +329,9 @@ class Account(models.Model):
         try: return self.account_group.discounts_account
         except: return None
     discounts_account=property(_get_discounts_account)
-    
+    def _get_receipt(self):
+        return self.contact.receipt_group.receipt
+    receipt=property(_get_receipt)
     
     
     def _get_account_group(self):
@@ -503,6 +505,13 @@ class TaxRate(models.Model):
     price_includes_tax = models.BooleanField(blank=True, default=True)
     def __unicode__(self):
         return self.name 
+        
+class ReceiptGroup(models.Model):
+    name = models.CharField(max_length=32)
+    receipt = models.ForeignKey(Report)
+    def __unicode__(self):
+        return self.name 
+        
 class AccountGroup(models.Model):
     def __init__(self, *args, **kwargs):
         super(AccountGroup, self).__init__(*args, **kwargs)
@@ -606,6 +615,7 @@ class Contact(models.Model):
         super(Contact, self).save(*args, **kwargs)
     tax_group_name = models.CharField(max_length=32)
     price_group = models.ForeignKey(PriceGroup)
+    receipt_group = models.ForeignKey(ReceiptGroup)
     account_group = models.ForeignKey(AccountGroup)
     address = models.CharField(max_length=32, blank=True, default="")
     state_name = models.CharField(max_length=32, blank=True, default="")

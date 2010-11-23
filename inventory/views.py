@@ -366,30 +366,60 @@ def quote(request, doc_number):
         return render_string_to_pdf(Template(report.body), {'doc':doc, 'watermark_filename':report.watermark_url,'tax':tax, 'charge':charge, 'discount':discount})
     except:
         return render_string_to_pdf(Template(report.body), {'watermark_filename':None, 'doc':doc, 'tax':tax, 'charge':charge, 'discount':discount})
-
+class TaxFilter():
+    def __init__(self, query):
+        self.query=query.filter(tipo='Tax')
+    def __getitem__(self, index):
+        i=self.query.filter(account__name=index).aggregate(total=models.Sum('value'))['total'] or Decimal('0.00')
+        if not i==0: i=i*-1
+        return i        
+    def _get_total(self):
+        i=self.query.aggregate(total=models.Sum('value'))['total'] or Decimal('0.00')
+        if not i==0: i=i*-1
+        return i   
+    total=property(_get_total)   
+    def group(self, name):
+        i=self.query.filter(account__name=name).aggregate(total=models.Sum('value'))['total'] or Decimal('0.00')
+        if not i==0: i=i*-1
+        return i    
+class ReceiptDocument():
+    def __init__(self, doc_number):
+        self.transactions=Transaction.objects.filter(doc_number=doc_number, tipo__startswith='Sale')
+        self.lines=[]
+        self.subtotal=0
+        self.entries=Entry.objects.filter(transaction__doc_number=doc_number)
+        for line in self.transactions.exclude(tipo='SaleTax'):
+            l=line.subclass            
+            self.lines.append(l)
+            self.subtotal+=l.entry('Client').value
+        self.doc_number=doc_number
+        self.tax=TaxFilter(self.entries)
+        self.total=self.subtotal+self.tax.total
+    def _get_client(self):
+        return self.lines[0].subclass.account
+    client=property(_get_client)
+    def _get_date(self):
+        return self.lines[0].date
+    date=property(_get_date)
+    def __getitem__(self, index):
+        return self.lines[index].subclass
+    def inactive(self):
+        for l in self.lines:
+            if l.active: return False
+        return True
 @login_required
 @permission_required('inventory.view_receipt', login_url="/blocked/")
 def sale_receipt(request, doc_number):
-    doc=Sale.objects.filter(doc_number=doc_number)
-    if doc.count()==0: return fallback_to_transactions(request, doc_number, _('Unable to find sales with the specified document number.'))
-    if doc_inactive(doc): return quote(request, doc_number)
-    try:report=Report.objects.get(name=settings.RECEIPT_REPORT_NAME_PREFIX+doc[0].client.tax_group.name+settings.RECEIPT_REPORT_NAME_SUFFIX)
-    except Report.DoesNotExist: 
-        return fallback_to_transactions(request, doc_number, _('Unable to find a report template with the name "%s"') % (settings.RECEIPT_REPORT_NAME_PREFIX+doc[0].client.tax_group.name+settings.RECEIPT_REPORT_NAME_SUFFIX,))
-    tax=charge=discount=0
-    for t in doc:
-        s=t.subclass
-        try: tax+=s.tax
-        except AttributeError: pass
-        try: charge+=s.charge
-        except AttributeError: pass
-        try: discount+=s.discount
-        except AttributeError: pass
-    try:
-        request.GET['test']
-        return render_string_to_pdf(Template(report.body), {'doc':doc, 'watermark_filename':report.watermark_url,'tax':tax, 'charge':charge, 'discount':discount})
-    except:
-        return render_string_to_pdf(Template(report.body), {'watermark_filename':None, 'doc':doc, 'tax':tax, 'charge':charge, 'discount':discount})
+#    doc=Sale.objects.filter(doc_number=doc_number)
+    doc=ReceiptDocument(doc_number)
+    if len(doc.lines)==0: return fallback_to_transactions(request, doc_number, _('Unable to find sales with the specified document number.'))
+    if doc.inactive(): return quote(request, doc_number)
+    report=doc[0].subclass.client.receipt
+    print "report = " + str(report)
+    if 'test' in request.GET:
+        return render_string_to_pdf(Template(report.body), {'doc':doc, 'watermark_filename':report.watermark_url})
+    else:
+        return render_string_to_pdf(Template(report.body), {'watermark_filename':None, 'doc':doc})
 
 @login_required
 @permission_required('inventory.view_receipt', login_url="/blocked/")
