@@ -1,0 +1,13 @@
+{% load i18n %}
+<div id="tax-form" class="tax-form" title="{% trans 'Add Tax' %}">
+    <form>
+        {% trans 'Tax' %}: 
+        <select id="id_tax_rate">
+            {% for rate in rates %}
+            <option {% if rate.name == default.name %}selected="selected" {% endif %} value="{{rate.value|floatformat:2}}">{{rate.name}}</option>
+            {% endfor %}
+        </select>    
+        <input type="hidden" id="doc_total_for_tax" value="{{total|floatformat:2}}">
+	    {% trans 'Amount' %}: <input id="tax_amount" value="{{amount|floatformat:2}}" type="text"><br>
+    </form>
+</div>

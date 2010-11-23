@@ -194,6 +194,49 @@ class VendorPaymentForm(forms.ModelForm):
     date =              forms.DateField(initial=datetime.now()) #, input_formats=['%Y-%m-%d', '%d/%m/%Y',]) # Uncomment this for spanish dates
     def clean_account(self):
         return clean_lookup(self, 'account', Vendor)
+class TaxForm(forms.ModelForm):
+    class Meta:
+        model = SaleTax
+        fields=('doc_number','date','account','value')
+    def save(self, commit=True):
+        model = super(TaxForm, self).save(commit=False)
+        model.account =      self.cleaned_data['account']
+        model.date =        self.cleaned_data['date']
+        model.value =        (self.cleaned_data['value'] or 0)
+        if commit: model.save()
+        return model
+    doc_number =        forms.CharField()
+    value =             forms.DecimalField(required=False)
+    account =           forms.CharField(initial=settings.DEFAULT_CLIENT_NAME)
+    date =              forms.DateField(initial=datetime.now()) #, input_formats=['%Y-%m-%d', '%d/%m/%Y',]) # Uncomment this for spanish dates
+
+class SaleTaxForm(TaxForm):
+    class Meta:
+        model = SaleTax
+        fields=('doc_number','date','account','value')
+    def clean_account(self):
+        return clean_lookup(self, 'account', Client)
+        
+class PurchaseTaxForm(TaxForm):
+    class Meta:
+        model = SaleTax
+        fields=('doc_number','date','account','value')
+    def clean_account(self):
+        return clean_lookup(self, 'account', Vendor)
+        
+class SaleDiscountForm(TaxForm):
+    class Meta:
+        model = SaleTax
+        fields=('doc_number','date','account','value')
+    def clean_account(self):
+        return clean_lookup(self, 'account', Client)
+        
+class PurchaseDiscountForm(TaxForm):
+    class Meta:
+        model = PurchaseDiscount
+        fields=('doc_number','date','account','value')
+    def clean_account(self):
+        return clean_lookup(self, 'account', Vendor)
 
 class PurchaseForm(forms.ModelForm):
     class Meta:

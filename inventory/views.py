@@ -916,34 +916,73 @@ def add_payment_to_sale(request, object_id):
     payment.save()
     return _r2r(request,'inventory/results.html', {'edit_mode':True, 'objects':[payment],'prefix':'clientpayment','line_template':"inventory/transaction.html",'error_list':{}, 'info_list':{}})
     
-    
+################################################################################################
+#                                     Taxes
+################################################################################################
+  
 @login_required
-@permission_required('inventory.add_saletax', login_url="/blocked/")
-def add_saletax(request, object_id):
-    sale = get_object_or_404(Sale, pk=object_id)
-    total=Entry.objects.filter(transaction__doc_number=obj.doc_number, active=True, account=obj.client).aggregate(total=models.Sum('value'))['total'] or Decimal('0.00')
-    rate=request.POST.pop('rate',DEFAULT_TAX_RATE.rate)
-    account=request.POST.pop('account',DEFAULT_TAX_RATE.sales_account)
-    tax=SaleTax(doc_number=obj.doc_number, date=obj.date, debit=obj.client, credit=account, value=total*rate)
+def add_tax(request, object_id):
+    obj = get_object_or_404(Transaction, pk=object_id).subclass
+    if not request.user.has_perm('inventory.add_'+obj.tipo.lower()): return http.HttpResponseRedirect("/blocked/")
+    rate=TaxRate.objects.get(name=request.POST['rate'])
+    amount=Decimal(request.POST['amount'])
+    if obj.tipo=='Sale':
+        tax=SaleTax(doc_number=obj.doc_number, date=obj.date, debit=obj.client, credit=rate.sales_account, value=amount)
+    elif obj.tipo=='Purchase':
+        tax=PurchaseTax(doc_number=obj.doc_number, date=obj.date, credit=obj.vendor, debit=rate.purchases_account, value=amount)
     tax.save()
-    return _r2r(request,'inventory/results.html', {'edit_mode':True, 'objects':[tax],'prefix':'saletax','line_template':"inventory/tax.html",'error_list':{}, 'info_list':{}})
+    return _r2r(request,'inventory/results.html', {'edit_mode':True, 'objects':[tax],'prefix':tax.tipo.lower(),'line_template':"inventory/tax.html",'error_list':{}, 'info_list':{}})
+
 @login_required
 @permission_required('inventory.change_saletax', login_url="/blocked/")
 def edit_saletax(request, object_id):
-    pass
+    return edit_object(request, object_id, SaleTax, SaleTaxForm, "saletax")
 
+@login_required
+@permission_required('inventory.change_purchasetax', login_url="/blocked/")
+def edit_purchasetax(request, object_id):
+    return edit_object(request, object_id, PurchaseTax, PurchaseTaxForm, "purchasetax")
+    
 @login_required
 @permission_required('inventory.add_tax', login_url="/blocked/")
 def get_tax_form(request, object_id):
-    obj = get_object_or_404(Transaction, pk=object_id)
-    rate=transaction.account.default_tax_rate
+    obj = get_object_or_404(Transaction, pk=object_id).subclass
+    default=obj.account.default_tax_rate
+    rates=TaxRate.objects.all()
     total=Entry.objects.filter(transaction__doc_number=obj.doc_number, active=True, account=obj.subclass.account).aggregate(total=models.Sum('value'))['total'] or Decimal('0.00')
-    try: q=request.GET['q']
-    except KeyError: q=''
-    return _r2r(request,'inventory/tax_form.html', {'object_list':TaxRate.objects.filter(name__icontains=q),'q':q})
+    total=total*obj.subclass.account.multiplier
+    amount=total*default.value
+    return _r2r(request,'inventory/tax_form.html', {'rates':rates,'default':default,'total':total,'amount':amount})
    
+################################################################################################
+#                                          Discounts
+################################################################################################
+def add_discount(request, object_id):
+    obj = get_object_or_404(Transaction, pk=object_id).subclass
+    if not request.user.has_perm('inventory.add_'+obj.tipo.lower()): return http.HttpResponseRedirect("/blocked/")
+    errors={}
+    amount=0
+    try:
+        amount=Decimal(request.POST['discount'])
+    except InvalidOperation:
+        try:
+            total=Entry.objects.filter(transaction__doc_number=obj.doc_number, active=True, account=obj.subclass.account).aggregate(total=models.Sum('value'))['total'] or Decimal('0.00')
+            total=total*obj.subclass.account.multiplier
+            amount=total-Decimal(request.POST['total'])
+        except:
+            errors[_('Amount')]=_("You must enter either the amount of the discount or the discounted total of the transaction.")
+    if obj.tipo=='Sale':
+        discount=SaleDiscount(doc_number=obj.doc_number, date=obj.date, debit=obj.client.account_group.discounts_account, credit=obj.client, value=amount)
+    elif obj.tipo=='Purchase':
+        discount=PurchaseDiscount(doc_number=obj.doc_number, date=obj.date, credit=obj.vendor.account_group.discounts_account, debit=obj.vendor, value=amount)
+    discount.save()
+    return _r2r(request,'inventory/results.html', {'edit_mode':True, 'objects':[discount],'prefix':discount.tipo.lower(),'line_template':"inventory/discount.html",'error_list':errors, 'info_list':{}})
     
+def edit_salediscount(request, object_id):
+    return edit_object(request, object_id, SaleDiscount, SaleDiscountForm, "salediscount")
     
+def edit_purchasediscount(request, object_id):
+    return edit_object(request, object_id, PurchaseDiscount, PurchaseDiscountForm, "purchasediscount")
 #######################################################################################
 ## Accounting Views
 #######################################################################################

@@ -13,8 +13,8 @@
 {% block other_actions_show %}
     <a class="show" id="id_transaction-{{object.pk}}-return" title="{% trans 'Return Sale' %}" href="#" onclick="newTransaction('/inventory/salereturn/{{object.pk}}/new/'); return false;"><img src="{{MEDIA_URL}}/img/return.png"/></a>
     <a class="show" id="id_transaction-{{object.pk}}-garantee" title="{% trans 'Add Garantee' %}" href="#" onclick="addGarantee({{object.pk}},'clientgarantee'); return false;"><img src="{{MEDIA_URL}}/img/garantee.png"/></a>
-    <a class="show" id="id_transaction-{{object.pk}}-tax" title="{% trans 'Add Tax' %}" href="#" onclick="addTax({{object.pk}},'saletax'); return false;"><img src="{{MEDIA_URL}}/img/coin.png"/></a>
-    <a class="show" id="id_transaction-{{object.pk}}-discount" title="{% trans 'Add Discount' %}" href="#" onclick="addDiscount({{object.pk}},'salediscount'); return false;"><img src="{{MEDIA_URL}}/img/down.png"/></a>
+    <a class="show" id="id_transaction-{{object.pk}}-tax" title="{% trans 'Add Tax' %}" href="#" onclick="getTaxForm({{object.pk}},'saletax'); return false;"><img src="{{MEDIA_URL}}/img/coin.png"/></a>
+    <a class="show" id="id_transaction-{{object.pk}}-discount" title="{% trans 'Add Discount' %}" href="#" onclick="jQuery('#last_id').val({{object.pk}}); $('#discount-form').dialog('open'); return false;"><img src="{{MEDIA_URL}}/img/down.png"/></a>
     {% if object.subclass.delivered %}
         <a class="show" id="id_transaction-{{object.pk}}-undeliver" title="{% trans 'Mark as NOT Delivered' %}" href="#" onclick="markTransaction('/inventory/transaction/{{object.pk}}/undeliver/'); return false;"><img src="{{MEDIA_URL}}/img/delivered.png"/></a>
     {% else %}

@@ -324,6 +324,14 @@ class Account(models.Model):
         try: self.contact.tax_group = value
         except: self._tax_group= value
     tax_group=property(_get_tax_group, _set_tax_group)
+
+    def _get_discounts_account(self):
+        try: return self.account_group.discounts_account
+        except: return None
+    discounts_account=property(_get_discounts_account)
+    
+    
+    
     def _get_account_group(self):
         try: return self.contact.account_group
         except: return self._account_group
@@ -1347,7 +1355,7 @@ class PurchaseTax(Transaction):
     def __init__(self, *args, **kwargs):
         kwargs.update({
             'account_tipo':'Vendor',
-            'credit_tipo':'Purchase',
+            'credit_tipo':'Vendor',
             'debit_tipo':'Tax',
         })
         super(PurchaseTax, self).__init__(*args, **kwargs)
@@ -1368,61 +1376,45 @@ class Discount(Transaction):
     class Meta:
         proxy = True
     def __init__(self, *args, **kwargs):
-        self._client = kwargs.pop('client', None)
-        self._account = kwargs.pop('account', None)
-        self._value = kwargs.pop('value', Decimal('0.00'))
         super(Discount, self).__init__(*args, **kwargs)
         self.template='inventory/discount.html'
-        self.tipo='Discount'
-    def _get_active(self):
-        try: return self.entry('Client').active
-        except AttributeError: return self._active
-    def _set_active(self, value):
-        self._active=value
-        [e.update('active',value) for e in self.entry_set.all()]
-    active = property(_get_active, _set_active)
-
-    def _get_value(self):
-        try: return self.entry('Client').value
-        except AttributeError: return self._value
-    def _set_value(self, value):
-        try:
-            self.entry('Client').update('value',-value)
-            self.entry('Discount').update('value', value)
-        except: self._value = value
-    value=property(_get_value, _set_value)
+class SaleDiscount(Discount):
+    class Meta:
+        proxy = True
+    objects = BaseManager('SaleDiscount')
+    def __init__(self, *args, **kwargs):
+        kwargs.update({
+            'account_tipo':'Client',
+            'credit_tipo':'Client',
+            'debit_tipo':'Discount',
+        })
+        super(SaleDiscount, self).__init__(*args, **kwargs)
+        self.tipo='SaleDiscount'
     def _get_client(self):
-        try: return self.entry('Client').account
-        except AttributeError: 
-            return self._client
+        return self.account
     def _set_client(self, value):
-        try: self.entry('Client').update('account', value)
-        except AttributeError: 
-            self._client = value
+        self.account=value
     client = property(_get_client, _set_client)
-    def _get_account(self):
-        try: return self.entry('Discount').account
-        except AttributeError: return self._account
-    def _set_account(self, value):
-        try: self.entry('Discount').update('account', value)
-        except AttributeError: self._account = value
-    account = property(_get_account, _set_account)
-
-
-def add_tax_entries(sender, **kwargs):
-    if kwargs['created']:
-        l=kwargs['instance']
-        l.sites.add(Site.objects.get_current())
-        l.create_related_entry(
-            account = l._client,
-            tipo = 'Client',
-            value = -l._value,
-        )
-        l.create_related_entry(
-            account = l._account,
-            tipo = 'Discount',
-            value = l._value,
-        )
+post_save.connect(add_general_entries, sender=SaleDiscount, dispatch_uid="jade.inventory.models")
+class PurchaseDiscount(Discount):
+    class Meta:
+        proxy = True
+    objects = BaseManager('PurchaseDiscount')
+    def __init__(self, *args, **kwargs):
+        kwargs.update({
+            'account_tipo':'Vendor',
+            'credit_tipo':'Discount',
+            'debit_tipo':'Vendor',
+        })
+        super(PurchaseDiscount, self).__init__(*args, **kwargs)
+        self.tipo='PurchaseDiscount'
+    def _get_vendor(self):
+        return self.account
+    def _set_vendor(self, value):
+        self.account=value
+    vendor = property(_get_vendor, _set_vendor)
+post_save.connect(add_general_entries, sender=PurchaseDiscount, dispatch_uid="jade.inventory.models")
+    
 ################################################################################################
 #                                       Garantees
 ################################################################################################

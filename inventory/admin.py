@@ -214,7 +214,7 @@ class TransactionAdmin(admin.ModelAdmin):
     list_display = ('id', 'doc_number', 'tipo')
     inlines = [EntryInline]
 class AccountAdmin(admin.ModelAdmin):
-    list_display = ('name', 'tipo','multiplier', 'balance', 'site')
+    list_display = ('number','name', 'tipo','multiplier', 'balance', 'site')
     search_fields = ('name', )
     list_filter = ('tipo','multiplier')
 class PriceAdmin(admin.ModelAdmin):

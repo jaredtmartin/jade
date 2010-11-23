@@ -28,9 +28,16 @@ urlpatterns = patterns('',
     (r'^sale/(?P<object_id>\d+)/pay/$', 'jade.inventory.views.add_payment_to_sale'),
 
     # Tax
-    (r'^sale/(?P<object_id>\d+)/addtax/$', 'jade.inventory.views.add_saletax'),
-    (r'^sale/(?P<object_id>\d+)/get_tax_form/$', 'jade.inventory.views.get_tax_form'),
+    (r'^transaction/(?P<object_id>\d+)/get_tax_form/$', 'jade.inventory.views.get_tax_form'),
     (r'^saletax/(?P<object_id>\d+)/$', 'jade.inventory.views.edit_saletax'),
+    (r'^transaction/(?P<object_id>\d+)/addtax/$', 'jade.inventory.views.add_tax'),
+    (r'^purchasetax/(?P<object_id>\d+)/$', 'jade.inventory.views.edit_purchasetax'),
+    
+    # Discounts
+    (r'^transaction/(?P<object_id>\d+)/add_discount/$', 'jade.inventory.views.add_discount'),
+    (r'^salediscount/(?P<object_id>\d+)/$', 'jade.inventory.views.edit_salediscount'),
+    (r'^purchasediscount/(?P<object_id>\d+)/$', 'jade.inventory.views.edit_purchasediscount'),
+    
     # Sale Returns
     (r'^salereturn/(?P<object_id>\d+)/$', 'jade.inventory.views.edit_salereturn'),
     (r'^salereturn/(?P<object_id>\d+)/new/$', 'jade.inventory.views.new_salereturn'),

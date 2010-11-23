@@ -1,6 +1,5 @@
 {% extends "inventory/index.html" %}
 {% load i18n %}
-
 {% load tags %}
 {% block js %}
     <script type="text/javascript" src="{{MEDIA_URL}}/js/jade.js"></script> 
@@ -22,34 +21,81 @@
 		    {% trans 'Value' %}: <input id="item" value="" type="text"><a href="#" onclick="$(this).prev().val('');$(this).prev().select();return false;"><img id="clear_value" src="{{MEDIA_URL}}/img/clear.png"/></a><br>
 	    </form>
     </div>
+    <div style="display: none;" id="discount-form" title="{% trans 'Add a discount' %}">
+	    <form>
+		    {% trans 'Discount' %}: <input id="discount_value" value="" type="text"><a href="#" onclick="$(this).prev().val('');$(this).prev().select();return false;"><img id="clear_value" src="{{MEDIA_URL}}/img/clear.png"/></a><br>
+		    {% trans 'or' %}<br>
+		    {% trans 'Total' %}: <input id="discount_total" value="" type="text"><a href="#" onclick="$(this).prev().val('');$(this).prev().select();return false;"><img id="clear_value" src="{{MEDIA_URL}}/img/clear.png"/></a><br>
+	    </form>
+    </div>
     <script>
-        function addTax(object_id){
+        function getTaxForm(object_id){
             jQuery("#last_id").val(object_id);
             $.ajax({
-                url: '/inventory/sale/'+object_id+'/get-default-tax/',
-                type:'GET',
-                success: showTaxMenu
+                url: '/inventory/transaction/'+object_id+'/get_tax_form/',
+                type: 'GET',
+                success: showTaxForm
             });
         }
-        function showTaxMenu(){
+        function showTaxForm(data){
             $('#ajax-data').replaceWith('<div id="ajax-data" style="display: none;"></div>');
             $('#ajax-data').append(data);
             $("#tax-form").dialog({
-		        autoOpen: true,
 		        height: 250,
 		        width: 250,
 		        position:['right','bottom'],
-		        modal: false,
 		        buttons: {
 			        Close: function() {
-				        $(this).dialog('close');
+				        $(this).remove();
 			        },
 		            'Add': function() {
-		                newTransaction('/sale/'+$('#last_id').val()+'/addtax/');
+		                addTax($('#last_id').val());
+				        $(this).remove();
 		            }
 		        },
 	        });
+            $('#tax-form #tax_amount').keydown(function(e){
+                if (e.keyCode == 13) {
+                    addTax(jQuery("#last_id").val());
+			        $('#tax-form').remove();
+                    e.preventDefault();
+                    return false;
+                }
+            });
+	        $('#id_tax_rate').change(update_tax_amount);
             $('#tax-form #tax').autocomplete('/inventory/tax_list/', {matchSubset:0, autoFill:1,});
+            $('#tax-form #tax_amount').select();
+        }
+        function update_tax_amount(){
+            $('#tax_amount').val(($('#doc_total_for_tax').val()*$('#id_tax_rate').val()).toFixed(2));
+        }
+        function addTax(object_id){
+            jQuery("#transaction-"+object_id+"-entries-table").remove();
+            hide_entries(object_id);
+            jQuery("#last_id").val(object_id);
+            $.ajax({
+                url: '/inventory/transaction/'+object_id+ '/addtax/',
+                type:'POST',
+                data:{
+                    rate:jQuery('#id_tax_rate :selected:visible').text(),
+                    amount:jQuery('#tax_amount').val(),
+                },
+                success: updateAndSelectItemField
+            });
+        }
+        function addDiscount(object_id){
+            jQuery("#transaction-"+object_id+"-entries-table").remove();
+            hide_entries(object_id);
+            jQuery("#last_id").val(object_id);
+            $.ajax({
+                url: '/inventory/transaction/'+object_id+ '/add_discount/',
+                type:'POST',
+                data:{
+                    discount:jQuery('#discount_value').val(),
+                    total:jQuery('#discount_total').val(),
+                },
+                success: updateAndSelectItemField
+            });
         }
         $(document).ready(function(){
             $("#accounting-form").dialog({
@@ -66,6 +112,29 @@
 			        }
 			    },
 		    });
+		    $("#discount-form").dialog({
+			    autoOpen: false,
+		        height: 250,
+		        width: 250,
+		        position:['right','bottom'],
+		        buttons: {
+			        Close: function() {
+				        $(this).dialog('close');
+			        },
+		            'Add': function() {
+		                addDiscount($('#last_id').val());
+				        $(this).dialog('close');
+		            }
+		        },
+	        });
+            $('#discount-form input').keydown(function(e){
+                if (e.keyCode == 13) {
+                    addDiscount($('#last_id').val());
+				    $('#discount-form').dialog('close');
+                    e.preventDefault();
+                    return false;
+                }
+            });
             $('#accounting-form #debit-account').autocomplete('/inventory/account_list/', {matchSubset:0, autoFill:1,});
             $('#accounting-form #credit-account').autocomplete('/inventory/account_list/', {matchSubset:0, autoFill:1,});
             
