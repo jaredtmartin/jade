@@ -82,6 +82,7 @@ def new_object(request, form, prefix, template='', tipo=None, extra_context={}):
             error_list=f.errors
             updated_form=None
         if not tipo: tipo=prefix
+        obj.edit_mode=True
         extra_context.update({'objects':[obj],'edit_mode':True, 'form':updated_form,'info_list':info_list,'error_list':error_list,'prefix':tipo,'line_template':"inventory/"+prefix+".html"})
         return _r2r(request,'inventory/results.html', extra_context)
     else:
@@ -200,6 +201,7 @@ def new_purchase(request):
     if not vendor: error_list['vendor']=[unicode('Unable to find a vendor with the name specified.')]
     purchase=Purchase(doc_number=doc_number, date=date, vendor=vendor, item=item, value=value)
     purchase.save()
+    purchase.edit_mode=True
     return _r2r(request,'inventory/results.html', {'edit_mode':True, 'objects':[purchase],'prefix':'purchase','line_template':"inventory/transaction.html",'error_list':error_list, 'info_list':{}})
 
 @login_required
@@ -213,6 +215,7 @@ def add_payment_to_purchase(request, object_id):
             if entry.active: total-=entry.value
     payment=VendorPayment(doc_number=obj.doc_number, date=obj.date, debit=obj.vendor, value=total)
     payment.save()
+    payment.edit_mode=True
     return _r2r(request,'inventory/results.html', {'edit_mode':True, 'objects':[payment],'prefix':'vendorpayment','line_template':"inventory/transaction.html",'error_list':{}, 'info_list':{}})
   
 
@@ -517,6 +520,7 @@ def new_count(request):
     except: unit_cost=0
     count=Count(doc_number=doc_number, date=date, item=item, unit_cost=unit_cost)
     count.save()
+    count.edit_mode=True
     return _r2r(request,'inventory/results.html', {'edit_mode':True, 'objects':[count],'prefix':'count','line_template':"inventory/transaction.html",'error_list':{}, 'info_list':{}})
 
 @login_required
@@ -819,6 +823,7 @@ def new_clientgarantee(request, object_id):
     except: months=0
     garantee=ClientGarantee(doc_number=sale.doc_number, date=sale.date, client=sale.client, item=sale.item, quantity=months, serial=sale.serial)
     garantee.save()
+    garantee.edit_mode=True
     return _r2r(request,'inventory/results.html', {'edit_mode':True, 'objects':[garantee],'prefix':'garantee','line_template':"inventory/transaction.html",'error_list':{}, 'info_list':{}})
 
 ######################################################################################
@@ -835,6 +840,7 @@ def new_vendorgarantee(request, object_id):
     purchase = get_object_or_404(Purchase, pk=object_id)
     garantee=VendorGarantee(doc_number=purchase.doc_number, date=purchase.date, vendor=purchase.vendor, item=purchase.item, serial=purchase.serial)
     garantee.save()
+    garantee.edit_mode=True
     return _r2r(request,'inventory/results.html', {'edit_mode':True, 'objects':[garantee],'prefix':'garantee','line_template':"inventory/transaction.html",'error_list':{}, 'info_list':{}})
 
 @login_required
@@ -912,6 +918,7 @@ def new_sale(request):
     # create the sale
     sale=Sale(doc_number=doc_number, date=date, client=client, item=item, cost=cost, value=value, quantity=1)
     sale.save()
+    sale.edit_mode=True
     objects=[sale]
     # add any linked items
     if item:
@@ -944,6 +951,7 @@ def add_payment_to_sale(request, object_id):
             if entry.active: total+=entry.value
     payment=ClientPayment(doc_number=obj.doc_number, date=obj.date, credit=obj.client, debit=PAYMENTS_RECEIVED_ACCOUNT, value=total)
     payment.save()
+    payment.edit_mode=True
     return _r2r(request,'inventory/results.html', {'edit_mode':True, 'objects':[payment],'prefix':'clientpayment','line_template':"inventory/transaction.html",'error_list':{}, 'info_list':{}})
     
 ################################################################################################
@@ -954,14 +962,26 @@ def add_payment_to_sale(request, object_id):
 def add_tax(request, object_id):
     obj = get_object_or_404(Transaction, pk=object_id).subclass
     if not request.user.has_perm('inventory.add_'+obj.tipo.lower()): return http.HttpResponseRedirect("/blocked/")
+    objects=[]
     rate=TaxRate.objects.get(name=request.POST['rate'])
     amount=Decimal(request.POST['amount'])
     if obj.tipo=='Sale':
         tax=SaleTax(doc_number=obj.doc_number, date=obj.date, debit=obj.client, credit=rate.sales_account, value=amount)
     elif obj.tipo=='Purchase':
         tax=PurchaseTax(doc_number=obj.doc_number, date=obj.date, credit=obj.vendor, debit=rate.purchases_account, value=amount)
+    if request.POST['tax_in_price']=='true':
+        print "reducing============================="
+        doc=Transaction.objects.filter(doc_number=obj.doc_number).exclude(tipo__endswith='Payment').exclude(tipo__endswith='Refund')
+        print "doc = " + str(doc)
+        for t in doc:
+            t=t.subclass
+            t.value-=t.value*rate.value
+            t.save()
+            objects.append(t)
     tax.save()
-    return _r2r(request,'inventory/results.html', {'edit_mode':True, 'objects':[tax],'prefix':tax.tipo.lower(),'line_template':"inventory/tax.html",'error_list':{}, 'info_list':{}})
+    tax.edit_mode=True
+    objects.append(tax)
+    return _r2r(request,'inventory/results.html', {'edit_mode':True, 'objects':objects,'prefix':tax.tipo.lower(),'line_template':"inventory/tax.html",'error_list':{}, 'info_list':{}})
 
 @login_required
 @permission_required('inventory.change_saletax', login_url="/blocked/")
@@ -1006,6 +1026,7 @@ def add_discount(request, object_id):
     elif obj.tipo=='Purchase':
         discount=PurchaseDiscount(doc_number=obj.doc_number, date=obj.date, credit=obj.vendor.account_group.discounts_account, debit=obj.vendor, value=amount)
     discount.save()
+    discount.edit_mode=True
     return _r2r(request,'inventory/results.html', {'edit_mode':True, 'objects':[discount],'prefix':discount.tipo.lower(),'line_template':"inventory/discount.html",'error_list':errors, 'info_list':{}})
     
 def edit_salediscount(request, object_id):
@@ -1075,6 +1096,7 @@ def new_salereturn(request, object_id):
         cost=-sale.cost,
     )
     salereturn.save()
+    salereturn.edit_mode=True
     return _r2r(request,'inventory/results.html', {'edit_mode':True, 'objects':[salereturn],'prefix':'salereturn','line_template':"inventory/transaction.html",'error_list':{}, 'info_list':{}})
 
 ########################################################################################
@@ -1098,6 +1120,7 @@ def new_purchasereturn(request, object_id):
         vendor=purchase.vendor, 
     )
     purchasereturn.save()
+    purchasereturn.edit_mode=True
     return _r2r(request,'inventory/results.html', {'edit_mode':True, 'objects':[purchasereturn],'prefix':'purchasereturn','line_template':"inventory/transaction.html",'error_list':{}, 'info_list':{}})
 
 ######################################################################################
@@ -1121,6 +1144,7 @@ def new_clientrefund(request, object_id):
     )
     print "refund.debit = " + str(refund.debit)
     refund.save()
+    refund.edit_mode=True
     return _r2r(request,'inventory/results.html', {'edit_mode':True, 'objects':[refund],'prefix':'clientrefund','line_template':"inventory/transaction.html",'error_list':{}, 'info_list':{}})
 
 ######################################################################################
@@ -1144,6 +1168,7 @@ def new_vendorrefund(request, object_id):
     )
     print "saving"
     refund.save()
+    refund.edit_mode=True
     return _r2r(request,'inventory/results.html', {'edit_mode':True, 'objects':[refund],'prefix':'vendorrefund','line_template':"inventory/transaction.html",'error_list':{}, 'info_list':{}})
 
 ######################################################################################
@@ -1173,6 +1198,7 @@ def new_clientpayment(request):
     except:pass
     clientpayment=ClientPayment(doc_number=doc_number, date=date, account=client)
     clientpayment.save()
+    clientpayment.edit_mode=True
     return _r2r(request,'inventory/results.html', {'edit_mode':True, 'objects':[clientpayment],'prefix':'clientpayment','line_template':"inventory/transaction.html",'error_list':{}, 'info_list':{}})
 ######################################################################################
 # Vendor Payments
@@ -1199,6 +1225,7 @@ def new_vendorpayment(request):
     except:pass
     vendorpayment=VendorPayment(doc_number=doc_number, date=date, source=PAYMENTS_MADE_ACCOUNT, dest=vendor)
     vendorpayment.save()
+    vendorpayment.edit_mode=True
     return _r2r(request,'inventory/results.html', {'edit_mode':True, 'objects':[vendorpayment],'prefix':'vendorpayment','line_template':"inventory/transaction.html",'error_list':{}, 'info_list':{}})
     
     
@@ -1219,6 +1246,7 @@ def new_tax(request):
     except:pass
     clientpayment=ClientPayment(doc_number=doc_number, date=date, source=client, dest=PAYMENTS_RECEIVED_ACCOUNT)
     clientpayment.save()
+    clientpayment.edit_mode=True
     return _r2r(request,'inventory/results.html', {'edit_mode':True, 'objects':[clientpayment],'prefix':'clientpayment','line_template':"inventory/transaction.html",'error_list':{}, 'info_list':{}})
 
 ######################################################################################
@@ -1562,6 +1590,7 @@ def new_transfer(request):
     transfer=Transfer(doc_number=doc_number, date=date, account=account, item=item, cost=cost)
     if len(error_list)==0:
         transfer.save()
+    transfer.edit_mode=True
     return _r2r(request,'inventory/results.html', {'edit_mode':True, 'objects':[transfer],'prefix':'transfer','line_template':"inventory/transaction.html",'error_list':error_list, 'info_list':{}})
 
 @login_required

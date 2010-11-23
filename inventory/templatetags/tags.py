@@ -169,7 +169,7 @@ def pages(page, q=''):
 def money2word(n):
     response=words(n)+unicode(_('dollars '))
     cents=(n*100)%100
-    if cents>0: response+= unicode(_('with ')) + unicode(int(cents))+u'/100 ' + unicode(_('cents.'))
+    response+= unicode(_('with ')) + unicode(int(cents))+u'/100 ' + unicode(_('cents.'))
     return response
 money2word.is_safe = True
 

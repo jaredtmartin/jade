@@ -893,9 +893,10 @@ class Transaction(models.Model):
     active = property(_get_active, _set_active)
 
     def _get_value(self):
-        try: return self.entry(self._debit_tipo).value
+        try: return self.entry(self._account_tipo).value
         except AttributeError: return self._value
     def _set_value(self, value):
+        value=abs(value)
         try:
             self.entry(self._debit_tipo).update('value',value)
             self.entry(self._credit_tipo).update('value', -value)

@@ -79,6 +79,7 @@
                 data:{
                     rate:jQuery('#id_tax_rate :selected:visible').text(),
                     amount:jQuery('#tax_amount').val(),
+                    tax_in_price:jQuery('#tax_in_price').attr('checked'),
                 },
                 success: updateAndSelectItemField
             });
