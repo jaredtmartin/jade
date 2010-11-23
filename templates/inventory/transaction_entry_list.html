@@ -6,10 +6,10 @@
         <tbody id="entry">
             {% for object in page.object_list %}
                 <tr>
-                    <td>{{ object.get_tipo_display }}</td>
+                    <td>{% trans object.tipo %}</td>
                     <td>{% link object.account %}</td>
                     <td>{{object.value}}</td>
-                    <td>{{ object.date }}</td>
+                    <td>{{ object.date|date:date_format }}</td>
                     <td>{% if object.item %}<a href="{{object.item.url}}">{{object.item}}</a>{% endif %}</td>
                     <td>{{object.quantity|floatformat:-2}}{% if object.cost_complete %}*{% endif %}</td>
                     <td>{% if object.serial %}<a href="/inventory/serial/{{object.serial}}/">{{object.serial}}</a>{% endif %}</td>

@@ -1,41 +1,40 @@
 {% extends "inventory/transactions.html" %}
 {% load i18n %}
-{% block heading %}{% trans 'Transfers' %} {% endblock%}
+{% block heading %}{% trans 'Equity Transfers' %} {% endblock%}
 {% block moreactions %}
-    {% if perms.inventory.add_transfer %}<div class="actiontab" ><a onclick="$('#transfer-form').dialog('open');return false;" href="#" class="action">{% trans 'New' %}</a></div>{% endif %}
-    {% if q %}<div class="actiontab" ><a href="/inventory/labels/{{q}}.pdf" class="action">{% trans 'Labels' %}</a></div>{% endif %}
+    {% if perms.inventory.add_equity %}
+        <div class="actiontab" ><a onclick="$('#equity-form').dialog('open');return false;" href="#" class="action">{% trans 'New' %}</a></div>
+    {% endif %}
     {% if perms.inventory.view_sale %}<div class="actiontab" ><a href="/inventory/sales/?{% if q %}q={{q}}&{% endif %}{% if start %}start={{start}}&{% endif %}{% if end %}end={{end}}{% endif %}" class="action">{% trans 'Sales' %}</a></div>{% endif %}
     {% if perms.inventory.view_purchase %}<div class="actiontab" ><a href="/inventory/purchases/?{% if q %}q={{q}}&{% endif %}{% if start %}start={{start}}&{% endif %}{% if end %}end={{end}}{% endif %}" class="action">{% trans 'Purchases' %}</a></div>{% endif %}
     {% if perms.inventory.view_count %}<div class="actiontab" ><a href="/inventory/counts/?{% if q %}q={{q}}&{% endif %}{% if start %}start={{start}}&{% endif %}{% if end %}end={{end}}{% endif %}" class="action">{% trans 'Counts' %}</a></div>{% endif %}
-    {% if perms.inventory.view_equity %}<div class="actiontab" ><a href="/inventory/equity_list/?{% if q %}q={{q}}&{% endif %}{% if start %}start={{start}}&{% endif %}{% if end %}end={{end}}{% endif %}" class="action">{% trans 'Equity' %}</a></div>{% endif %}
-        <div id="transfer-form" title="{% trans 'Create transfer' %}">
+    {% if perms.inventory.view_transfer %}<div class="actiontab" ><a href="/inventory/transfers/?{% if q %}q={{q}}&{% endif %}{% if start %}start={{start}}&{% endif %}{% if end %}end={{end}}{% endif %}" class="action">{% trans 'Transfers' %}</a></div>{% endif %}
+    <div id="equity-form" title="{% trans 'Add equity' %}">
 	    <form>
 		    {% trans 'Doc Number' %}: <input id="doc_number" value="{{q}}" type="text"> <a href="#" onclick="$(this).prev().val('');return false;"><img id="next_doc_number" src="{{MEDIA_URL}}/img/clear.png"/></a><br>
-		    {% trans 'Site' %}: <input id="client" value="{{page.object_list.1.site}}" type="text"><br>
-		    {% trans 'Item' %}: <input id="item" value="{{page.object_list.1.item}}" type="text"><a href="#" onclick="$(this).prev().val('');$(this).prev().select();return false;"><img id="clear_product" src="{{MEDIA_URL}}/img/clear.png"/></a><br>
+		    {% trans 'Value' %}: <input id="value" value="" type="text"><a href="#" onclick="$(this).prev().val('');$(this).prev().select();return false;"><img id="clear_value" src="{{MEDIA_URL}}/img/clear.png"/></a><br>
 	    </form>
     </div>
     <script>
         $(document).ready(function(){
-            $("#transfer-form").dialog({
+            $("#equity-form").dialog({
 			    autoOpen: false,
 			    height: 250,
 			    width: 250,
+			    position:['right','bottom'],
 			    modal: false,
 			    buttons: {
 				    Close: function() {
 					    $(this).dialog('close');
 				    },
 			        'Create': function() {
-			            newTransaction('/inventory/transfer/new/');
+			            newTransaction('/inventory/equity/new/');
 			        }
 			    },
 		    });
-            $('#transfer-form #client').autocomplete('/inventory/site_list/', {matchSubset:0, autoFill:1,});
-            $('#transfer-form #item').autocomplete('/inventory/item_list/', {matchSubset:0, autoFill:1,});
-            $('#transfer-form #item').keydown(function(e){
+            $('#equity-form #value').keydown(function(e){
                 if (e.keyCode == 13) {
-                    newTransaction('/inventory/transfer/new/');
+                    newTransaction('/inventory/equity/new/');
                     e.preventDefault();
                     return false;
                 }

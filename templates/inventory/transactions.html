@@ -6,21 +6,13 @@
 {% endblock %}
 {% block actions %}
     {% block moreactions %}
-        {% if perms.inventory.add_transaction %}<div class="actiontab" ><a onclick="$('#accounting-form').dialog('open');return false;" href="#" class="action">{% trans 'New' %}</a></div>{% endif %}
         {% if perms.inventory.view_sale %}<div class="actiontab" ><a href="/inventory/sales/?{% if q %}q={{q}}&{% endif %}{% if start %}start={{start}}&{% endif %}{% if end %}end={{end}}{% endif %}" class="action">{% trans 'Sales' %}</a></div>{% endif %}
         {% if perms.inventory.view_purchase %}<div class="actiontab" ><a href="/inventory/purchases/?{% if q %}q={{q}}&{% endif %}{% if start %}start={{start}}&{% endif %}{% if end %}end={{end}}{% endif %}" class="action">{% trans 'Purchases' %}</a></div>{% endif %}
         {% if perms.inventory.view_count %}<div class="actiontab" ><a href="/inventory/counts/?{% if q %}q={{q}}&{% endif %}{% if start %}start={{start}}&{% endif %}{% if end %}end={{end}}{% endif %}" class="action">{% trans 'Counts' %}</a></div>{% endif %}
-        {% if perms.inventory.change_transfer %}<div class="actiontab" ><a href="/inventory/transfers/?{% if q %}q={{q}}&{% endif %}{% if start %}start={{start}}&{% endif %}{% if end %}end={{end}}{% endif %}" class="action">{% trans 'Transfers' %}</a></div>{% endif %}
+        {% if perms.inventory.view_transfer %}<div class="actiontab" ><a href="/inventory/transfers/?{% if q %}q={{q}}&{% endif %}{% if start %}start={{start}}&{% endif %}{% if end %}end={{end}}{% endif %}" class="action">{% trans 'Transfers' %}</a></div>{% endif %}
+        {% if perms.inventory.view_equity %}<div class="actiontab" ><a href="/inventory/equity_list/?{% if q %}q={{q}}&{% endif %}{% if start %}start={{start}}&{% endif %}{% if end %}end={{end}}{% endif %}" class="action">{% trans 'Equity' %}</a></div>{% endif %}
     {% endblock%}
     <div class="actiontab" ><a href="/inventory/transactions/movements.pdf?{% if q %}q={{q}}&{% endif %}{% if start %}start={{start}}&{% endif %}{% if end %}end={{end}}{% endif %}" class="action">{% trans 'Inventory' %}</a></div>
-    <div id="accounting-form" title="{% trans 'Create simple transaction' %}">
-	    <form>
-		    {% trans 'Doc Number' %}: <input id="doc_number" value="{{q}}" type="text"> <a href="#" onclick="$(this).prev().val('');$(this).prev().select();return false;"><img id="next_doc_number" src="{{MEDIA_URL}}/img/clear.png"/></a><br>
-		    {% trans 'Debit Account' %}: <input id="debit-account" value="" type="text"><br>
-		    {% trans 'Credit Account' %}: <input id="credit-account" value="" type="text"><br>
-		    {% trans 'Value' %}: <input id="item" value="" type="text"><a href="#" onclick="$(this).prev().val('');$(this).prev().select();return false;"><img id="clear_value" src="{{MEDIA_URL}}/img/clear.png"/></a><br>
-	    </form>
-    </div>
     <div style="display: none;" id="discount-form" title="{% trans 'Add a discount' %}">
 	    <form>
 		    {% trans 'Discount' %}: <input id="discount_value" value="" type="text"><a href="#" onclick="$(this).prev().val('');$(this).prev().select();return false;"><img id="clear_value" src="{{MEDIA_URL}}/img/clear.png"/></a><br>
@@ -99,20 +91,20 @@
             });
         }
         $(document).ready(function(){
-            $("#accounting-form").dialog({
-			    autoOpen: false,
-			    height: 280,
-			    width: 250,
-			    modal: false,
-			    buttons: {
-				    Close: function() {
-					    $(this).dialog('close');
-				    },
-			        'Create': function() {
-			            newTransaction('/inventory/accounting/new/');
-			        }
-			    },
-		    });
+<!--            $("#accounting-form").dialog({-->
+<!--			    autoOpen: false,-->
+<!--			    height: 280,-->
+<!--			    width: 250,-->
+<!--			    modal: false,-->
+<!--			    buttons: {-->
+<!--				    Close: function() {-->
+<!--					    $(this).dialog('close');-->
+<!--				    },-->
+<!--			        'Create': function() {-->
+<!--			            newTransaction('/inventory/accounting/new/');-->
+<!--			        }-->
+<!--			    },-->
+<!--		    });-->
 		    $("#discount-form").dialog({
 			    autoOpen: false,
 		        height: 250,
@@ -136,16 +128,16 @@
                     return false;
                 }
             });
-            $('#accounting-form #debit-account').autocomplete('/inventory/account_list/', {matchSubset:0, autoFill:1,});
-            $('#accounting-form #credit-account').autocomplete('/inventory/account_list/', {matchSubset:0, autoFill:1,});
-            
-            $('#accounting-form #value').keydown(function(e){
-                if (e.keyCode == 13) {
-                    newTransaction('/inventory/accounting/new/');
-                    e.preventDefault();
-                    return false;
-                }
-            });
+<!--            $('#accounting-form #debit-account').autocomplete('/inventory/account_list/', {matchSubset:0, autoFill:1,});-->
+<!--            $('#accounting-form #credit-account').autocomplete('/inventory/account_list/', {matchSubset:0, autoFill:1,});-->
+<!--            -->
+<!--            $('#accounting-form #value').keydown(function(e){-->
+<!--                if (e.keyCode == 13) {-->
+<!--                    newTransaction('/inventory/accounting/new/');-->
+<!--                    e.preventDefault();-->
+<!--                    return false;-->
+<!--                }-->
+<!--            });-->
 
         });
     </script>

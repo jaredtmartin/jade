@@ -216,7 +216,12 @@ class SaleTaxForm(TaxForm):
         fields=('doc_number','date','account','value')
     def clean_account(self):
         return clean_lookup(self, 'account', Client)
-        
+class EquityForm(TaxForm):
+    class Meta:
+        model = Equity
+        fields=('doc_number','date','account','value')
+    def clean_account(self):
+        return clean_lookup(self, 'account', Account)
 class PurchaseTaxForm(TaxForm):
     class Meta:
         model = SaleTax
@@ -230,7 +235,12 @@ class SaleDiscountForm(TaxForm):
         fields=('doc_number','date','account','value')
     def clean_account(self):
         return clean_lookup(self, 'account', Client)
-        
+class CashClosingForm(TaxForm):
+    class Meta:
+        model = CashClosing
+        fields=('doc_number','date','account','value')
+    def clean_account(self):
+        return clean_lookup(self, 'account', Account)
 class PurchaseDiscountForm(TaxForm):
     class Meta:
         model = PurchaseDiscount
@@ -440,7 +450,8 @@ class ContactForm(forms.ModelForm):
     work_phone =    forms.CharField(required=False)
     fax =           forms.CharField(required=False)
     tax_number =    forms.CharField(required=False)
-    tax_group =     forms.CharField(widget=AutoCompleteInput('/inventory/tax_group_list/'))
+    account_group = forms.CharField(widget=AutoCompleteInput('/inventory/account_group_list/'))
+    receipt_group = forms.CharField(widget=AutoCompleteInput('/inventory/receipt_group_list/'))
     price_group =   forms.CharField(widget=AutoCompleteInput('/inventory/price_group_list/'))
     description =   forms.CharField(required=False)
     email =         forms.CharField(required=False)
@@ -470,8 +481,10 @@ class ContactForm(forms.ModelForm):
             self.initial['home_phone'] = instance.home_phone
             self.initial['cell_phone'] = instance.cell_phone
             self.initial['work_phone'] = instance.work_phone
-            if instance.tax_group: self.initial['tax_group'] = instance.tax_group.name
-            else: self.initial['tax_group'] = settings.DEFAULT_TAX_GROUP_NAME
+            if instance.account_group: self.initial['account_group'] = instance.account_group.name
+            else: self.initial['account_group'] = settings.DEFAULT_ACCOUNT_GROUP_NAME
+            if instance.receipt_group: self.initial['receipt_group'] = instance.receipt_group.name
+            else: self.initial['receipt_group'] = settings.DEFAULT_RECEIPT_GROUP_NAME
             if instance.price_group: self.initial['price_group'] = instance.price_group.name
             else: self.initial['price_group'] = settings.DEFAULT_PRICE_GROUP_NAME
             self.initial['fax'] = instance.fax
@@ -483,10 +496,12 @@ class ContactForm(forms.ModelForm):
             self.initial['credit_days'] = instance.credit_days
         else:
             self.initial['price_group'] = settings.DEFAULT_PRICE_GROUP_NAME
-            self.initial['tax_group'] = settings.DEFAULT_TAX_GROUP_NAME
+            self.initial['account_group'] = settings.DEFAULT_ACCOUNT_GROUP_NAME
             self.initial['credit_days'] = settings.DEFAULT_CREDIT_DAYS
-    def clean_tax_group(self):
-        return clean_lookup(self, 'tax_group', TaxGroup)
+    def clean_account_group(self):
+        return clean_lookup(self, 'account_group', AccountGroup)
+    def clean_receipt_group(self):
+        return clean_lookup(self, 'receipt_group', ReceiptGroup)
     def clean_price_group(self):
         return clean_lookup(self, 'price_group', PriceGroup)
     def clean_user(self):

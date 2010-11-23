@@ -7,7 +7,7 @@
             <p>{% trans 'Account number'%}: {{form.number}}</p>
             <p>{% trans 'Multiplier'%}: {{form.multiplier}}</p>
             {% if tipo != 'account' %}            
-                <p>{% trans 'Tax Group'%}: {{form.tax_group}}</p>
+                <p>{% trans 'Account Group'%}: {{form.account_group}}</p>
                 <p>{% trans 'Tax Number'%}: {{form.tax_number}}</p>
                 <p>{% trans 'Price Group'%}: {{form.price_group}}</p>
                 <p>{% trans 'Registration'%}: {{form.registration}}</p>
@@ -25,6 +25,7 @@
         </div>
         <div class="three-column">
             {% if tipo != 'account' %}   
+                <p>{% trans 'Receipt Group'%}: {{form.receipt_group}}</p>
                 <p>{% trans 'Address'%}: {{form.address}}</p>
                 <p>{% trans 'State'%}: {{form.state_name}}</p>
                 <p>{% trans 'Country'%}: {{form.country}}</p>

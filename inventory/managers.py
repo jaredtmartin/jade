@@ -89,25 +89,20 @@ class EntryManager(models.Manager):
     def get_query_set(self):
         return super(EntryManager, self).get_query_set().filter(site=Site.objects.get_current())
 class BaseManager(models.Manager):
-    def __init__(self, tipo):
+    def __init__(self, tipo, prefix=''):
         super(BaseManager, self).__init__()
         self.tipo=tipo
+        self.prefix=prefix
     def get_query_set(self):
         return super(BaseManager, self).get_query_set().filter(tipo=self.tipo)
     def next_doc_number(self):
-#        try: 
-            print "self.tipo = " + str(self.tipo)
-            print "super(BaseManager, self).get_query_set().filter(tipo=self.tipo).order_by('-pk')[0].doc_number = " + str(super(BaseManager, self).get_query_set().filter(tipo=self.tipo).order_by('-pk')[0].doc_number)
+        try: 
             number = super(BaseManager, self).get_query_set().filter(tipo=self.tipo).order_by('-pk')[0].doc_number
-            print "number = " + str(number)
-            print 're.split("(\d*)", number) = ' + str(re.split("(\d*)", number))
             number=re.split("(\d*)", number)
-            print "number1 = " + str(number)
             if number[-1]=='':
                 number[-2]=("%%0%id" % len(number[-2])) % (int(number[-2])+1)
-            print "number2 = " + str(number)
             return "".join(number)
-#        except: return "1001"    
+        except IndexError: return "%s1001" % self.prefix
 class SaleManager(BaseManager):
     def next_doc_number(self):
         try: 

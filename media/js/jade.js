@@ -103,6 +103,7 @@ function newTransaction(url) {
             doc_number: jQuery('.ui-dialog-content:visible').children().children('#doc_number').val(),
             client:     jQuery('#client.ac_input').val(),
             vendor:     jQuery('#vendor.ac_input').val(),
+            value:     jQuery('.ui-dialog-content:visible').children().children('#value').val(),
             item:     jQuery('#item.ac_input').val(),
         },
         success: updateAndSelectQuantity

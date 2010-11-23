@@ -18,7 +18,8 @@ from jade.inventory.managers import *
 
 DEBIT=1
 CREDIT=-1
-    
+def dt(date):
+    return datetime.fromordinal(date.toordinal())
 def create_barcode(number, folder=''):
     from jade.inventory.code128 import Code128
     bar = Code128()
@@ -330,9 +331,14 @@ class Account(models.Model):
         except: return None
     discounts_account=property(_get_discounts_account)
     def _get_receipt(self):
-        return self.contact.receipt_group.receipt
+        try: return self.contact.receipt_group.receipt
+        except Contact.DoesNotExist: return None
     receipt=property(_get_receipt)
     
+    def _get_receipt_group(self):
+        try: return self.contact.receipt_group
+        except Contact.DoesNotExist: return None
+    receipt_group=property(_get_receipt_group)
     
     def _get_account_group(self):
         try: return self.contact.account_group
@@ -582,6 +588,7 @@ CASH_ACCOUNT = make_default_account(settings.CASH_ACCOUNT_DATA)
 PAYMENTS_RECEIVED_ACCOUNT = make_default_account(settings.PAYMENTS_RECEIVED_ACCOUNT_DATA)
 PAYMENTS_MADE_ACCOUNT = make_default_account(settings.PAYMENTS_MADE_ACCOUNT_DATA)
 INVENTORY_ACCOUNT = make_default_account(settings.INVENTORY_ACCOUNT_DATA)
+BANK_ACCOUNT = make_default_account(settings.BANK_ACCOUNT_DATA)
 CLIENTS_ACCOUNT = make_default_account(settings.CLIENTS_ACCOUNT_DATA)
 TRANSFER_ACCOUNT = make_default_account(settings.TRANSFER_ACCOUNT_DATA)
 LIABILITIES_ACCOUNT = make_default_account(settings.LIABILITIES_ACCOUNT_DATA)
@@ -713,38 +720,37 @@ def add_user_profile(sender, **kwargs):
         except:pass
 post_save.connect(add_user_profile, sender=User, dispatch_uid="jade.inventory.moddels")
 
-TRANSACTION_TYPES=(
-        ('Sale', 'Sale'),
-        ('Purchase', 'Purchase'),
-        ('Count', 'Count'),
-        ('Transfer', 'Transfer'),
-        ('ClientPayment', 'Payment'),
-        ('VendorPayment', 'Payment.'),
-        ('ClientRefund', 'Refund'),
-        ('VendorRefund', 'Refund.'),
-        ('ClientGarantee', 'Garantee'),
-        ('VendorGarantee', 'Garantee.'),
-        ('SaleReturn', 'Return'),
-        ('PurchaseReturn', 'Return.'),
-        ('Process', 'Process'),
-        ('Job', 'Job'),
-        ('Tax', 'Tax'),
-        ('Discount', 'Discount'),
-        )
+#TRANSACTION_TYPES=(
+#        ('Sale', 'Sale'),
+#        ('Purchase', 'Purchase'),
+#        ('Count', 'Count'),
+#        ('Transfer', 'Transfer'),
+#        ('ClientPayment', 'Payment'),
+#        ('VendorPayment', 'Payment.'),
+#        ('ClientRefund', 'Refund'),
+#        ('VendorRefund', 'Refund.'),
+#        ('ClientGarantee', 'Garantee'),
+#        ('VendorGarantee', 'Garantee.'),
+#        ('SaleReturn', 'Return'),
+#        ('PurchaseReturn', 'Return.'),
+#        ('Process', 'Process'),
+#        ('Job', 'Job'),
+#        ('Tax', 'Tax'),
+#        ('Discount', 'Discount'),
+#        )
 
 class Transaction(models.Model):
     _date = models.DateTimeField(default=datetime.now())
     doc_number = models.CharField(max_length=32, default='', blank=True)
     comments = models.CharField(max_length=200, blank=True, default='')
     sites = models.ManyToManyField(Site)
-    tipo = models.CharField(max_length=16, choices=TRANSACTION_TYPES)
+    tipo = models.CharField(max_length=16)
     def __init__(self, *args, **kwargs):
         self.template='inventory/accounting.html'
-        self.tipo='Transaction'
         self._debit=None
-        self.credit=None
+        self._credit=None
         self._active = kwargs.pop('active', True)
-        self.tipo = kwargs.pop('tipo', '')
+        self.tipo = kwargs.pop('tipo', 'Transaction')
         self._debit = kwargs.pop('debit', self._debit)
         self._credit = kwargs.pop('credit', self.credit)
         self._account_tipo = kwargs.pop('account_tipo','Debit')
@@ -764,6 +770,9 @@ class Transaction(models.Model):
         permissions = (
             ("view_transaction", "Can view transactions"),
         )
+    
+    def get_tipo_display(self):
+        return _(self.tipo)
     def _get_date(self):
         return self._date
     def _set_date(self, value):
@@ -794,7 +803,9 @@ class Transaction(models.Model):
             if not site: site = Site.objects.get_current()
         except DatabaseError:
             print "pass"
+        print "quantity = " + str(quantity)
         e=self.entry_set.create(
+            date=self.date,
             account=account,
             tipo=tipo,
             value=value,
@@ -896,7 +907,7 @@ class Transaction(models.Model):
         try: return self.entry(self._account_tipo).value
         except AttributeError: return self._value
     def _set_value(self, value):
-        value=abs(value)
+        if self._credit_tipo==self._account_tipo: value=value*-1
         try:
             self.entry(self._debit_tipo).update('value',value)
             self.entry(self._credit_tipo).update('value', -value)
@@ -939,29 +950,27 @@ class Transaction(models.Model):
         except AttributeError: self._quantity=value
     quantity = property(_get_quantity, _set_quantity)
 class Entry(models.Model):
-    """
-    """
-    ENTRY_TYPES = (
-        # Sale only entries
-        ('Client', 'Client'), # Debit
-        ('Revenue', 'Revenue'), # Credit
-        ('Tax', 'Tax'), # Credit
-        ('Discount', 'Discount'), # Credit
-        ('Inventory', 'Inventory'), # Debit
-        ('Expense', 'Expense'), # Debit
+#    ENTRY_TYPES = (
+#        # Sale only entries
+#        ('Client', 'Client'), # Debit
+#        ('Revenue', 'Revenue'), # Credit
+#        ('Tax', 'Tax'), # Credit
+#        ('Discount', 'Discount'), # Credit
+#        ('Inventory', 'Inventory'), # Debit
+#        ('Expense', 'Expense'), # Debit
 
-        # Purchase only entries
-        ('Vendor', 'Vendor'), # Credit
+#        # Purchase only entries
+#        ('Vendor', 'Vendor'), # Credit
 
-        # Count only entries
-        ('Count', 'Count'), # Debit
+#        # Count only entries
+#        ('Count', 'Count'), # Debit
 
-        # Payment entries
-        ('Debit', 'Debit'), # Debit
-        ('Credit', 'Credit'), # Credit
-        
-        ('Production', 'Production'), # Credit
-        )
+#        # Payment entries
+#        ('Debit', 'Debit'), # Debit
+#        ('Credit', 'Credit'), # Credit
+#        
+#        ('Production', 'Production'), # Credit
+#        )
     class Meta:
         permissions = (
             ("view_entry", "Can view entries"),
@@ -976,7 +985,7 @@ class Entry(models.Model):
     quantity = models.DecimalField(max_digits=8, decimal_places=2, default='0.00')
     item = models.ForeignKey(Item, blank=True, null=True)
     active = models.BooleanField(default=True)
-    tipo = models.CharField(max_length=16, choices=ENTRY_TYPES)
+    tipo = models.CharField(max_length=16)
     serial = models.CharField(max_length=32, null=True, blank=True)
     date = models.DateTimeField(default=datetime.now())
     site = models.ForeignKey(Site)
@@ -984,7 +993,7 @@ class Entry(models.Model):
     def update(self, attribute, value):
         setattr(self, attribute, value)
         self.save()
-        
+                
     def __unicode__(self):
         return str(self.account.name) +"($" + str(self.value)+") " + str(self.tipo)
         
@@ -1040,13 +1049,8 @@ class Sale(Transaction):
     def print_url(self):
         return '/inventory/sale/%s/receipt.pdf'% self.doc_number
     def __init__(self, *args, **kwargs):
-        self._value = kwargs.pop('value',0)
         self._cost = kwargs.pop('cost', 0)
-        self._date = kwargs.pop('date', datetime.now())
         self._delivered = kwargs.pop('delivered', True)
-        self._item = kwargs.pop('item', None)
-        self._quantity = kwargs.pop('quantity', 0)
-        self._serial = kwargs.pop('serial', None)
         self._client = kwargs.pop('client', DEFAULT_CLIENT)
         super(Sale, self).__init__(*args, **kwargs)
         self.template='inventory/sale.html'
@@ -1091,7 +1095,9 @@ class Sale(Transaction):
         try: return self.entry('Client').quantity
         except AttributeError: return self._quantity
     def _set_quantity(self, value):
-        try: return [self.entry(e).update('quantity',value) for e in ['Inventory','Client']]
+        try: 
+            self.entry('Inventory').update('quantity',-value)
+            self.entry('Client').update('quantity',value)
         except AttributeError: self._quantity=value
         
     def _get_serial(self):
@@ -1212,7 +1218,7 @@ class Purchase(Transaction):
         permissions = (
             ("view_purchase", "Can view purchases"),
         )
-    objects = BaseManager('Purchase')
+    objects = BaseManager('Purchase','P')
 
     def __init__(self, *args, **kwargs):
         self._vendor = kwargs.pop('vendor', Vendor.objects.get(name=settings.DEFAULT_VENDOR_NAME))
@@ -1260,13 +1266,236 @@ post_save.connect(add_purchase_extra_values, sender=Purchase, dispatch_uid="jade
 class PurchaseReturn(Purchase):
     class Meta:
         proxy = True
-    objects = BaseManager('PurchaseReturn')
+    objects = BaseManager('PurchaseReturn','P')
     def __init__(self, *args, **kwargs):
         super(PurchaseReturn, self).__init__(*args, **kwargs)
         self.template='inventory/purchase_return.html'
         self.tipo='PurchaseReturn'
 post_save.connect(add_general_entries, sender=PurchaseReturn, dispatch_uid="jade.inventory.models")
 post_save.connect(add_purchase_extra_values, sender=PurchaseReturn, dispatch_uid="jade.inventory.models")
+
+################################################################################################
+#                                   CashClosing
+################################################################################################
+class TaxFilter():
+    def __init__(self, query):
+        self.query=query.filter(tipo='Tax')
+    def __getitem__(self, index):
+        i=self.query.filter(account__name=index).aggregate(total=models.Sum('value'))['total'] or Decimal('0.00')
+        if not i==0: i=i*-1
+        return i
+    def _get_total(self):
+        i=self.query.aggregate(total=models.Sum('value'))['total'] or Decimal('0.00')
+        if not i==0: i=i*-1
+        return i
+    total=property(_get_total)
+    def group(self, name):
+        i=self.query.filter(account__name=name).aggregate(total=models.Sum('value'))['total'] or Decimal('0.00')
+        if not i==0: i=i*-1
+        return i
+class Document():
+    def __init__(self, doc_number):
+        self.transactions=Transaction.objects.filter(doc_number=doc_number, tipo__startswith='Sale')
+        self.lines=[]
+        self.subtotal=0
+        self.entries=Entry.objects.filter(transaction__doc_number=doc_number)
+        for line in self.transactions.exclude(tipo='SaleTax'):
+            l=line.subclass            
+            self.lines.append(l)
+            self.subtotal+=l.entry('Client').value
+        self.doc_number=doc_number
+        self.tax=TaxFilter(self.entries)
+        self.total=self.subtotal+self.tax.total
+        self._due =None
+        self._paid_on_spot = None
+        self._unpaid_on_spot = None
+        self.value=self.subtotal
+    
+    def __repr__(self):
+        return self.doc_number
+    def _get_client(self):
+        return self.lines[0].subclass.account
+    client=property(_get_client)
+    def _get_date(self):
+        return self.lines[0].date
+    date=property(_get_date)
+    def __getitem__(self, index):
+        return self.lines[index].subclass
+    def _get_due(self):
+        if not self._due:
+            self._due = self.entries.filter(date=self.transactions[0]._date, account=self.client, tipo='Client').aggregate(total=models.Sum('value'))['total'] or Decimal('0.00')
+        return self._due
+    due=property(_get_due)
+    def _get_paid_on_spot(self):
+        if not self._paid_on_spot:
+            self._paid_on_spot = (self.entries.filter(date=self.transactions[0]._date, account=self.client, tipo='Credit').aggregate(total=models.Sum('value'))['total'] or Decimal('0.00'))*-1
+        return self._paid_on_spot
+    paid_on_spot=property(_get_paid_on_spot)
+    def _get_unpaid_on_spot(self):
+        if not self._unpaid_on_spot:
+            self._unpaid_on_spot = self.entries.filter(date=self.transactions[0]._date, account=self.client).aggregate(total=models.Sum('value'))['total'] or Decimal('0.00')
+        return self._unpaid_on_spot
+    unpaid_on_spot=property(_get_unpaid_on_spot)
+    def inactive(self):
+        for l in self.lines:
+            if l.active: return False
+        return True
+class Series():
+    def __init__(self, documents):
+        self.documents=documents
+    def append(self, document):
+        self.documents.append(document)
+    def __getitem__(self, index):
+        return self.documents[index]    
+    def __repr__(self):
+        return str(self.documents)
+    def __unicode__(self):
+        if self.documents[0].number==self.documents[-1].number: return self.documents[0].number
+        else: return "%s - %s" % (self.documents[0].number, self.documents[-1].number)
+    def _get_first(self):
+        return self.documents[0]
+    first=property(_get_first)
+    def _get_last(self):
+        return self.documents[-1]
+    last=property(_get_last)
+    def _get_value(self):
+        total=0
+        for d in self.documents:
+            total+=d.subtotal
+        return total
+    value=property(_get_value)
+class CashClosing(Transaction):
+    class Meta:
+        proxy = True
+        permissions = (
+            ("view_cash_closing", "Can view cash_closings"),
+        )
+    objects = BaseManager('CashClosing','CT')
+    def __init__(self, *args, **kwargs):
+        kwargs.update({
+            'debit_tipo':'Bank',
+            'credit_tipo':'Cash',
+            'account_tipo':'Bank',
+            'debit':BANK_ACCOUNT,
+            'credit':CASH_ACCOUNT,
+        })
+        super(CashClosing, self).__init__(*args, **kwargs)
+        self.template='inventory/cash_closing.html'
+        self.tipo='CashClosing'
+        self.start = datetime.date(dt(self.date))
+        self.end = self.start + timedelta(days=1)
+        self._documents=None
+        self._sale_entries=None
+        self.payments=ClientPayment.objects.filter(_date__gte=self.start, _date__lt=self.end).order_by('-_date')
+        self.starting_cash=Entry.objects.filter(date__lt=self.start, account=CASH_ACCOUNT).aggregate(total=models.Sum('value'))['total'] or Decimal('0.00')
+        self.ending_cash=Entry.objects.filter(date__lt=self.end, account=CASH_ACCOUNT).exclude(tipo='Cash', date=self.end).aggregate(total=models.Sum('value'))['total'] or Decimal('0.00')
+        self.revenue=(Entry.objects.filter(date__gte=self.start, date__lt=self.end, tipo='Revenue').aggregate(total=models.Sum('value'))['total'] or Decimal('0.00'))*-1
+        self.discount=(Entry.objects.filter(date__gte=self.start, date__lt=self.end, tipo='Discount').aggregate(total=models.Sum('value'))['total'] or Decimal('0.00'))
+        self.expense=(Entry.objects.filter(date__gte=self.start, date__lt=self.end, tipo='Expense').aggregate(total=models.Sum('value'))['total'] or Decimal('0.00'))*-1
+        self.tax=(Entry.objects.filter(date__gte=self.start, date__lt=self.end, tipo='Tax').aggregate(total=models.Sum('value'))['total'] or Decimal('0.00'))*-1
+        self.earnings=self.revenue+self.tax-self.discount-self.expense
+        self.paymentstotal=(Entry.objects.filter(date__gte=self.start, date__lt=self.end, tipo='Debit').aggregate(total=models.Sum('value'))['total'] or Decimal('0.00'))
+        self.revenue_check=self.starting_cash+self.revenue+self.tax-self.discount-self.expense-self.earnings-self.ending_cash
+        self.cash_check=self.starting_cash-self.ending_cash+self.paymentstotal-self.paymentstotal
+        self._account_groups=None
+        self._paid_sales=None
+        self._unpaid_sales=None
+        self._groups_by_series=None
+        self._payments_by_timing=None
+    def print_url(self):
+#        return '/inventory/sale/%s/garantee.pdf'% self.doc_number
+        return "/inventory/cashclosing/%s/report.pdf" % self.pk
+    def _get_sale_entries(self):
+        if not self._sale_entries:
+            self._sale_entries = Entry.objects.filter(tipo='Revenue', date__gte=self.start, date__lt=self.end)
+        return self._sale_entries
+    sale_entries=property(_get_sale_entries)
+    def create_documents_from_entries(self, entries):
+        d=()
+        for e in entries:
+            d+=(e.transaction.doc_number,)
+        documents=[]
+        for doc in d:
+            documents.append(Document(doc))
+        return documents
+    def _get_documents(self):
+        if not self._documents:
+            self._documents=self.create_documents_from_entries(self.sale_entries)
+        return self._documents
+    documents=property(_get_documents)
+    def separate_by_paid_on_spot(self, documents):
+        paid= []
+        unpaid=[]
+        for doc in documents:
+            if doc.paid_on_spot==doc.due: 
+                paid.append(doc)
+            else: 
+                unpaid.append(doc)
+        return (paid, unpaid)
+    def _get_paid_sales(self):
+        if not self._paid_sales:
+            self._paid_sales, self._unpaid_sales = self.separate_by_paid_on_spot(self.documents)
+        print "self._paid_sales = " + str(self._paid_sales)
+        print "self._unpaid_sales = " + str(self._unpaid_sales)
+        return self._paid_sales
+    paid_sales=property(_get_paid_sales)
+    def _get_unpaid_sales(self):
+        if not self._unpaid_sales:
+            self._paid_sales, self._unpaid_sales = self.separate_by_paid_on_spot(self.documents)
+        return self._unpaid_sales
+    unpaid_sales=property(_get_unpaid_sales)
+    def separate_by_account_group(self, documents):
+        groups={}
+        for doc in documents: self.update_dict_list(groups, {doc.client.account_group.name:doc})
+        return groups.values()
+    def _get_account_groups(self):
+        if not self._account_groups:
+            self._account_groups = self.separate_by_account_group(self.paid_sales)
+        return self._account_groups
+    account_groups=property(_get_account_groups)
+    def create_series(self, documents):
+        from operator import attrgetter
+        documents.sort(key=attrgetter('doc_number'))
+        series=[]
+        last=0
+        price=0
+        for doc in documents:
+            if series==[]:
+                series.append(Series([doc]))
+                l=re.split("(\d*)", doc.doc_number)
+                if len(l)>1:
+                    prefix=l[0:-2]
+                    last=int(l[-2])
+                else:
+                    prefix=''
+                    last=0
+            else:
+                x=int(re.split("(\d*)", doc.doc_number)[-2])
+                if x-1==last or x==last: series[-1].append(doc)
+                else: series.append(Series([doc]))
+                last=x
+        return series
+    def _get_groups_by_series(self):
+        if not self._groups_by_series:
+            self._groups_by_series = []
+            for group in self.account_groups:
+                self._groups_by_series.append(self.create_series(group))
+        return self._groups_by_series
+    groups_by_series=property(_get_groups_by_series)
+    def update_dict_list(self, x, y):
+        for k in y.keys():
+            if k in x:
+                x[k].append(y[k])
+            else:
+                x[k]=[y[k]]
+    def _get_payments_by_timing(self):
+        if not self._payments_by_timing:
+            self._payments_by_timing={'Early':[], 'OnTime':[],'Late':[],'Down':[],'Over':[]}
+            for payment in self.payments: self.update_dict_list(self._payments_by_timing, {payment.timing:payment})
+        print "self._payments_by_timing = " + str(self._payments_by_timing)
+        return self._payments_by_timing
+    payments_by_timing=property(_get_payments_by_timing)    
+post_save.connect(add_general_entries, sender=CashClosing, dispatch_uid="jade.inventory.models")
 ################################################################################################################
 #                                             Payments                                                         #
 ################################################################################################################
@@ -1280,7 +1509,7 @@ class Payment(Transaction):
         except IndexError: return "Early"
         if p==s:
             s_end= s + timedelta(days=1)
-            due=Entry.objects.filter(date__gte=s,date__lt=s_end, transaction__doc_number=self.doc_number, account=self.source).aggregate(total=models.Sum('value'))['total'] or Decimal('0.00')
+            due=Entry.objects.filter(date__gte=s,date__lt=s_end, transaction__doc_number=self.doc_number, account=self.credit).aggregate(total=models.Sum('value'))['total'] or Decimal('0.00')
             if due==0: return "OnTime"
             if due>0: return "Down"
             if due<0: return "Over"
@@ -1301,6 +1530,15 @@ class ClientPayment(Payment):
         super(ClientPayment, self).__init__(*args, **kwargs)
         self.template='inventory/client_payment.html'
         self.tipo='ClientPayment'
+    def _get_value(self):
+        try: return self.entry(self._debit_tipo).value
+        except AttributeError: return self._value
+    def _set_value(self, value):
+        try:
+            self.entry(self._debit_tipo).update('value',value)
+            self.entry(self._credit_tipo).update('value', -value)
+        except: self._value = value
+    value=property(_get_value, _set_value)
 post_save.connect(add_general_entries, sender=ClientPayment, dispatch_uid="jade.inventory.models")
 
 class ClientRefund(ClientPayment):
@@ -1486,7 +1724,27 @@ class VendorGarantee(Garantee):
         self.account=value
     vendor = property(_get_vendor, _set_vendor)
 post_save.connect(add_general_entries, sender=VendorGarantee, dispatch_uid="jade.inventory.models")
-
+################################################################################################
+#                                             Equity
+################################################################################################
+class Equity(Transaction):
+    class Meta:
+        proxy = True
+    objects=BaseManager('Equity','Q')
+    
+    def __init__(self, *args, **kwargs):
+        self._client = kwargs.pop('client', None)
+        kwargs.update({
+            'account_tipo':'Cash',
+            'debit_tipo':'Cash',
+            'credit_tipo':'Equity',
+            'debit':CASH_ACCOUNT,
+            'credit':EQUITY_ACCOUNT,
+        })
+        super(Equity, self).__init__(*args, **kwargs)
+        self.template='inventory/equity.html'
+        self.tipo='Equity'
+post_save.connect(add_general_entries, sender=Equity, dispatch_uid="jade.inventory.models")
 ################################################################################################
 #                                          Counts
 ################################################################################################
@@ -1605,7 +1863,7 @@ post_save.connect(add_general_entries, sender=Count, dispatch_uid="jade.inventor
 
 
 class Transfer(Transaction):
-    objects = BaseManager('Transfer')
+    objects = BaseManager('Transfer','T')
     #    Entry Name             Account     Site
     #    SourceInventory        Inventory   A
     #    SourceTransfer         Transfer    A

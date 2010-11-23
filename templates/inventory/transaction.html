@@ -2,10 +2,10 @@
 <tr id="transaction-{{object.pk}}" class="transaction" transaction_id={{object.pk}} tipo={{object.tipo|lower}}>
     <td id="id_transaction-{{object.pk}}-doc_number" class="doc_number"><a  href="{{object.subclass.url}}{% if tipo == "Sale" %}&tipo=Sale{% endif %}{% if tipo == "Purchase" %}&tipo=Purchase{% endif %}{% if tipo == "Count" %}&tipo=Count{% endif %}">{{object.doc_number}}</a></td>
     <td id="id_transaction-{{object.pk}}-tipo">{% trans object.get_tipo_display %}</td>
-    <td id="id_transaction-{{object.pk}}-date" class="date">{{object.date|date:"m/d/Y"}}</td>
+    <td id="id_transaction-{{object.pk}}-date" class="date">{{object.date|date:date_format}}</td>
     <td id="id_transaction-{{object.pk}}-account" class="account"><a href="{{object.subclass.account.url}}">{{object.subclass.account|default:''}}</a></td>
     <td id="id_transaction-{{object.pk}}-item" class="item" class="inventory-details">{% if object.subclass.item %}<a href="{{object.subclass.item.url}}">{{object.subclass.item}}</a>{% endif %}</td>
-    <td id="id_transaction-{{object.pk}}-quantity" class="quantity inventory-details"> {{object.subclass.quantity|floatformat:-2}} {% if object.subclass.count %}({{object.subclass.count|floatformat:-2}}){% endif %}</td>
+    <td id="id_transaction-{{object.pk}}-quantity" class="quantity inventory-details">{% if object.subclass.quantity %} {{object.subclass.quantity|floatformat:-2}}{% endif %} {% if object.subclass.count %}({{object.subclass.count|floatformat:-2}}){% endif %}</td>
     <td id="id_transaction-{{object.pk}}-serial" class="serial inventory-details"> {{object.subclass.serial|floatformat:-2}}</td>
     <td id="id_transaction-{{object.pk}}-value" class="money">${{object.subclass.value|floatformat:2}}</td>
     <td>

@@ -60,7 +60,7 @@ def delete_object(request, object_id, model, prefix, tipo=None):
     if not request.user.has_perm('inventory.delete_'+obj.tipo.lower()): return http.HttpResponseRedirect("/blocked/")
     if not tipo: tipo=obj.get_tipo_display()
     obj.delete()
-    info_list=['The '+tipo+' has been deleted successfully.',]
+    info_list=[u'The '+unicode(tipo)+u' has been deleted successfully.',]
     return _r2r(request,'inventory/results.html', {'error_list':{}, 'info_list':info_list})
 
 def new_object(request, form, prefix, template='', tipo=None, extra_context={}):
@@ -280,11 +280,18 @@ def ajax_price_group_list(request):
     except KeyError: q=''
     return _r2r(request,'inventory/ajax_list.html', {'object_list':PriceGroup.objects.filter(name__icontains=q),'q':q})
 @login_required
-@permission_required('inventory.view_tax_group', login_url="/blocked/")
-def ajax_tax_group_list(request):
+@permission_required('inventory.view_account_group', login_url="/blocked/")
+def ajax_account_group_list(request):
     try: q=request.GET['q']
     except KeyError: q=''
-    return _r2r(request,'inventory/ajax_list.html', {'object_list':TaxGroup.objects.filter(name__icontains=q),'q':q})
+    return _r2r(request,'inventory/ajax_list.html', {'object_list':AccountGroup.objects.filter(name__icontains=q),'q':q})
+
+@login_required
+@permission_required('inventory.view_receipt_group', login_url="/blocked/")
+def ajax_receipt_group_list(request):
+    try: q=request.GET['q']
+    except KeyError: q=''
+    return _r2r(request,'inventory/ajax_list.html', {'object_list':ReceiptGroup.objects.filter(name__icontains=q),'q':q})
 
 @login_required
 @permission_required('inventory.view_account', login_url="/blocked/")
@@ -369,52 +376,11 @@ def quote(request, doc_number):
         return render_string_to_pdf(Template(report.body), {'doc':doc, 'watermark_filename':report.watermark_url,'tax':tax, 'charge':charge, 'discount':discount})
     except:
         return render_string_to_pdf(Template(report.body), {'watermark_filename':None, 'doc':doc, 'tax':tax, 'charge':charge, 'discount':discount})
-class TaxFilter():
-    def __init__(self, query):
-        self.query=query.filter(tipo='Tax')
-    def __getitem__(self, index):
-        i=self.query.filter(account__name=index).aggregate(total=models.Sum('value'))['total'] or Decimal('0.00')
-        if not i==0: i=i*-1
-        return i        
-    def _get_total(self):
-        i=self.query.aggregate(total=models.Sum('value'))['total'] or Decimal('0.00')
-        if not i==0: i=i*-1
-        return i   
-    total=property(_get_total)   
-    def group(self, name):
-        i=self.query.filter(account__name=name).aggregate(total=models.Sum('value'))['total'] or Decimal('0.00')
-        if not i==0: i=i*-1
-        return i    
-class ReceiptDocument():
-    def __init__(self, doc_number):
-        self.transactions=Transaction.objects.filter(doc_number=doc_number, tipo__startswith='Sale')
-        self.lines=[]
-        self.subtotal=0
-        self.entries=Entry.objects.filter(transaction__doc_number=doc_number)
-        for line in self.transactions.exclude(tipo='SaleTax'):
-            l=line.subclass            
-            self.lines.append(l)
-            self.subtotal+=l.entry('Client').value
-        self.doc_number=doc_number
-        self.tax=TaxFilter(self.entries)
-        self.total=self.subtotal+self.tax.total
-    def _get_client(self):
-        return self.lines[0].subclass.account
-    client=property(_get_client)
-    def _get_date(self):
-        return self.lines[0].date
-    date=property(_get_date)
-    def __getitem__(self, index):
-        return self.lines[index].subclass
-    def inactive(self):
-        for l in self.lines:
-            if l.active: return False
-        return True
+
 @login_required
 @permission_required('inventory.view_receipt', login_url="/blocked/")
 def sale_receipt(request, doc_number):
-#    doc=Sale.objects.filter(doc_number=doc_number)
-    doc=ReceiptDocument(doc_number)
+    doc=Document(doc_number)
     if len(doc.lines)==0: return fallback_to_transactions(request, doc_number, _('Unable to find sales with the specified document number.'))
     if doc.inactive(): return quote(request, doc_number)
     report=doc[0].subclass.client.receipt
@@ -549,7 +515,7 @@ def post_count_as_sale(request, object_id):
     
 
 ######################################################################################
-# Accounts Views
+#                                 Accounts Views
 ######################################################################################
 @login_required
 @permission_required('inventory.change_item', login_url="/blocked/")
@@ -937,6 +903,7 @@ def new_sale(request):
     
 def get_transaction(request, object_id, edit_mode=False):
     obj = get_object_or_404(Transaction, pk=object_id).subclass
+    obj.edit_mode=edit_mode
     if not request.user.has_perm('inventory.change_'+obj.tipo.lower()): return http.HttpResponseRedirect("/blocked/")
     return _r2r(request,'inventory/results.html', {'edit_mode':edit_mode, 'objects':[obj],'prefix':obj.tipo.lower(),'line_template':"inventory/transaction.html",'error_list':{}, 'info_list':{}})
 
@@ -1035,8 +1002,53 @@ def edit_salediscount(request, object_id):
 def edit_purchasediscount(request, object_id):
     return edit_object(request, object_id, PurchaseDiscount, PurchaseDiscountForm, "purchasediscount")
 #######################################################################################
-## Accounting Views
+##                                         Equity Views
 #######################################################################################
+@login_required
+@permission_required('inventory.view_equity', login_url="/blocked/")
+def list_equity(request):
+    try: q=request.GET['q']
+    except KeyError: q=''
+    if q=='': page=_paginate(request, Equity.objects.all().order_by('-_date'))
+    else: page=_paginate(request, Equity.objects.filter(doc_number=q).order_by('-_date'))
+    
+    return _r2r(request,'inventory/equity_list.html', {'page':page,'prefix':'transaction','q':q})
+@login_required
+@permission_required('inventory.change_equity', login_url="/blocked/")
+def edit_equity(request, object_id):
+    return edit_object(request, object_id, Equity, EquityForm, "equity")
+@login_required
+@permission_required('inventory.change_equity', login_url="/blocked/")
+def new_equity(request):
+    error_list={}
+    # get the doc number
+    try: doc_number=request.POST['doc_number']
+    except: doc_number='' 
+    if doc_number=='': doc_number=Equity.objects.next_doc_number()
+    # get the date
+    try: 
+        sample=Equity.objects.filter(doc_number=doc_number)[0]
+        date=sample.date
+    except:
+        date=datetime.now()
+    try:
+        value=Decimal(request.POST['value'])
+    except InvalidOperation:
+        error_list={_('Value'):[_('This value should be a number')]}
+    if len(error_list)==0:
+        equity=Equity(
+            doc_number=doc_number, 
+            date=date,
+            value=value,
+            )
+        equity.save()
+        equity.edit_mode=True
+        objects=[equity]
+    else:
+        objects=[]
+    return _r2r(request,'inventory/results.html', {'edit_mode':True, 'objects':objects,'prefix':'equity','line_template':"inventory/equity.html",'error_list':error_list, 'info_list':{}})
+    
+
 #@login_required
 #@permission_required('inventory.change_accounting', login_url="/blocked/")
 #def edit_accounting(request, object_id):
@@ -1307,246 +1319,70 @@ def movements_report(request):
         errors={'Report':[unicode(_('Unable to find a report template with the name "%s"') % (settings.MOVEMENTS_REPORT_NAME,))]}
         return list_sales(request, errors=errors)
     return render_string_to_pdf(Template(report.body), {'transactions':transactions, 'user':request.user})  
-   
-class Document():
-    def __init__(self, number):
-        self._price = None
-        self._due = None
-        self._client = None
-        self._paid_on_spot = None
-        self.transactions=Transaction.objects.filter(doc_number=number)
-    def _get_number(self):
-        return self.transactions[0].doc_number
-    number=property(_get_number)
-    def __getitem__(self, index):
-        return self.transactions[index]
-    def __repr__(self):
-        return self.number
-    def _get_price(self):
-        if not self._price:
-            self._price = Entry.objects.filter(transaction__doc_number=self.number, tipo='Revenue').aggregate(total=models.Sum('value'))['total'] or Decimal('0.00')
-        return -self._price
-    price=property(_get_price)
-    value=property(_get_price)
-    def _get_due(self):
-        if not self._due:
-#            self._due = Entry.objects.filter(transaction__doc_number=self.number, tipo='Client').aggregate(total=models.Sum('value'))['total'] or Decimal('0.00')
-            self._due = Entry.objects.filter(transaction__doc_number=self.number, date=self.transactions[0]._date, account=self.client, tipo='Debit').aggregate(total=models.Sum('value'))['total'] or Decimal('0.00')
-        return self._due
-    due=property(_get_due)
-    def _get_paid_on_spot(self):
-        if not self._paid_on_spot:
-            self._paid_on_spot = Entry.objects.filter(transaction__doc_number=self.number, date=self.transactions[0]._date, account=self.client, tipo='Credit').aggregate(total=models.Sum('value'))['total'] or Decimal('0.00')
-        return self._paid_on_spot
-    paid_on_spot=property(_get_paid_on_spot)
-    def _get_unpaid_on_spot(self):
-        if not self._unpaid_on_spot:
-            self._unpaid_on_spot = Entry.objects.filter(transaction__doc_number=self.number, date=self.transactions[0]._date, account=self.client).aggregate(total=models.Sum('value'))['total'] or Decimal('0.00')
-        return self._unpaid_on_spot
-    unpaid_on_spot=property(_get_unpaid_on_spot)
-    def _get_client(self):
-        if not self._client:
-            self._client = Entry.objects.filter(transaction__doc_number=self.number, tipo='Client')[0].account
-        return self._client
-    client=property(_get_client)
-    def _get_date(self):
-        if not self._date:
-            self._date = self.transactions[0].date
-        return self._date
-    date=property(_get_date)
-        
-def update_dict_list(x, y):
-    for k in y.keys():
-        if k in x:
-            x[k].append(y[k])
-        else:
-            x[k]=[y[k]]
-            
-#def create_documents(trans):
-#    d={}
-#    for t in trans:
-#        update_dict_list(d, {t.doc_number:t})
-#    documents=[]
-#    for doc in d:
-#        documents.append(Document(doc))
-#    return documents
-def create_documents_from_entries(entries):
-    d={}
-    for e in entries:
-        update_dict_list(d, {e.transaction.doc_number:e.transaction})
-    documents=[]
-    for doc in d:
-        documents.append(Document(doc))
-    return documents
-    
-class Series():
-    def __init__(self, documents):
-        self.documents=documents
-    def append(self, document):
-        self.documents.append(document)
-    def __getitem__(self, index):
-        return self.documents[index]    
-    def __repr__(self):
-        return str(self.documents)
-    def __unicode__(self):
-        if self.documents[0].number==self.documents[-1].number: return self.documents[0].number
-        else: return "%s - %s" % (self.documents[0].number, self.documents[-1].number)
-    def _get_first(self):
-        return self.documents[0]
-    first=property(_get_first)
-    def _get_last(self):
-        return self.documents[-1]
-    last=property(_get_last)
-    def _get_value(self):
-        total=0
-        for d in self.documents:
-            total+=d.price
-        return total
-    value=property(_get_value)
-        
-        
-def create_series(documents):
-    from operator import attrgetter
-    documents.sort(key=attrgetter('number'))
-    series=[]
-    last=0
-    price=0
-    for doc in documents:
-        if series==[]:
-            series.append(Series([doc]))
-            l=re.split("(\d*)", doc.number)
-            if len(l)>1:
-                prefix=l[0:-2]
-                last=int(l[-2])
-            else:
-                prefix=''
-                last=0
-        else:
-            x=int(re.split("(\d*)", doc.number)[-2])
-            if x-1==last or x==last: series[-1].append(doc)
-            else: series.append(Series([doc]))
-            last=x
-    return series
-    
-def separate_by_paid_on_spot(documents):
-    paid= []
-    unpaid=[]
-    for doc in documents:
-        print "doc.number = " + str(doc.number)
-        print "doc.paid_on_spot = " + str(doc.paid_on_spot)
-        print "doc.due = " + str(doc.due)
-        print "doc.paid_on_spot==doc.due = " + str(doc.paid_on_spot==doc.due)
-        if doc.paid_on_spot==doc.due: 
-            print "adding to paid"
-            paid.append(doc)
-        else: 
-            print "adding to unpaid"
-            unpaid.append(doc)
-    print "paid = " + str(paid)
-    print "unpaid = " + str(unpaid)
-    return (paid, unpaid)
-    
-def separate_payments_by_timing(payments):
-    groups={'Early':[], 'OnTime':[],'Late':[],'Down':[],'Over':[]}
-    for payment in payments: update_dict_list(groups, {payment.timing:payment})
-    return groups
-    
-def separate_by_tax_group(documents):
-    groups={}
-    for doc in documents: update_dict_list(groups, {doc.client.tax_group.name:doc})
-    return groups.values()
-            
+
 @login_required
-@permission_required('inventory.view_sale', login_url="/blocked/")
-def corte(request):
+@permission_required('inventory.add_cash_closing', login_url="/blocked/")
+def new_cash_closing(request):
     form=SearchForm(request.GET)
     form.is_valid()
     start=form.cleaned_data['start']
     end=form.cleaned_data['end']
-    sales = Sale.objects.all().order_by('doc_number')
-    print "REVENUE_ACCOUNT = " + str(REVENUE_ACCOUNT)
-    sale_entries = Entry.objects.filter(tipo='Revenue')
-    print "sale_entries.count() = " + str(sale_entries.count())
-    payments = ClientPayment.objects.all().order_by('-_date')
-    cash = Entry.objects.filter(account=CASH_ACCOUNT)
-    revenue = Entry.objects.filter(account__number__startswith=REVENUE_ACCOUNT.number)
-    expense = Entry.objects.filter(account=EXPENSE_ACCOUNT)
-    tax = Entry.objects.filter(account__number__startswith=TAX_ACCOUNT.number)
+    cash_closings=CashClosing.objects.all()
+    print "start = " + str(start)
+    print "end = " + str(end)
     if not start and not end:
         from datetime import datetime
         start=datetime.date(datetime.now())
         end=start+timedelta(days=1)
-    if start:
-        sales=sales.filter(_date__gte=start)
-        sale_entries=sale_entries.filter(transaction___date__gte=start)
-        print "sale_entries.count() = " + str(sale_entries.count())
-        payments=payments.filter(_date__gte=start)
-        cash=cash.filter(date__gte=start)
-        revenue=revenue.filter(date__gte=start)
-        expense=expense.filter(date__gte=start)
-        tax=tax.filter(date__gte=start)
-        initial_cash=Entry.objects.filter(account=CASH_ACCOUNT, date__lt=start).aggregate(total=models.Sum('value'))['total'] or Decimal('0.00')
-    else:
-        initial_cash=Entry.objects.filter(account=CASH_ACCOUNT, date__lte=datetime.date(datetime.now())).aggregate(total=models.Sum('value'))['total'] or Decimal('0.00')
+    if start: cash_closings=cash_closings.filter(_date__gte=start)
     if end:
         deadline = end + timedelta(days=1)
-        sales=sales.filter(_date__lt=deadline)
-        sale_entries=sale_entries.filter(transaction___date__lt=deadline)
-        print "sale_entries.count() = " + str(sale_entries.count())
-        payments=payments.filter(_date__lt=deadline)
-        cash=cash.filter(date__lt=deadline)
-        revenue=revenue.filter(date__lt=deadline)
-        expense=expense.filter(date__lt=deadline)
-        tax=tax.filter(date__lt=deadline)
-        
-    # Organize sales:
-    # if it was made and paid today, group by tax_group
-    # otherwise put it in the "unpaid" list
-#    sales_docs=create_documents(sales)
-    sales_docs=create_documents_from_entries(sale_entries)
-    paid_sales, unpaid_sales = separate_by_paid_on_spot(sales_docs)
-    print "paid_sales = " + str(paid_sales)
-    print "unpaid_sales = " + str(unpaid_sales)
-    # put each paid doc in a list for its tax_group
-    tax_groups = separate_by_tax_group(paid_sales)
+        cash_closings=cash_closings.filter(_date__lt=deadline)
+        cash=Entry.objects.filter(account=CASH_ACCOUNT, date__lt=dt(deadline)).aggregate(total=models.Sum('value'))['total'] or Decimal('0.00')
+    if cash_closings.count() == 0:
+        doc_number=CashClosing.objects.next_doc_number()
+        c=CashClosing(doc_number=doc_number, date=start, value=cash-settings.STARTING_CASH_ACCOUNT_BALANCE)
+        c.save()
+        c.edit_mode=True
+        return _r2r(request,'inventory/results.html', {'objects':[c],'prefix':'cash_closing','line_template':"inventory/cash_closing.html",'error_list':{}, 'info_list':{}})
+    else:
+        return _r2r(request,'inventory/results.html', {'objects':[],'prefix':'cash_closing','line_template':"inventory/cash_closing.html",'error_list':{_('CashClosing'):[_('There can only be one cash_closing per day.'),]}, 'info_list':{}})
     
-    # group the documents into series
-    tax_groups_by_series=[]
-    for group in tax_groups:
-        tax_groups_by_series.append(create_series(group))
-        
-    # group payments by timing
-    # returns a dict with three lists of payments: 'Early', 'OnTime', and 'Late'
-    grouped_payments=separate_payments_by_timing(payments)
-        
-    try:report=Report.objects.get(name=settings.CORTE_REPORT_NAME)
+@login_required
+@permission_required('inventory.change_cash_closing', login_url="/blocked/")
+def edit_cash_closing(request, object_id):    
+    return edit_object(request, object_id, CashClosing, CashClosingForm, "cash_closing")
+
+def cash_closing_report(request, object_id):
+    cash_closing = get_object_or_404(CashClosing, pk=object_id)
+    try:report=Report.objects.get(name=settings.CASH_CLOSING_REPORT_NAME)
     except Report.DoesNotExist: 
         request.GET=request.GET.copy()
         errors={'Report':[unicode(_('Unable to find a report template with the name "%s"') % (settings.CORTE_REPORT_NAME,))]}
         return item_list(request, errors=errors)
-    cash=cash.aggregate(total=models.Sum('value'))['total'] or Decimal('0.00')
-    revenue=-revenue.aggregate(total=models.Sum('value'))['total'] or Decimal('0.00')
-    expense=expense.aggregate(total=models.Sum('value'))['total'] or Decimal('0.00')
-    tax=-tax.aggregate(total=models.Sum('value'))['total'] or Decimal('0.00')
     return render_string_to_pdf(Template(report.body), {
-        'start':start or datetime.now(),
-        'end':end,
-        'tax_groups':tax_groups,
-        'sales':sale_entries,
-        'payments':payments,
-        'paid_sales':paid_sales,
-        'unpaid_sales':unpaid_sales,
-        'tax_groups_by_series':tax_groups_by_series,
-        'grouped_payments':grouped_payments,
+        'start':cash_closing.start,
+        'end':cash_closing.end,
+        'groups':cash_closing.account_groups,
+        'sales':cash_closing.sale_entries,
+        'payments':cash_closing.payments,
+        'paid_sales':cash_closing.paid_sales,
+        'unpaid_sales':cash_closing.unpaid_sales,
+        'groups_by_series':cash_closing.groups_by_series,
+        'grouped_payments':cash_closing.payments_by_timing,
         'user':request.user,
         'settings.COMPANY_NAME':settings.COMPANY_NAME,
-        'cash':cash,
-        'revenue':revenue,
-        'earnings':cash-initial_cash-expense-tax,
-        'expense':expense,
-        'tax':tax,
-        'final_cash':CASH_ACCOUNT.balance,
-        'initial_cash':initial_cash
+        'revenue':cash_closing.revenue,        
+        'discount':cash_closing.discount,        
+        'totalrevenue':cash_closing.revenue-cash_closing.discount,
+        'earnings':cash_closing.earnings,
+        'expense':cash_closing.expense,
+        'tax':cash_closing.tax,
+        'final_cash':cash_closing.ending_cash,
+        'initial_cash':cash_closing.starting_cash,
+        'revenue_check':cash_closing.revenue_check,
+        'cash_check':cash_closing.cash_check,
+        'paymentstotal':cash_closing.paymentstotal,
     })  
     
 ######################################################################################

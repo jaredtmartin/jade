@@ -5,7 +5,7 @@
     <tbody>
         {% for entry in entry_page.object_list %}
             <tr>
-                <td>{{ entry.date|date:"m/d/Y" }}</td>
+                <td>{{ entry.date|date:date_format }}</td>
                 <td>{% link entry.transaction %}</td>
                 <td>{{ entry.transaction.tipo }}</td>
                 <td>{% link entry.account %}</td>

@@ -10,7 +10,8 @@ urlpatterns = patterns('',
     (r'^vendor_list/$', 'jade.inventory.views.ajax_vendor_list'),
     (r'^account_list/$', 'jade.inventory.views.ajax_account_list'),
     (r'^item_list/$', 'jade.inventory.views.ajax_item_list'),
-    (r'^tax_group_list/$', 'jade.inventory.views.ajax_tax_group_list'),
+    (r'^account_group_list/$', 'jade.inventory.views.ajax_account_group_list'),
+    (r'^receipt_group_list/$', 'jade.inventory.views.ajax_receipt_group_list'),
     (r'^price_group_list/$', 'jade.inventory.views.ajax_price_group_list'),
     (r'^unit_list/$', 'jade.inventory.views.ajax_unit_list'),
     (r'^site_list/$', 'jade.inventory.views.ajax_site_list'),
@@ -53,10 +54,10 @@ urlpatterns = patterns('',
     (r'^transfer/(?P<object_id>\d+)/$', 'jade.inventory.views.edit_transfer'),
     (r'^transfer/new/$', 'jade.inventory.views.new_transfer'),
     
-    # Accounting
-#    (r'^accounting/$', 'jade.inventory.views.list_accounting'),
-#    (r'^accounting/(?P<object_id>\d+)/$', 'jade.inventory.views.edit_accounting'),
-#    (r'^accounting/new/$', 'jade.inventory.views.new_accounting'),
+    # Equity
+    (r'^equity_list/$', 'jade.inventory.views.list_equity'),
+    (r'^equity/(?P<object_id>\d+)/$', 'jade.inventory.views.edit_equity'),
+    (r'^equity/new/$', 'jade.inventory.views.new_equity'),
     
     #Purchase Returns
     (r'^purchasereturn/(?P<object_id>\d+)/$', 'jade.inventory.views.edit_purchasereturn'),
@@ -147,9 +148,13 @@ urlpatterns = patterns('',
     (r'^linkeditem/(?P<object_id>\d+)/$', 'jade.inventory.views.edit_linkeditem'),
     (r'^item/(?P<object_id>\d+)/addlinkeditem/$', 'jade.inventory.views.new_linkeditem'),
     
+    # CashClosing
+    (r'^transactions/close/$', 'jade.inventory.views.new_cash_closing'),
+    (r'^cashclosing/(?P<object_id>\d+)/$', 'jade.inventory.views.edit_cash_closing'),
+    (r'^cashclosing/(?P<object_id>\d+)/report.pdf$', 'jade.inventory.views.cash_closing_report'),
+    
     # Transactions
     (r'^transactions/movements.pdf$', 'jade.inventory.views.movements_report'),
-    (r'^transactions/corte.pdf$', 'jade.inventory.views.corte'),
     (r'^transactions/$', 'jade.inventory.views.transaction_list'),
     (r'^transaction/(?P<object_id>\d+)/delete/$', 'jade.inventory.views.delete_transaction'),
     (r'^transaction/(?P<object_id>\d+)/activate/$', 'jade.inventory.views.activate_transaction'),
