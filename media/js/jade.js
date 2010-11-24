@@ -1,4 +1,5 @@
 function editTransaction(object_id) {
+    if ($('#transaction-'+object_id).attr('tipo') == 'sale'){$('#last_sale').val(object_id);}
     $('#transaction-'+object_id+' .field').each(function(i){
         var input = '<td style="'+ $(this).attr('style') +'"><input id="'+ $(this).attr('id') +'" class="'+ $(this).attr('class') +'" value="'+$(this).attr('value')+'" name="'+ $(this).attr('name') +'" type="text"></td>'
         $(this).before(input).removeClass('Inventory').hide();
@@ -22,6 +23,7 @@ function editTransaction(object_id) {
     $('#transaction-'+object_id+' .edit').show();
 }
 function getTransaction(object_id, url){
+    if ($('#transaction-'+object_id).attr('tipo') == 'sale'){$('#last_sale').val(object_id);}
     $.ajax({
         url: url ,
         type:'POST',
@@ -212,9 +214,9 @@ function update(prefix, data){
             $('#'+prefix+'s').prepend(this);
             $('.date:first').datepicker();
             $('.item:first').autocomplete('/inventory/item_list/', {matchSubset:0, autoFill:1,});
-//            $('.account:first').autocomplete('/inventory/account_list/', {matchSubset:0, autoFill:1,});
             $('.account:first.client').autocomplete('/inventory/client_list/', {matchSubset:0, autoFill:1,});
             $('.account:first.vendor').autocomplete('/inventory/vendor_list/', {matchSubset:0, autoFill:1,});
+            if ($('.transaction:first').attr('tipo') == 'sale'){$('#last_sale').val($('.transaction:first').attr('transaction_id'));}
         }
     });
     if ($('.error').length==0){

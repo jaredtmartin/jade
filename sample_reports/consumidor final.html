@@ -1,8 +1,9 @@
+{% load tags %}
 <html>
 <style>
-    body{line-height:16px;font-size:16px;}
-    td.numero {text-align:left;font-size:16px;}
-    td.texto {text-align:left;font-size:16px;}
+    body{line-height:16px;}
+    td.numero {text-align:left;}
+    td.texto {text-align:left;}
     table {border:solid;height:200px;}
 @page {
     size:letter;
@@ -12,21 +13,21 @@ background-image: url({{watermark_filename}});
   top: 3.2cm;
   left: 1.7cm;
       @frame header{
-        top:3.6cm;
+        top:3.4cm;
         height: 1.3cm;
-        left: 4cm;
+        left: 3.7cm;
         right: 1.7cm;
         -pdf-frame-content: headerContent;
       }
       @frame table{
-        top:5.5cm;
+        top:5.3cm;
         height: 5.8cm;
-        left: 2cm;
+        left: 1.7cm;
         right: 1.7cm;
         -pdf-frame-content: tableContent;
       }
       @frame totals{
-        top:11.3cm;
+        top:11cm;
         height: 2.3cm;
         left: 2.7cm;
         right: 1.7cm;
@@ -38,40 +39,48 @@ background-image: url({{watermark_filename}});
 <body>
     <table id="headerContent">
         <tr>
-            <td style="width:11.5cm;">{{doc.0.client.name}}</td>
-            <td>{{doc.0.date|date:"m/d/Y"}}</td>
+            <td style="width:11.5cm;">{{doc.client.name}}</td>
+            <td>{{doc.date|date:"m/d/Y"}}</td>
         </tr>
-        <tr><td colspan="2">{{doc.0.client.address}}</td></tr>
+        <tr><td colspan="2">{{doc.client.address}}</td></tr>
         <tr>
-            <td>{{doc.0.client.tax_number}}</td>
-            <td>{{doc.0.form_of_payment}}</td>
+            <td>{{doc.client.tax_number}}</td>
+            <td>{{doc.form_of_payment}}</td>
         </tr>
     </table>
     <table id="tableContent">
-         {% for sale in doc %}
+         {% for sale in doc.lines %}
+            {% if sale.tipo == 'SaleDiscount' %}
+              <tr><td/><td> Descuento</td><td/><td/><td/><td>(${{sale.value|floatformat:2}})</td></tr>
+            {% else %}
             <tr>
                 <td class="numero" style="width:68px;">{{sale.quantity|floatformat:-2}}</td>
                 <td class="texto" style="width:387px;">{{sale.item.name}}</td>
-                <td class="numero" style="width:58px;">${{sale.unit_charge|floatformat:2}}</td>
+                <td class="numero" style="width:58px;">${{sale.unit_value|floatformat:2}}</td>
                 <td class="numero" style="width:47px;"> </td>
                 <td class="numero" style="width:47px;"> </td>
-                <td class="numero">${{sale.charge|floatformat:2}}</td>
+                <td class="numero">${{sale.value|floatformat:2}}</td>
             </tr>
+           {% endif %}
         {%endfor%}
     </table>
     <table id="totalsContent">
         <tr>
-            <td style="width:15.2cm;">${{charge|floatformat:2}}</td>
-            <td>${{charge|floatformat:2}}</td>
+            <td style="width:15.2cm;">{{doc.total|money2word}}</td>
+            <td>${{doc.subtotal|floatformat:2}}</td>
         </tr>
         <tr>
             <td></td>
-            <td>${{charge|floatformat:2}}</td>
+            <td>${% tax doc 'Impuestos de Ventas de Consumidor Final'%}</td>
         </tr>
-        <tr/><tr/>
         <tr>
             <td></td>
-            <td>${{charge|floatformat:2}}</td>
+            <td>${% tax doc 'Percepcion'%}</td>
+        </tr>
+<tr/>
+        <tr>
+            <td></td>
+            <td>${{doc.total|floatformat:2}}</td>
         </tr>
 
     </table>

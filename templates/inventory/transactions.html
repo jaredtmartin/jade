@@ -166,9 +166,10 @@
     <th>{% trans 'Item' %}</th>
     <th>{% trans 'Quantity' %}</th>
     <th>{% trans 'Serial' %}</th>
-    <th  class="value sale-details">{% trans 'Value' %}</th>
+    <th class="value sale-details">{% trans 'Value' %}</th>
     <th>{% trans 'Actions' %}</th>
     <input type="hidden" id="last_id" value="">
+    <input type="hidden" id="last_sale" value="">
 {% endblock%}
 {% block line %}
     {% with object.subclass as object %}

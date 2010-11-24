@@ -27,10 +27,9 @@
             <div id="user-corner">                
                 <a href="{% url jade.inventory.views.set_languages %}?lang=en" title={% trans 'English' %}><img src="{{MEDIA_URL}}/img/en.png" alt={% trans 'English' %} /></a>
                 <a href="{% url jade.inventory.views.set_languages %}?lang=es" title={% trans 'Spanish' %}><img src="{{MEDIA_URL}}/img/es.png" alt={% trans 'Spanish' %} /></a>
-                <a href="{% url jade.inventory.views.set_languages %}?lang=de" title={% trans 'German' %}><img src="{{MEDIA_URL}}/img/de.png" alt={% trans 'German' %} /></a>
                 <a href="{% url jade.inventory.views.set_languages %}?lang=fr" title={% trans 'French' %}><img src="{{MEDIA_URL}}/img/fr.png" alt={% trans 'French' %} /></a>
                 <br>
-                {% block user-corner %}              
+                {% block user-corner %}
                 {% endblock %}
             </div>
         <div id="messages">{% block messages %}{% endblock %}</div>
@@ -43,7 +42,6 @@
         <div id="content">{% block content %}{% endblock %}</div>
         
         <div id="ajax-data" style="display: none;"></div>
-<!--        <div id="right">{% block right %}{% endblock %}</div>-->
 <div class="clear-contentunit"></div>
         <div id="bottom">
             {% block bottom %}{% endblock %}
