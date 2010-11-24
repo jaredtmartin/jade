@@ -23,8 +23,9 @@
     <li class="subheading"><a href="#add-clients-and-vendors">{% trans "Adding Clients and Vendors" %}</a></li>
     <li class="subsubheading"><a href="#number">{% trans "Account Number" %}</a></li>
     <li class="subsubheading"><a href="#multiplier">{% trans "Multiplier" %}</a></li>
-    <li class="subsubheading"><a href="#taxgroup">{% trans "Tax Group" %}</a></li>
+    <li class="subsubheading"><a href="#accountgroup">{% trans "Account Group" %}</a></li>
     <li class="subsubheading"><a href="#pricegroup">{% trans "Price Group" %}</a></li>
+    <li class="subsubheading"><a href="#receiptgroup">{% trans "Receipt Group" %}</a></li>
     <li class="subsubheading"><a href="#creditdays">{% trans "Credit Days" %}</a></li>
     <li class="subsubheading"><a href="#balance">{% trans "Balance" %}</a></li>
     <li class="subsubheading"><a href="#user">{% trans "User" %}</a></li>
@@ -56,6 +57,9 @@
 <span id="pricegroup"></span>
 <h2> {% trans "Price Group" %}</h2>
 <p> {% trans "This is the name of the Price Group the client or Vendor belongs to. When products are sold to this person, prices will be retreived for this price group. By default Jade comes with two price groups: Retail and Wholesale." %}</p>
+<span id="receiptgroup"></span>
+<h2> {% trans "Receipt Group" %}</h2>
+<p> {% trans "This is the name of the Receipt Group the client or Vendor belongs to. This value determines which receipt the client gets when sales are made." %}</p>
 <span id="creditdays"></span>
 <h2> {% trans "Credit Days" %}</h2>
 <p> {% trans "When a sale is made without a payment, the sale will appear in the Unpaid Sales section. If the number of days specified by Credit Days has passed since the Sale was made the Transaction will appear in the Overdue section" %}</p>

@@ -24,13 +24,13 @@
 {% block pre-table %}
     <div id="design-form" title="{% trans 'Create process' %}">
 	    <form>
-		    {% trans 'Doc Number' %}: <br><input id="doc_number" value="{{q}}" type="text"> <a href="#" onclick="$(this).prev().val('');return false;"><img id="next_doc_number" src="{{MEDIA_URL}}/img/clear.png"/></a><br>
+		    {% trans 'Doc Number' %}: <br><input id="doc_number" value="{{q}}" type="text"> <a href="#" onclick="$(this).prev().val('');return false;"><img id="next_doc_number" src="{{MEDIA_URL}}/img/clear.png"/></a><a href="/manual/production/#creatingaprocess"><img src="{{MEDIA_URL}}/img/help.png"/></a><br>
 		    {% trans 'Item' %}: <br><input id="item" value="{{page.object_list.1.item}}" type="text"> <a onclick="newTransaction('/production/process/new/'); return false;" href="#"><img src="{{MEDIA_URL}}/img/add.png"/></a><br>
 	    </form>
     </div>
     <div id="plan-form" title="{% trans 'Create job' %}">
 	    <form>
-		    {% trans 'Number of times to multiply process' %}: <input id="quantity" value="1" type="text">
+		    {% trans 'Number of times to multiply process' %}: <input id="quantity" value="1" type="text"><a href="/manual/production/#creatingajob"><img src="{{MEDIA_URL}}/img/help.png"/></a>
 	    </form>
     </div>
     <script type="text/javascript">

@@ -27,6 +27,7 @@
         {% trans 'Until' %}: <input id="end-search" type="text" value="{{end|default:''}}" >
     {% endif %}
     <a onclick="window.location = '{% block search_url %}{% endblock %}?q='+$('#search_field').val()+'&start='+$('#start-search').val()+'&end='+$('#end-search').val(); return false;" href="#"> <img src="{{MEDIA_URL}}/img/find.png"/></a>
+    <a href="/manual/transactions/#searching"><img src="{{MEDIA_URL}}/img/help.png"/></a>
 {% endblock %}
 {% block content %}
     <script type="text/javascript">

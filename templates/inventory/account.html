@@ -19,12 +19,12 @@
         <input id="last_id" type="hidden" value="{{form.instance.pk}}">
         <div class="three-column">
             <p>{% trans 'Name'%}: {{form.name}}</p>
-            <p>{% trans 'Account number'%}: {{form.number}}</p>
-            <p>{% trans 'Multiplier'%}: {{form.multiplier}}</p>
+            <p>{% trans 'Account number'%}: {{form.number}} <a href="/manual/accounts/#number"><img src="{{MEDIA_URL}}/img/help.png"/></a></p>
+            <p>{% trans 'Multiplier'%}: {{form.multiplier}} <a href="/manual/accounts/#multiplier"><img src="{{MEDIA_URL}}/img/help.png"/></a></p>
             {% if tipo != 'account' %}            
-                <p>{% trans 'Account Group'%}: {{form.account_group}}</p>
+                <p>{% trans 'Account Group'%}: {{form.account_group}} <a href="/manual/accounts/#accountgroup"><img src="{{MEDIA_URL}}/img/help.png"/></a></p>
                 <p>{% trans 'Tax Number'%}: {{form.tax_number}}</p>
-                <p>{% trans 'Price Group'%}: {{form.price_group}}</p>
+                <p>{% trans 'Price Group'%}: {{form.price_group}} <a href="/manual/accounts/#pricegroup"><img src="{{MEDIA_URL}}/img/help.png"/></a></p>
                 <p>{% trans 'Registration'%}: {{form.registration}}</p>
             {% endif %}
         </div>
@@ -40,15 +40,15 @@
         </div>
         <div class="three-column">
             {% if tipo != 'account' %}   
-                <p>{% trans 'Receipt Group'%}: {{form.receipt_group}}</p>
+                <p>{% trans 'Receipt Group'%}: {{form.receipt_group}} <a href="/manual/accounts/#receiptgroup"><img src="{{MEDIA_URL}}/img/help.png"/></a></p>
                 <p>{% trans 'Address'%}: {{form.address}}</p>
                 <p>{% trans 'State'%}: {{form.state_name}}</p>
                 <p>{% trans 'Country'%}: {{form.country}}</p>
-                <p>{% trans 'Credit Period (days)'%}: {{form.credit_days}}</p>
+                <p>{% trans 'Credit Period (days)'%}: {{form.credit_days}} <a href="/manual/accounts/#creditdays"><img src="{{MEDIA_URL}}/img/help.png"/></a></p>
             {% endif %}
-            <p><b>{% trans 'Balance' %}: ${{object.balance|default:0.00|floatformat:2}}</b></p>
+            <p><b>{% trans 'Balance' %}: ${{object.balance|default:0.00|floatformat:2}}</b> <a href="/manual/accounts/#balance"><img src="{{MEDIA_URL}}/img/help.png"/></a></p>
             {% if tipo != 'account' %}   
-                <p>{% trans 'User' %}: {{form.user}}</p>
+                <p>{% trans 'User' %}: {{form.user}} <a href="/manual/counts/#why"><img src="{{MEDIA_URL}}/img/help.png"/></a></p>
             {% endif %}
         </div>            
         <div class="clear-contentunit"></div>

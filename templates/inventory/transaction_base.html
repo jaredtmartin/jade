@@ -17,7 +17,7 @@
 <tr id="transaction-{{ object.pk }}" class="transaction" transaction_id={{object.pk}} tipo={{object.tipo|lower}}>
 {% if object.edit_mode %}
     <td><input id="id_transaction-{{object.pk}}-doc_number" title="{% trans 'Document Number' %}" class="field doc_number" value="{{object.doc_number}}" type="text"></td>
-    <td><a title="{% trans 'Type' %}" id="id_transaction-{{object.pk}}-tipo">{% trans object.get_tipo_display %}</a></td>
+    <td><a title="{% trans 'Type' %}" id="id_transaction-{{object.pk}}-tipo">{% trans object.tipo %}</a></td>
     <td><input id="id_transaction-{{object.pk}}-date" title="{% trans 'Date' %}" class="field date" value="{{object.date|date:date_format}}" type="text"></td>
     {% block other_fields_edit %}{% endblock %}
     <td>

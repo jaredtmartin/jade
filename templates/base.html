@@ -35,9 +35,9 @@
     </ul>
 {% endblock %}
 {% block user-corner %}
-    {% trans 'User' %}: {{ user.username }}<br>
+    {% trans 'User' %}: {{ user.username }} <a href="/manual/"><img src="{{MEDIA_URL}}/img/help.png"/></a> <br>
     {% trans 'Price Group' %}: {{user.get_profile.price_group}}<br>
-    <a href="/manual/">Ayuda?</a>  - <a href="/logout/">{% trans 'Logout' %}</a><br>
+    <a href="/logout/">{% trans 'Logout' %}</a><br>
 {% endblock %}
 {% block right %}
     {% block actdions %}{% endblock%}
