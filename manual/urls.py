@@ -24,6 +24,7 @@ urlpatterns = patterns('',
     (r'^transactions/$', direct_to_template, {'template': 'manual/transactions.html'}),
     (r'^counts/$', direct_to_template, {'template': 'manual/counts.html'}),
     (r'^production/$', direct_to_template, {'template': 'manual/production.html'}),
+    (r'^license/$', direct_to_template, {'template': 'manual/license.html'}),
     (r'^$', direct_to_template, {'template': 'manual/home.html'}),
 )
 
