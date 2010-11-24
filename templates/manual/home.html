@@ -1,0 +1,37 @@
+<!--# Jade Inventory Control System-->
+<!--#Copyright (C) 2010  Jared T. Martin-->
+
+<!--#    This program is free software: you can redistribute it and/or modify-->
+<!--#    it under the terms of the GNU General Public License as published by-->
+<!--#    the Free Software Foundation, either version 3 of the License, or-->
+<!--#    (at your option) any later version.-->
+
+<!--#    This program is distributed in the hope that it will be useful,-->
+<!--#    but WITHOUT ANY WARRANTY; without even the implied account of-->
+<!--#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the-->
+<!--#    GNU General Public License for more details.-->
+
+<!--#    You should have received a copy of the GNU General Public License-->
+<!--#    along with this program.  If not, see <http://www.gnu.org/licenses/>.-->
+{% extends "manual/base.html" %}
+{% load i18n %}
+{% block main %}
+    <div style="padding-left:20px;">
+        <h1>{% trans 'Contents of this manual' %}:</h1>
+        <p> {% trans "This manual was designed to more than just a manual, but rather an online tutorial not only of how to use your Jade Inventory System, but also to contain easy to understand guidelines of common inventory procedures. Since Jade is an Open Source project, your contributions and/or corrections to this manual are also welcomed." %}</p><br>
+        
+        <ul>
+            <li class="chapter"><a href="/manual/items">{% trans "Chapter" %} {% trans "1: Items" %}</a></li>
+            <li class="chapter"><a href="/manual/sales">{% trans "Chapter" %} {% trans "2: Sales" %}</a></li>
+            <li class="chapter"><a href="/manual/transactions">{% trans "Chapter" %} {% trans "3: Transactions" %}</a></li>
+            <li class="chapter"><a href="/manual/accounts">{% trans "Chapter" %} {% trans "4: Accounts" %}</a></li>
+            <li class="chapter"><a href="/manual/counts">{% trans "Chapter" %} {% trans "5: Physical Counts" %}</a></li>
+            <li class="chapter"><a href="/manual/transfers">{% trans "Chapter" %} {% trans "6: Transfers" %}</a></li>
+            <li class="chapter"><a href="/manual/production">{% trans "Chapter" %} {% trans "7: Production" %}</a></li>
+            <li class="chapter"><a href="/manual/groups">{% trans "Chapter" %} {% trans "8: Account & Receipt Groups" %}</a></li>
+            <li class="chapter"><a href="/manual/taxes">{% trans "Chapter" %} {% trans "9: Price Groups & Taxes" %}</a></li>
+            <li class="chapter"><a href="/manual/users">{% trans "Chapter" %} {% trans "10: Users and Rights" %}</a></li>
+            <li class="chapter"><a href="/manual/reports">{% trans "Chapter" %} {% trans "11: Reports" %}</a></li>
+        </ul>
+    </div>
+{% endblock %}

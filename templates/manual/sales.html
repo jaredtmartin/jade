@@ -1,8 +1,23 @@
+<!--# Jade Inventory Control System-->
+<!--#Copyright (C) 2010  Jared T. Martin-->
+
+<!--#    This program is free software: you can redistribute it and/or modify-->
+<!--#    it under the terms of the GNU General Public License as published by-->
+<!--#    the Free Software Foundation, either version 3 of the License, or-->
+<!--#    (at your option) any later version.-->
+
+<!--#    This program is distributed in the hope that it will be useful,-->
+<!--#    but WITHOUT ANY WARRANTY; without even the implied account of-->
+<!--#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the-->
+<!--#    GNU General Public License for more details.-->
+
+<!--#    You should have received a copy of the GNU General Public License-->
+<!--#    along with this program.  If not, see <http://www.gnu.org/licenses/>.-->
 {% extends "manual/base.html" %}
 {% load i18n %}
 {% block chapters %}
     <li class="chapter"><a href="/manual/items">{% trans "Chapter" %} {% trans "1: Items" %}</a></li>
-    <li class="chapter"><a href="/manual/sales">{% trans "Chapter" %} {% trans "2: Sales" %}</a></li>
+    <li class="chapter"><a href="/manual/sales">{% trans "Chapter" %} {% trans "2: Sales & Purchases" %}</a></li>
     <li class="subheading"><a href="#creating-a-sale">{% trans "Creating a Sale" %}</a></li>
     <li class="subsubheading"><a href="#document-number">{% trans "Document Number" %}</a></li>
     <li class="subsubheading"><a href="#client-name">{% trans "Client Name" %}</a></li>
@@ -12,21 +27,27 @@
     <li class="subsubheading"><a href="#price">{% trans "Price" %}</a></li>
     <li class="subsubheading"><a href="#serial-number">{% trans "Serial Number" %}</a></li>
     <li class="subsubheading"><a href="#edit-and-save">{% trans "Edit & Save" %}</a></li>
+    <li class="subheading"><a href="#discount">{% trans "Discounts" %}</a></li>
     <li class="subheading"><a href="#garantees">{% trans "Garantees" %}</a></li>
+    <li class="subheading"><a href="#tax">{% trans "Tax" %}</a></li>
+    <li class="subheading"><a href="#payment">{% trans "Payments" %}</a></li>
     <li class="subheading"><a href="#returns">{% trans "Returns" %}</a></li>
+    <li class="subsubheading"><a href="#refund">{% trans "Refunds" %}</a></li>
     <li class="subheading"><a href="#end-of-day">{% trans "End of Day" %}</a></li>
     <li class="subheading"><a href="#whats-next">{% trans "What's Next?" %}</a></li>
     <li class="chapter"><a href="/manual/transactions">{% trans "Chapter" %} {% trans "3: Transactions" %}</a></li>
     <li class="chapter"><a href="/manual/accounts">{% trans "Chapter" %} {% trans "4: Accounts" %}</a></li>
-    <li class="chapter"><a href="/manual/purchases">{% trans "Chapter" %} {% trans "5: Purchases" %}</a></li>
-    <li class="chapter"><a href="/manual/counts">{% trans "Chapter" %} {% trans "6: Physical Counts" %}</a></li>
-    <li class="chapter"><a href="/manual/transfers">{% trans "Chapter" %} {% trans "7: Transfers" %}</a></li>
-    <li class="chapter"><a href="/manual/production">{% trans "Chapter" %} {% trans "8: Production" %}</a></li>
-    <li class="chapter"><a href="/manual/groups">{% trans "Chapter" %} {% trans "9: Tax Groups and Price Groups" %}</a></li>
+    <li class="chapter"><a href="/manual/counts">{% trans "Chapter" %} {% trans "5: Physical Counts" %}</a></li>
+    <li class="chapter"><a href="/manual/transfers">{% trans "Chapter" %} {% trans "6: Transfers" %}</a></li>
+    <li class="chapter"><a href="/manual/production">{% trans "Chapter" %} {% trans "7: Production" %}</a></li>
+    <li class="chapter"><a href="/manual/groups">{% trans "Chapter" %} {% trans "8: Account & Receipt Groups" %}</a></li>
+    <li class="chapter"><a href="/manual/taxes">{% trans "Chapter" %} {% trans "9: Price Groups & Taxes" %}</a></li>
     <li class="chapter"><a href="/manual/users">{% trans "Chapter" %} {% trans "10: Users and Rights" %}</a></li>
     <li class="chapter"><a href="/manual/reports">{% trans "Chapter" %} {% trans "11: Reports" %}</a></li>
 {% endblock %}
 {% block main %}
+<h1>Sales & Purchases</h1>
+<p> {% trans "Since creating Sales and Purchases are almost the same process, we'll consider how to create a sale and mention any differences as we go. Before we start, notice that the keyboard shortcuts mentioned are not available for  purchases." %}</p>
 <span id="creating-a-sale"></span>
 <h1> {% trans "Creating a Sale" %}</h1>
 <p> {% trans " Creating a sale is simple, click on the green sales tab on the left side of the page and click on \"New\".  This will cause a small window to appear in the lower-left corner of your screen.  There you will find three fields: Doc Number, Client, and Item.  " %}</p>
@@ -47,22 +68,32 @@
 <span id="price"></span>
 <h2> {% trans "Value" %}</h2>
 <p> {% trans "Once you've put in the quantity, you may want to change the price.  Jade already put in the normal price for the item.  If you have more than one <a href=\"#TODO\">price group</a> configured then Jade created the sale with the price appropiate to the price group of the client specified.  But no matter what the normal price is you can change it here.  As before, be sure to type the price per unit. If you wish to change the price for an item, you can do that on the <a href=\"/inventory/items\">Item</a> page.  You can get more information about changing prices in <a href=\"/manual/items/\">Chapter 1: Items</a>." %}</p>
+<p> {% trans "<b>Purchases:</b> If you are editing a purchase be sure to enter the <b>total</b> cost. This is the main difference between sales and purchases." %}</p>
 <span id="serial-number"></span>
 <h2> {% trans "Serial Number" %}</h2>
 <p> {% trans "Jade will not require you to type a serial number even if the item has them, but if you do, later you'll be able to see a complete history of your serial numbers by simply clicking on them." %}</p>
 <span id="edit-and-save"></span>
-<h2> {% trans "Edit & Save" %}</h2>
-<p> {% trans "Of course you can still change the document number, date, client, and item fields if they're not right. When you're done just click on the diskette <img src=\"/media/img/save.png\"> image and the Sale will be saved, the appearance of the sale will change, and you'll receive a nice message confirming that your sale as been saved successfully. Notice that Jade now shows you the total price rather than the unit price. " %}</p>
+<h2> {% trans "Edit & Save" %} <img src="/media/img/save.png"><img src="/media/img/edit.png"></h2>
+<p> {% trans "Of course you can still change the document number, date, client, and item fields if they're not right. When you're done just click on the diskette <img src=\"/media/img/save.png\"> image and the Sale will be saved, the appearance of the sale will change, and you'll receive a nice message confirming that your sale as been saved successfully. Notice that Jade now shows you the total price rather than the unit price. If you notice an error and want to edit the sale again, click on the paper and pencil <img src=\"/media/img/edit.png\">" %}</p>
 <span id="discount"></span>
-<h2> {% trans "Discount" %}</h2>
+<h1> {% trans "Discount" %} <img src="/media/img/down.png"></h1>
 <p> {% trans "If you are giving the client a discount and wish for it to be reported in the accounting, either click on the green arrow <img src=\"/media/img/down.png\"> to the right or press the F3 key on your keyboard. This will cause the New Discount window to appear. Here you can either type the amount of the discount you wish to give the client or if you want the sale to have a given total, put that in the Total field. When you either click on Add or press Enter, the Discount will appear in the list of transactions." %}</p>
-
+<p> {% trans "Discounts can also be applied to <b>Purchases</b>, but note that the value of the discount will not be used when calculating the cost of the item purchased. This may be the desired effect. Otherwise you may find it better to simply create two lines for the item purchased. For example, if you got a buy one get one free offer, create a purchase of the two with the full price and then add a second purchase with a cost of zero. Jade will average out the costs correctly." %}</p>
 <span id="garantees"></span>
-<h2> {% trans "Garantees" %}</h2>
-<p> {% trans "TODO" %}</p>
+<h1> {% trans "Garantees" %} <img src="/media/img/garantee.png"></h1>
+<p> {% trans "If you want to provide a garantee for the item, click on the sheild <img src=\"/media/img/garantee.png\"> or press F9 on your keyboard. This will create a garantee for the the item. Type the number of months the garantee will last in the quantity field and check the price in the value field. If you configure garantees for an item on the items page, (See <a href=\"/manual/items/\">Chapter 1: Items</a>) the appropriate price will appear automaticly when you type in the correct number of months. If you configure a garantee on the Item page that has a price of $0.00, the garantee will be created automaticly when you create the sale. You may also want to put the item's serial number in the serial number field if it has one. Clicking on the print <img src=\"/media/img/print.png\"> icon for a garantee will produce a list of all of the garantees with the same document number that you can print out and give to your clients for reference." %}</p>
+<span id="tax"></span>
+<h1> {% trans "Tax" %} <img src="/media/img/coin.png"></h1>
+<p> {% trans "When you're finished with the other aspects of the sale, you'll probably want to calculate tax. Jade makes it easy. Either click on the gold coin <img src=\"/media/img/coin.png\"> or press the F6 key on your keyboard. This will cause the Tax window to appear. The default tax for the client will appear with the tax already calculated for the total of the transactions with the given document number. If its correct, just press Enter. If you want to apply a different tax, select it from the dropdown menu and optionally adjust the amount of tax to be applied. If you check the 'Subtract from Price' box, Jade will extract the tax from the current values of the sale. For more information on configuring Taxes, see the <a href=\"#TODO\">Tax Groups and Price Groups</a>" %}</p>
+<span id="payment"></span>
+<h1> {% trans "Payment" %} <img src="/media/img/money.png"></h1>
+<p> {% trans "If the client will pay for the item now, either press F8 on your keyboard or click on the money icon. <img src=\"/media/img/money.png\">. This will create a payment equal to the total of the transactions with the current document number.</a>" %}</p>
 <span id="returns"></span>
-<h2> {% trans "Returns" %}</h2>
-<p> {% trans "TODO" %}</p>
+<h1> {% trans "Returns" %} <img src="/media/img/return.png"></h1>
+<p> {% trans "If the user later decides to return the item, you can mark this clearly by locating the sale and clicking on the round red arrow on the sale. <img src=\"/media/img/return.png\"> This will create a transaction that is an exact mirror of the sale. If the user returns more than one item, you may need to do this for each item returned. Notice that this does not return the payment." %}</p>
+<span id="refund"></span>
+<h2> {% trans "Refund" %} <img src="/media/img/return.png"></h2>
+<p> {% trans "If you need to return money to the client, either press F8 on your keyboard or click on the round red arrow on the payment. <img src=\"/media/img/return.png\"> This will create a refund equal to the payment. Notice that this does not return the items." %}</p>
 <span id="end-of-day"></span>
 <h1> {% trans "End of Day" %}</h1>
 <p> {% trans "At the end of the day you'll probably want a report of the sales made during the day. You can get this report by clicking on the sales tab and then on 'End of Day'. Be sure to prepare the template for this report. More information on formatting reports is found in <a href=\"#TODO\">Chapter 11: Reports</a>" %}</p>

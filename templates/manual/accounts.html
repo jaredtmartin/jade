@@ -1,3 +1,18 @@
+<!--# Jade Inventory Control System-->
+<!--#Copyright (C) 2010  Jared T. Martin-->
+
+<!--#    This program is free software: you can redistribute it and/or modify-->
+<!--#    it under the terms of the GNU General Public License as published by-->
+<!--#    the Free Software Foundation, either version 3 of the License, or-->
+<!--#    (at your option) any later version.-->
+
+<!--#    This program is distributed in the hope that it will be useful,-->
+<!--#    but WITHOUT ANY WARRANTY; without even the implied account of-->
+<!--#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the-->
+<!--#    GNU General Public License for more details.-->
+
+<!--#    You should have received a copy of the GNU General Public License-->
+<!--#    along with this program.  If not, see <http://www.gnu.org/licenses/>.-->
 {% extends "manual/base.html" %}
 {% load i18n %}
 {% block chapters %}
@@ -16,11 +31,11 @@
     <li class="subsubheading"><a href="#other">{% trans "Other fields" %}</a></li>
     <li class="subheading"><a href="#unpaid">{% trans "Unpaid and Overdue Transactions" %}</a></li>
     <li class="subheading"><a href="#recent">{% trans "Recent Transactions" %}</a></li>
-    <li class="chapter"><a href="/manual/purchases">{% trans "Chapter" %} {% trans "5: Purchases" %}</a></li>
-    <li class="chapter"><a href="/manual/counts">{% trans "Chapter" %} {% trans "6: Physical Counts" %}</a></li>
-    <li class="chapter"><a href="/manual/transfers">{% trans "Chapter" %} {% trans "7: Transfers" %}</a></li>
-    <li class="chapter"><a href="/manual/production">{% trans "Chapter" %} {% trans "8: Production" %}</a></li>
-    <li class="chapter"><a href="/manual/groups">{% trans "Chapter" %} {% trans "9: Tax Groups and Price Groups" %}</a></li>
+    <li class="chapter"><a href="/manual/counts">{% trans "Chapter" %} {% trans "5: Physical Counts" %}</a></li>
+    <li class="chapter"><a href="/manual/transfers">{% trans "Chapter" %} {% trans "6: Transfers" %}</a></li>
+    <li class="chapter"><a href="/manual/production">{% trans "Chapter" %} {% trans "7: Production" %}</a></li>
+    <li class="chapter"><a href="/manual/groups">{% trans "Chapter" %} {% trans "8: Account & Receipt Groups" %}</a></li>
+    <li class="chapter"><a href="/manual/taxes">{% trans "Chapter" %} {% trans "9: Price Groups & Taxes" %}</a></li>
     <li class="chapter"><a href="/manual/users">{% trans "Chapter" %} {% trans "10: Users and Rights" %}</a></li>
     <li class="chapter"><a href="/manual/reports">{% trans "Chapter" %} {% trans "11: Reports" %}</a></li>
 {% endblock %}
@@ -33,10 +48,10 @@
 <p> {% trans "The account number is very important because it is used to calculate the balance on an account. For example: By default Jade comes with a 'Clients' account which has an account number '0103'. The balance for that account will not only include transactions with that account number but for <b>any</b> account that starts with '0103'. So if we want our new client's balance to be included in the total, our clients account number must start with '0103'. By default, if we create a client without specifing an account number, Jade will take care of things and assign the client an appropriate account number. The same principle applies to Vendors." %}</p>
 <span id="multiplier"></span>
 <h2> {% trans "Multiplier" %}</h2>
-<p> {% trans "The multiplier is a peice of accounting and is either Credit or Debit. Clients will always be Debit accounts and Vendors will always be Credit accounts. The reasons why is beyond the scope of this manual and is best explained by an accountant. For a little more information see the section <a href=\"#account-multiplier\">'Creating an account'</a> later in this chapter." %}</p>
-<span id="taxgroup"></span>
-<h2> {% trans "Tax Group" %}</h2>
-<p> {% trans "The account's Tax Group determines not only how much tax he is charged but also whether or not the tax is included in the price. For more information about Tax Groups see <a href=\"#account-multiplier\">Chapter 9: Tax Groups & Price Groups</a>" %}</p>
+<p> {% trans "The multiplier is a peice of accounting and is either Credit or Debit. Clients will always be Debit accounts and Vendors will always be Credit accounts. The reasons why is beyond the scope of this manual and is best explained by an accountant. For a little more information see the section <a href=\"#TODO\">'Creating an account'</a> later in this chapter." %}</p>
+<span id="accountgroup"></span>
+<h2> {% trans "Account Group" %}</h2>
+<p> {% trans "The account's Account Group determines where Jade stores the values of the revenue, discounts, returns, etc. for the client. For more information about Account Groups see <a href=\"#TODO\">Chapter 9: Account, Receipt, & Price Groups</a>" %}</p>
 <span id="pricegroup"></span>
 <h2> {% trans "Price Group" %}</h2>
 <p> {% trans "This is the name of the Price Group the client or Vendor belongs to. When products are sold to this person, prices will be retreived for this price group. By default Jade comes with two price groups: Retail and Wholesale." %}</p>
@@ -58,4 +73,7 @@
 <span id="recent"></span>
 <h1> {% trans "Recent Transactions" %}</h1>
 <p> {% trans "A list of some of the most recent transactions for this account. Note that not all entries may appear if you do not have sufficient rights to view certain transaction types." %}</p>
+<span id="accounts"></span>
+<h1> {% trans "Creating Accounts" %}</h1>
+<p> {% trans "While the accounts you use most of the time may be Clients and Vendors, Jade also uses generic Accounts to organize your accounting. Although Jade comes with a complete collection out of the box, you may want to add some accounts of your own. For example: You may have two taxes that your government requires, and you may need to keep their values separate. In this case you would create two accounts for the new tax. One for purchases and one for sales. (Unless of course you prefer to lump the two values together in which case you would only need one new account.) First determine under which branch of the accounting structure the new account should be included for example, our sales tax would fall under 020201 - Sales Taxes. Then determine the next available account number for the branch. If we're starting with the default Jade installation, the next available number for our example would be 02020102 since 02020101 is already in use. Now the easy part: From the Accounts page, click New and type in the Name of the new account and the new account number. Make sure you make the multiplier to match the parent account. Since 020201 - Sales Taxes is a Credit account, we'll make our new account Credit as well. When you're ready click Save. See <a href=\"#TODO\">Chapter 10: Price Groups & Taxes</a> for more information about creating taxes." %}</p>
 {% endblock %}

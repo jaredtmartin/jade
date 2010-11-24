@@ -1,3 +1,18 @@
+<!--# Jade Inventory Control System-->
+<!--#Copyright (C) 2010  Jared T. Martin-->
+
+<!--#    This program is free software: you can redistribute it and/or modify-->
+<!--#    it under the terms of the GNU General Public License as published by-->
+<!--#    the Free Software Foundation, either version 3 of the License, or-->
+<!--#    (at your option) any later version.-->
+
+<!--#    This program is distributed in the hope that it will be useful,-->
+<!--#    but WITHOUT ANY WARRANTY; without even the implied account of-->
+<!--#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the-->
+<!--#    GNU General Public License for more details.-->
+
+<!--#    You should have received a copy of the GNU General Public License-->
+<!--#    along with this program.  If not, see <http://www.gnu.org/licenses/>.-->
 {% extends "manual/base.html" %}
 {% load i18n %}
 {% block chapters %}
@@ -18,11 +33,11 @@
     <li class="subsubheading"><a href="#by-date">{% trans "By Date" %}</a></li>
     <li class="subsubheading"><a href="#clear-doc-number">{% trans "Clear Document Number Field" %}</a></li>
     <li class="chapter"><a href="/manual/accounts">{% trans "Chapter" %} {% trans "4: Accounts" %}</a></li>
-    <li class="chapter"><a href="/manual/purchases">{% trans "Chapter" %} {% trans "5: Purchases" %}</a></li>
-    <li class="chapter"><a href="/manual/counts">{% trans "Chapter" %} {% trans "6: Physical Counts" %}</a></li>
-    <li class="chapter"><a href="/manual/transfers">{% trans "Chapter" %} {% trans "7: Transfers" %}</a></li>
-    <li class="chapter"><a href="/manual/production">{% trans "Chapter" %} {% trans "8: Production" %}</a></li>
-    <li class="chapter"><a href="/manual/groups">{% trans "Chapter" %} {% trans "9: Tax Groups and Price Groups" %}</a></li>
+    <li class="chapter"><a href="/manual/counts">{% trans "Chapter" %} {% trans "5: Physical Counts" %}</a></li>
+    <li class="chapter"><a href="/manual/transfers">{% trans "Chapter" %} {% trans "6: Transfers" %}</a></li>
+    <li class="chapter"><a href="/manual/production">{% trans "Chapter" %} {% trans "7: Production" %}</a></li>
+    <li class="chapter"><a href="/manual/groups">{% trans "Chapter" %} {% trans "8: Account & Receipt Groups" %}</a></li>
+    <li class="chapter"><a href="/manual/taxes">{% trans "Chapter" %} {% trans "9: Price Groups & Taxes" %}</a></li>
     <li class="chapter"><a href="/manual/users">{% trans "Chapter" %} {% trans "10: Users and Rights" %}</a></li>
     <li class="chapter"><a href="/manual/reports">{% trans "Chapter" %} {% trans "11: Reports" %}</a></li>
 {% endblock %}
@@ -43,8 +58,8 @@
 <h2> {% trans "Delivered/Undelivered <img src=\"/media/img/delivered.png\">" %}</h2>
 <p> {% trans "Just as the deactivate option controls whether or not the transaction is taken into consideration in the accounting, the Devered option controls whether or not the quantity is applied to the inventory. For example: perhaps a purchase has already been made, but has not yet been received. How do we keep the quantity from showing up in our inventory? Click on the Delivered icon which is normally a box with a green check <img src=\"/media/img/delivered.png\"> and it will change the icon to a box with a red 'x' <img src=\"/media/img/undelivered.png\">. Now the items will not appear in our inventory until we mark it as delivered." %}</p>
 <span id="details"></span>
-<h2> {% trans "Details <img src=\"/media/img/next.png\">" %}</h2>
-<p> {% trans "Sometimes, to make the system faster, Jade will only show us a preview of a transaction, the date, account, item, quantity, and value, and it will leave out some of the details like the cost, tax, and discount. If you want to see those details for a certain transaction, just click on the blue arrow <img src=\"/media/img/next.png\"> and Jade will fetch all of those details for you." %}</p>
+<h2> {% trans "Details <img src=\"/media/img/go.png\">" %}</h2>
+<p> {% trans "Sometimes, to serve you faster, Jade will only show us a preview of a transaction, the date, account, item, quantity, and value, and it will leave out some of the details like the cost, tax, and discount. If you want to see those details for a certain transaction, just click on the white arrow <img src=\"/media/img/go.png\"> and Jade will fetch all of those details for you." %}</p>
 <span id="edit"></span>
 <h2> {% trans "Edit <img src=\"/media/img/edit.png\">, Save <img src=\"/media/img/save.png\">, & Cancel <img src=\"/media/img/cancel.png\">" %}</h2>
 <p> {% trans "If you see that you made a mistake, don't worry, just click on the icon of a paper and pencil <img src=\"/media/img/edit.png\">. This icon allows you to edit the sale again. When you are finished making your changes, click on the diskette <img src=\"/media/img/save.png\"> and your changes will be saved. If you don't want to save your changes click on the red 'X' <img src=\"/media/img/cancel.png\"> to cancel any changes made." %}</p>

@@ -1,0 +1,57 @@
+<!--# Jade Inventory Control System-->
+<!--#Copyright (C) 2010  Jared T. Martin-->
+
+<!--#    This program is free software: you can redistribute it and/or modify-->
+<!--#    it under the terms of the GNU General Public License as published by-->
+<!--#    the Free Software Foundation, either version 3 of the License, or-->
+<!--#    (at your option) any later version.-->
+
+<!--#    This program is distributed in the hope that it will be useful,-->
+<!--#    but WITHOUT ANY WARRANTY; without even the implied account of-->
+<!--#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the-->
+<!--#    GNU General Public License for more details.-->
+
+<!--#    You should have received a copy of the GNU General Public License-->
+<!--#    along with this program.  If not, see <http://www.gnu.org/licenses/>.-->
+{% extends "manual/base.html" %}
+{% load i18n %}
+{% block chapters %}
+    <li class="chapter"><a href="/manual/items">{% trans "Chapter" %} {% trans "1: Items" %}</a></li>
+    <li class="chapter"><a href="/manual/sales">{% trans "Chapter" %} {% trans "2: Sales & Purchases" %}</a></li>
+    <li class="chapter"><a href="/manual/transactions">{% trans "Chapter" %} {% trans "3: Transactions" %}</a></li>
+    <li class="chapter"><a href="/manual/accounts">{% trans "Chapter" %} {% trans "4: Accounts" %}</a></li>
+    <li class="chapter"><a href="/manual/counts">{% trans "Chapter" %} {% trans "5: Physical Counts" %}</a></li>
+    <li class="subheading"><a href="#why">{% trans "Why do physical counts?" %}</a></li>
+    <li class="subsubheading"><a href="#preparation">{% trans "Preparation" %}</a></li>
+    <li class="subheading"><a href="#quantitiesandcosts">{% trans "Quantities & Costs" %}</a></li>
+    <li class="subheading"><a href="#countsheet">{% trans "Printing the Count Sheet" %}</a></li>
+    <li class="subheading"><a href="#post">{% trans "Posting the Count" %}</a></li>
+    <li class="subheading"><a href="#postassale">{% trans "Converting the Count into a Sale" %}</a></li>
+    <li class="chapter"><a href="/manual/transfers">{% trans "Chapter" %} {% trans "6: Transfers" %}</a></li>
+    <li class="chapter"><a href="/manual/production">{% trans "Chapter" %} {% trans "7: Production" %}</a></li>
+    <li class="chapter"><a href="/manual/groups">{% trans "Chapter" %} {% trans "8: Account & Receipt Groups" %}</a></li>
+    <li class="chapter"><a href="/manual/taxes">{% trans "Chapter" %} {% trans "9: Price Groups & Taxes" %}</a></li>
+    <li class="chapter"><a href="/manual/users">{% trans "Chapter" %} {% trans "10: Users and Rights" %}</a></li>
+    <li class="chapter"><a href="/manual/reports">{% trans "Chapter" %} {% trans "11: Reports" %}</a></li>
+{% endblock %}
+{% block main %}
+<span id="why"></span>
+<h1>Why do physical counts?</h1>
+<p> {% trans "Many businesses and governments have rules regarding physically counting inventory to be sure the amounts reported are correct. This is important since over time there will probably be items lost or even appear without much explanation. Even if there is an explanation, this change needs to be reflected in our inventory levels to work smoothly. A physical count will also be needed when you first start using Jade. It will be necisary to count all of your inventory and input these values into Jade. It may be a big job, but Jade will help you along the way." %}</p>
+<span id="preparation"></span>
+<h2> {% trans "Preparation" %}</h2>
+<p> {% trans "Before you start counting, be sure to have all of the items to be counted registered in Jade's database. Having locations and images already assigned to the items will smooth the process. Although when you're just trying things out you'll want to create imaginary sales and purchases and maybe even real transactions, but if you sell an item that has not been either bought or counted, it's cost will be zero. This will distort costs and prices later and result in negative costs. For this reason it is recommended that you either delete any previous transactions for the item or create a preliminary count to reduce the inventory level (and cost) to zero. That way you'll have a solid foundation to work on." %}</p>
+<p> {% trans "Since many aspects of creating physical counts are similar to creating sales and purchases, we'll assume you've read those chapters of this manual and focus on what's unique to physical counts." %}</p>
+<span id="quantitiesandcosts"></span>
+<h1> {% trans "Quantities & Costs" %}</h1>
+<p> {% trans "As soon as you create a new count and save it, you'll notice that it has two quantities and two values.  The first quantity shown after your count is saved is the quantity applied to the inventory. This is probably still zero. The second number which is in parenthesis is the quantity you counted; that's the quantity you typed when you created the count. The reason that the first quantity is zero is because it has not yet been applied to the inventory. First you'll have to 'Post' the count, that is, confirm that the values are correct and apply the values to your inventory. The same is true of the value, the first is the amount of value applied to your stock and the second is the <b>unit</b> value of the items you are counting. This is the value that will be used to calculate the total value of the transaction later." %}</p>
+<span id="countsheet"></span>
+<h1> {% trans "Printing the Count Sheet" %} <img src="/media/img/print.png"></h1>
+<p> {% trans "Before you post the count or run of to count everything on the shelves, Jade will do a little work to make it easier for you. First clear the quantity from the count you created, save the count and then click on the printer <img src=\"/media/img/print.png\"> to the right. This will give you a sheet you can print out with a list of all of the items you'll be counting and a place where you can note the quantities. If there's only one item on the sheet, go back and create a count for each of the items you'll be counting, then print out the count sheet and count the items, noting the quantities on the sheet as you go. When you finish counting, put all of the values into Jade. Be sure to check that the costs are correct as you go." %}</p>
+<span id="post"></span>
+<h1> {% trans "Posting the Count" %} <img src="/media/img/post.png"></h1>
+<p> {% trans "Now that the quantities and costs of your counts are correct, go back and click on the printer <img src=\"/media/img/print.png\"> icon again. Notice the column labeled Value of Difference and review all of the values, being sure they are correct. If the value of the adjustment is large, you may want to have another person double-check what you counted. When you are sure you are ready, click on the sproket. <img src=\"/media/img/post.png\"> That's it. Now you can see the quantity and value of the adjustment Jade made to your inventory. If you click on the item, you'll see that the inventory levels have been adjusted to the amount specified. If there were no transactions before you started, the cost of the item should match what you specified. If there were other transactions, don't worry, the cost you specified was used in proportion to the quantity of the adjustment." %}</p>
+<span id="postassale"></span>
+<h1> {% trans "Converting the Count into a Sale" %} <img src="/media/img/post_count_sale.png"></h1>
+<p> {% trans "Some businesses may have such small levels of inventory that instead of putting each sale in Jade, it's easier to simply count the inventory at the end of the day and assume that whatever is missing was sold. This is the purpose of the Convert to Sale button which appears as a sproket with money. <img src=\"/media/img/post_count_sale.png\"> This will change you count into a sale with the quantity set to the difference between what was counted and the current stock level. Just be sure you don't do this until you're ready, because you can't convert the sale back into a count." %}</p>
+{% endblock %}

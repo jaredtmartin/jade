@@ -1,3 +1,18 @@
+<!--# Jade Inventory Control System-->
+<!--#Copyright (C) 2010  Jared T. Martin-->
+
+<!--#    This program is free software: you can redistribute it and/or modify-->
+<!--#    it under the terms of the GNU General Public License as published by-->
+<!--#    the Free Software Foundation, either version 3 of the License, or-->
+<!--#    (at your option) any later version.-->
+
+<!--#    This program is distributed in the hope that it will be useful,-->
+<!--#    but WITHOUT ANY WARRANTY; without even the implied account of-->
+<!--#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the-->
+<!--#    GNU General Public License for more details.-->
+
+<!--#    You should have received a copy of the GNU General Public License-->
+<!--#    along with this program.  If not, see <http://www.gnu.org/licenses/>.-->
 
 {% extends "inventory/transaction_base.html" %}
 {% load i18n %}
@@ -29,5 +44,6 @@
     {% if perms.inventory.post_count_sale %}
         <a class="show" id="id_transaction-{{object.pk}}-post_count_sale" title="{% trans 'Post Count as Sale' %}" href="#" onclick="getTransaction({{object.pk}},'/inventory/count/{{object.pk}}/post-as-sale/'); return false;"><img src="{{MEDIA_URL}}/img/post_count_sale.png"/></a>
     {% endif %}
+    <a class="show" id="id_transaction-{{object.pk}}-print" title="{% trans 'Print Receipt' %}" href="{{object.print_url}}"><img src="{{MEDIA_URL}}/img/print.png"/></a>
 {% endblock %}
 

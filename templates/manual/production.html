@@ -1,0 +1,49 @@
+<!--# Jade Inventory Control System-->
+<!--#Copyright (C) 2010  Jared T. Martin-->
+
+<!--#    This program is free software: you can redistribute it and/or modify-->
+<!--#    it under the terms of the GNU General Public License as published by-->
+<!--#    the Free Software Foundation, either version 3 of the License, or-->
+<!--#    (at your option) any later version.-->
+
+<!--#    This program is distributed in the hope that it will be useful,-->
+<!--#    but WITHOUT ANY WARRANTY; without even the implied account of-->
+<!--#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the-->
+<!--#    GNU General Public License for more details.-->
+
+<!--#    You should have received a copy of the GNU General Public License-->
+<!--#    along with this program.  If not, see <http://www.gnu.org/licenses/>.-->
+{% extends "manual/base.html" %}
+{% load i18n %}
+{% block chapters %}
+    <li class="chapter"><a href="/manual/items">{% trans "Chapter" %} {% trans "1: Items" %}</a></li>
+    <li class="chapter"><a href="/manual/sales">{% trans "Chapter" %} {% trans "2: Sales" %}</a></li>
+    <li class="chapter"><a href="/manual/transactions">{% trans "Chapter" %} {% trans "3: Transactions" %}</a></li>
+    <li class="chapter"><a href="/manual/accounts">{% trans "Chapter" %} {% trans "4: Accounts" %}</a></li>
+    <li class="chapter"><a href="/manual/counts">{% trans "Chapter" %} {% trans "5: Physical Counts" %}</a></li>
+    <li class="chapter"><a href="/manual/transfers">{% trans "Chapter" %} {% trans "6: Transfers" %}</a></li>
+    <li class="chapter"><a href="/manual/production">{% trans "Chapter" %} {% trans "7: Production" %}</a></li>
+    <li class="subheading"><a href="#creatingaprocess">{% trans "Design: Creating a Process" %}</a></li>
+    <li class="subheading"><a href="#creatingajob">{% trans "Planning: Creating a Job" %}</a></li>
+    <li class="subheading"><a href="#starting">{% trans "Execution: Starting a Job" %}</a></li>
+    <li class="subheading"><a href="#finishing">{% trans "Execution: Finishing a Job" %}</a></li>
+    <li class="chapter"><a href="/manual/groups">{% trans "Chapter" %} {% trans "8: Account & Receipt Groups" %}</a></li>
+    <li class="chapter"><a href="/manual/taxes">{% trans "Chapter" %} {% trans "9: Price Groups & Taxes" %}</a></li>
+    <li class="chapter"><a href="/manual/users">{% trans "Chapter" %} {% trans "10: Users and Rights" %}</a></li>
+    <li class="chapter"><a href="/manual/reports">{% trans "Chapter" %} {% trans "11: Reports" %}</a></li>
+{% endblock %}
+{% block main %}
+<p> {% trans "Production involves taking quantities of certain items and turning them into quantities of one or more other items. Jade divides production into three parts: Design, Planning, and Execution. " %}</p>
+<span id="creatingaprocess"></span>
+<h1> {% trans "Design: Creating a Process" %}</h1>
+<p> {% trans "The first step to do in production is to design processes. These are like recipies, but they don't only include the ingredients but also the end product. Suppose we were to make lemonade. We would need to create the following items: Lemons, Sugar, Water, and don't forget the end product:Lemonade. Click on Production, Process, Design. The create process window appears. Choose a document number for the process. This number will also be used to identify production jobs done based on this process. Add four lines, one for each of the four demo items we created.  Now close the window and look at the lines we made. Suppose it takes 1 lemon, 2 scoops of sugar and 5 cups of water to make 1 serving of Lemonade. Since our inventory of lemons will go down when we make the lemonade, put -1 for the quantity of the lemons. Likewise put -2 and -5 respectively for the sugar and water. The last line, lemonade is our end product so put a positve 1 for its quantity. Save each line. There, now we have a process. Any time we want to make lemonade, Jade knows how much to use of each item." %}</p>
+<span id="creatingajob"></span>
+<h1> {% trans "Planning: Creating a Job" %}</h1>
+<p> {% trans "Now suppose that we want to actually make some lemonade. But we don't want to make one serving, we want to make two servings. Click on Plan. When we click on plan, Jade collects all of the processes on the screen and creates jobs to match them. So be sure that once you have several processes that you click on the document number of the process you wish to execute before you click on Plan. Jade asks us how many times we want to do the process. Type 2 to plan for 2 servings and click Create. Jade will duplicate each line of the process into jobs appending a 1 to the end of the document number. If we were to plan this process again, it would append 2 and so on. Notice that the quantities of the items have been doubled. this is because we told Jade we wanted 2 times the Process. If we wanted to plan the job in the future we could change the date at this point, but for now we'll leave it as it is." %}</p>
+<span id="starting"></span>
+<h1> {% trans "Execution: Starting a Job" %}</h1>
+<p> {% trans "Once you're actually taking the supplies of the shelf, click on the document number of the job and click on Start. Notice that all of the lines with negative quantities are now activated. If we check the stock levels, the items used in the production of these items are not included in the inventory." %}</p>
+<span id="finishing"></span>
+<h1> {% trans "Execution: Finishing a Job" %}</h1>
+<p> {% trans "Before we mark the job as finished, suppose we spilled some lemonade on the floor while we were working. How will we report this in the inventory? Change the quantity for Lemonade from 2 to 1.5 and save. Now when we click on Finish, one and a half servings of lemonade will appear in our inventory, ready to sell." %}</p>
+{% endblock %}

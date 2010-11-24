@@ -1,6 +1,21 @@
+<!--# Jade Inventory Control System-->
+<!--#Copyright (C) 2010  Jared T. Martin-->
+
+<!--#    This program is free software: you can redistribute it and/or modify-->
+<!--#    it under the terms of the GNU General Public License as published by-->
+<!--#    the Free Software Foundation, either version 3 of the License, or-->
+<!--#    (at your option) any later version.-->
+
+<!--#    This program is distributed in the hope that it will be useful,-->
+<!--#    but WITHOUT ANY WARRANTY; without even the implied account of-->
+<!--#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the-->
+<!--#    GNU General Public License for more details.-->
+
+<!--#    You should have received a copy of the GNU General Public License-->
+<!--#    along with this program.  If not, see <http://www.gnu.org/licenses/>.-->
 {% extends "base.html" %}
 {% load i18n %}
-{% block top %}<h1>Manual</h1> {% block pagetitle %}{% endblock %}{% endblock %}
+{% block top %}<h1 style="font-size:40px;"> {% trans 'Jade Users Manual' %}</h1> {% block pagetitle %}{% endblock %}{% endblock %}
 {% block css %}
     <style type="text/css">
         li.chapter {font-weight:bold;font-size:14px;margin-top:10px;}
@@ -14,18 +29,7 @@
     </div>
     <div style="float:right;width:240px;">
         <ul>
-            {% block chapters %}
-                <li class="chapter"><a href="/manual/items">{% trans "Chapter" %} {% trans "1: Items" %}</a></li>
-                <li class="chapter"><a href="/manual/items">{% trans "Chapter" %} {% trans "2: Sales" %}</a></li>
-                <li class="chapter"><a href="/manual/items">{% trans "Chapter" %} {% trans "3: Transactions" %}</a></li>
-                <li class="chapter"><a href="/manual/items">{% trans "Chapter" %} {% trans "7: Accounts" %}</a></li>
-                <li class="chapter"><a href="/manual/items">{% trans "Chapter" %} {% trans "4: Purchases" %}</a></li>
-                <li class="chapter"><a href="/manual/items">{% trans "Chapter" %} {% trans "5: Physical Counts" %}</a></li>
-                <li class="chapter"><a href="/manual/items">{% trans "Chapter" %} {% trans "5: Transfers" %}</a></li>
-                <li class="chapter"><a href="/manual/items">{% trans "Chapter" %} {% trans "6: Production" %}</a></li>
-                <li class="chapter"><a href="/manual/items">{% trans "Chapter" %} {% trans "7: Tax Groups and Price Groups" %}</a></li>
-                <li class="chapter"><a href="/manual/items">{% trans "Chapter" %} {% trans "7: Users and Rights" %}</a></li>
-            {% endblock %}
+            {% block chapters %}{% endblock %}
         </ul>
     </div>
 {% endblock %}
