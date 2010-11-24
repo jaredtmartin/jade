@@ -17,8 +17,7 @@ from django.template import Template, Context, RequestContext
 import cgi
 from django.views.generic import list_detail
 from django.contrib.auth.decorators import permission_required, login_required
-#from jade.settings import settings.APP_LOCATION, settings.COMPANY_NAME, settings.CORTE_REPORT_NAME, settings.MOVEMENTS_REPORT_NAME, settings.PRICE_REPORT_NAME, settings.INVENTORY_REPORT_NAME, settings.MEDIA_URL, settings.APP_LOCATION, settings.RECEIPT_REPORT_NAME_SUFFIX, settings.RECEIPT_REPORT_NAME_PREFIX, settings.COUNT_SHEET_REPORT_NAME, settings.LABEL_SHEET_REPORT_NAME
-from jade import settings
+from django.conf import settings
 
 def root(response):
     return HttpResponseRedirect('/inventory/sales/')
@@ -53,7 +52,7 @@ def edit_object(request, object_id, model, form, prefix, tipo=None, extra_contex
         info_list=[]
         error_list=f.errors
         updated_form=form(instance=obj, prefix=prefix+'-'+str(obj.pk))
-    extra_context.update({'objects':[obj],'form':updated_form,'info_list':info_list,'error_list':error_list,'prefix':prefix,'line_template':"inventory/transaction.html"})
+    extra_context.update({'objects':[obj],'form':updated_form,'info_list':info_list,'error_list':error_list,'prefix':prefix,'line_template':"inventory/transaction.html",'tipo':tipo})
     return _r2r(request,'inventory/results.html', extra_context)
     
 def delete_object(request, object_id, model, prefix, tipo=None):
@@ -61,17 +60,15 @@ def delete_object(request, object_id, model, prefix, tipo=None):
     if not request.user.has_perm('inventory.delete_'+obj.tipo.lower()): return http.HttpResponseRedirect("/blocked/")
     if not tipo: tipo=obj.get_tipo_display()
     obj.delete()
-    info_list=['The '+tipo+' has been deleted successfully.',]
+    info_list=[u'The '+unicode(tipo)+u' has been deleted successfully.',]
     return _r2r(request,'inventory/results.html', {'error_list':{}, 'info_list':info_list})
 
 def new_object(request, form, prefix, template='', tipo=None, extra_context={}):
     if tipo and not request.user.has_perm('inventory.change_'+tipo.lower()): return http.HttpResponseRedirect("/blocked/")
     if request.POST:
         f = form(request.POST)
-        print "adadad"
         if f.is_valid():      
-            print "valid"
-            print "tipo = " + str(tipo)
+            m=f.save(commit=False)
             if tipo:obj=f.save(tipo=tipo)
             else:obj=f.save()
             updated_form=form(instance=obj, prefix=prefix+'-'+str(obj.pk))
@@ -85,12 +82,13 @@ def new_object(request, form, prefix, template='', tipo=None, extra_context={}):
             error_list=f.errors
             updated_form=None
         if not tipo: tipo=prefix
+        obj.edit_mode=True
         extra_context.update({'objects':[obj],'edit_mode':True, 'form':updated_form,'info_list':info_list,'error_list':error_list,'prefix':tipo,'line_template':"inventory/"+prefix+".html"})
         return _r2r(request,'inventory/results.html', extra_context)
     else:
         form=form(prefix=prefix+'-')
         if not tipo: tipo=prefix
-        extra_context.update({'form':form,'prefix':tipo})
+        extra_context.update({'form':form,'prefix':tipo,'tipo':tipo})
         return _r2r(request,template, extra_context)
     
 def search_entries(user, form, tipo=None):
@@ -166,20 +164,20 @@ def search_and_paginate_transactions(request, model, template='inventory/transac
 # Purchase Views
 ######################################################################################
 @login_required
-@permission_required('inventory.view_sale', login_url="/blocked/")
+@permission_required('inventory.view_purchase', login_url="/blocked/")
 def list_purchases(request): # GET ONLY
     return search_and_paginate_transactions(request, Purchase,'inventory/purchases.html')
 
 @login_required
 @permission_required('inventory.change_purchase', login_url="/blocked/")
-def edit_purchase(request, object_id): # AJAX POST ONLY
+def edit_purchase(request, object_id):
     return edit_object(request, object_id, Purchase, PurchaseForm, "purchase")
 
 @login_required
 @permission_required('inventory.change_purchase', login_url="/blocked/")
-def new_purchase(request): # AJAX POST ONLY
+def new_purchase(request):
     error_list={}
-    cost=0
+    value=0
     item=None
     try: doc_number=request.POST['doc_number']
     except: doc_number='' 
@@ -200,33 +198,29 @@ def new_purchase(request): # AJAX POST ONLY
         error_list['item']=['There are more than one %ss with the name %s. Try using a bar code.' % ('item', request.POST['item'])]
     except Item.DoesNotExist: 
         if request.POST['item']!='': error_list['item']=["Unable to find '%s' in the list of items." % (request.POST['item'], )]
-    if vendor:
-        if vendor.tax_group.price_includes_tax: cost = cost/(vendor.tax_group.value+1)
-        tax=cost*vendor.tax_group.value
-    else:
-        error_list['vendor']=[unicode('Unable to find a vendor with the name specified.')]
-    purchase=Purchase(doc_number=doc_number, date=date, vendor=vendor, item=item, cost=cost, tax=tax)
+    if not vendor: error_list['vendor']=[unicode('Unable to find a vendor with the name specified.')]
+    purchase=Purchase(doc_number=doc_number, date=date, vendor=vendor, item=item, value=value)
     purchase.save()
+    purchase.edit_mode=True
     return _r2r(request,'inventory/results.html', {'edit_mode':True, 'objects':[purchase],'prefix':'purchase','line_template':"inventory/transaction.html",'error_list':error_list, 'info_list':{}})
 
 @login_required
 @permission_required('inventory.change_vendorpayment', login_url="/blocked/")
-def add_payment_to_purchase(request, object_id): # AJAX POST ONLY
+def add_payment_to_purchase(request, object_id):
     obj = get_object_or_404(Purchase, pk=object_id)
     doc=Transaction.objects.filter(doc_number=obj.doc_number)
     total=0
     for transaction in doc:
         for entry in transaction.entry_set.filter(account=obj.vendor):
             if entry.active: total-=entry.value
-    payment=VendorPayment(doc_number=obj.doc_number, date=obj.date, source=PAYMENTS_MADE_ACCOUNT, dest=obj.vendor, value=total)
+    payment=VendorPayment(doc_number=obj.doc_number, date=obj.date, debit=obj.vendor, value=total)
     payment.save()
+    payment.edit_mode=True
     return _r2r(request,'inventory/results.html', {'edit_mode':True, 'objects':[payment],'prefix':'vendorpayment','line_template':"inventory/transaction.html",'error_list':{}, 'info_list':{}})
   
 
-def delete_purchase(request, object_id):
-    return delete_object(request, object_id, Purchase, 'purchase')
 ######################################################################################
-# Ajax Views
+#                                      Ajax Views
 ######################################################################################
 @login_required
 def serial_history(request, serial):
@@ -258,7 +252,14 @@ def ajax_unit_list(request):
     try: q=request.GET['q']
     except KeyError: q=''
     return _r2r(request,'inventory/ajax_list.html', {'object_list':Unit.objects.filter(name__icontains=q),'q':q})
-    
+
+@login_required
+@permission_required('inventory.view_tax', login_url="/blocked/")
+def ajax_tax_list(request):
+    try: q=request.GET['q']
+    except KeyError: q=''
+    return _r2r(request,'inventory/ajax_list.html', {'object_list':TaxRate.objects.filter(name__icontains=q),'q':q})
+     
 @login_required
 @permission_required('inventory.view_user', login_url="/blocked/")
 def ajax_user_list(request):
@@ -279,11 +280,18 @@ def ajax_price_group_list(request):
     except KeyError: q=''
     return _r2r(request,'inventory/ajax_list.html', {'object_list':PriceGroup.objects.filter(name__icontains=q),'q':q})
 @login_required
-@permission_required('inventory.view_tax_group', login_url="/blocked/")
-def ajax_tax_group_list(request):
+@permission_required('inventory.view_account_group', login_url="/blocked/")
+def ajax_account_group_list(request):
     try: q=request.GET['q']
     except KeyError: q=''
-    return _r2r(request,'inventory/ajax_list.html', {'object_list':TaxGroup.objects.filter(name__icontains=q),'q':q})
+    return _r2r(request,'inventory/ajax_list.html', {'object_list':AccountGroup.objects.filter(name__icontains=q),'q':q})
+
+@login_required
+@permission_required('inventory.view_receipt_group', login_url="/blocked/")
+def ajax_receipt_group_list(request):
+    try: q=request.GET['q']
+    except KeyError: q=''
+    return _r2r(request,'inventory/ajax_list.html', {'object_list':ReceiptGroup.objects.filter(name__icontains=q),'q':q})
 
 @login_required
 @permission_required('inventory.view_account', login_url="/blocked/")
@@ -312,6 +320,8 @@ def fetch_resources(uri, rel):
 def render_to_pdf(template_src, context_dict):
     template = get_template(template_src)
     context = Context(context_dict)
+    from datetime import datetime
+    context_dict.update({'company_name':settings.COMPANY_NAME,'date_printed':datetime.now()})
     html  = template.render(context)
     result = StringIO.StringIO()
     pdf = pisa.pisaDocument(StringIO.StringIO(html.encode("ISO-8859-1")), dest=result, link_callback=fetch_resources)
@@ -321,6 +331,8 @@ def render_to_pdf(template_src, context_dict):
     
 def render_string_to_pdf(template, context_dict):
     context = Context(context_dict)
+    from datetime import datetime
+    context_dict.update({'company_name':settings.COMPANY_NAME,'date_printed':datetime.now()})
     html  = template.render(context)
     result = StringIO.StringIO()
     pdf = pisa.pisaDocument(StringIO.StringIO(html.encode("ISO-8859-1")), dest=result, link_callback=fetch_resources)
@@ -368,26 +380,15 @@ def quote(request, doc_number):
 @login_required
 @permission_required('inventory.view_receipt', login_url="/blocked/")
 def sale_receipt(request, doc_number):
-    doc=Sale.objects.filter(doc_number=doc_number)
-    if doc.count()==0: return fallback_to_transactions(request, doc_number, _('Unable to find sales with the specified document number.'))
-    if doc_inactive(doc): return quote(request, doc_number)
-    try:report=Report.objects.get(name=settings.RECEIPT_REPORT_NAME_PREFIX+doc[0].client.tax_group.name+settings.RECEIPT_REPORT_NAME_SUFFIX)
-    except Report.DoesNotExist: 
-        return fallback_to_transactions(request, doc_number, _('Unable to find a report template with the name "%s"') % (settings.RECEIPT_REPORT_NAME_PREFIX+doc[0].client.tax_group.name+settings.RECEIPT_REPORT_NAME_SUFFIX,))
-    tax=charge=discount=0
-    for t in doc:
-        s=t.subclass
-        try: tax+=s.tax
-        except AttributeError: pass
-        try: charge+=s.charge
-        except AttributeError: pass
-        try: discount+=s.discount
-        except AttributeError: pass
-    try:
-        request.GET['test']
-        return render_string_to_pdf(Template(report.body), {'doc':doc, 'watermark_filename':report.watermark_url,'tax':tax, 'charge':charge, 'discount':discount})
-    except:
-        return render_string_to_pdf(Template(report.body), {'watermark_filename':None, 'doc':doc, 'tax':tax, 'charge':charge, 'discount':discount})
+    doc=Document(doc_number)
+    if len(doc.lines)==0: return fallback_to_transactions(request, doc_number, _('Unable to find sales with the specified document number.'))
+    if doc.inactive(): return quote(request, doc_number)
+    report=doc[0].subclass.client.receipt
+    print "report = " + str(report)
+    if 'test' in request.GET:
+        return render_string_to_pdf(Template(report.body), {'doc':doc, 'watermark_filename':report.watermark_url})
+    else:
+        return render_string_to_pdf(Template(report.body), {'watermark_filename':None, 'doc':doc})
 
 @login_required
 @permission_required('inventory.view_receipt', login_url="/blocked/")
@@ -446,11 +447,11 @@ def labels(request, doc_number):
     return response
 
 ######################################################################################
-# Count Views
+#                                 Count Views
 ######################################################################################
 @login_required
 @permission_required('inventory.view_count', login_url="/blocked/")
-def list_counts(request): # GET ONLY
+def list_counts(request):
     try: q=request.GET['q']
     except KeyError: q=''
     if q=='': page=_paginate(request, Count.objects.all().order_by('-_date'))
@@ -460,12 +461,12 @@ def list_counts(request): # GET ONLY
 
 @login_required
 @permission_required('inventory.change_count', login_url="/blocked/")
-def edit_count(request, object_id): # AJAX POST ONLY
+def edit_count(request, object_id):
     return edit_object(request, object_id, Count, CountForm, "count")
     
 @login_required
 @permission_required('inventory.change_count', login_url="/blocked/")
-def new_count(request): # AJAX POST ONLY
+def new_count(request):
     item=None
     try: doc_number=request.POST['doc_number']
     except: doc_number='' 
@@ -485,23 +486,36 @@ def new_count(request): # AJAX POST ONLY
     except: unit_cost=0
     count=Count(doc_number=doc_number, date=date, item=item, unit_cost=unit_cost)
     count.save()
+    count.edit_mode=True
     return _r2r(request,'inventory/results.html', {'edit_mode':True, 'objects':[count],'prefix':'count','line_template':"inventory/transaction.html",'error_list':{}, 'info_list':{}})
-
-@login_required
-@permission_required('inventory.change_count', login_url="/blocked/")
-def delete_count(request, object_id):
-    return delete_object(request, object_id, Count, 'count')
 
 @login_required
 @permission_required('inventory.post_count', login_url="/blocked/")
 def post_count(request, object_id):
     count = get_object_or_404(Count, pk=object_id)
     success=count.post()
-    if success: info_list=['The count has been posted successfully.',]
+    if success: info_list=[_('The count has been posted successfully.'),]
     else: info_list=[]
     return _r2r(request,'inventory/results.html', {'objects':[count],'prefix':'count','line_template':"inventory/transaction.html", 'error_list':count.errors, 'info_list':info_list})
+@login_required
+@permission_required('inventory.post_count_sale', login_url="/blocked/")
+def post_count_as_sale(request, object_id):
+    result=Count.objects.post_as_sale(object_id)
+    if not result.errors: 
+        info_list=[_('The count has been posted as a sale successfully.'),]
+        return _r2r(request,'inventory/results.html', {
+            'objects':[result],
+            'prefix':'sale',
+            'line_template':"inventory/transaction.html",
+            'error_list':{}, 
+            'info_list':info_list})
+    else: 
+        info_list=[]
+        return _r2r(request,'inventory/results.html', {'objects':[result],'prefix':'count','line_template':"inventory/transaction.html", 'error_list':result.errors, 'info_list':info_list})
+    
+
 ######################################################################################
-# Accounts Views
+#                                 Accounts Views
 ######################################################################################
 @login_required
 @permission_required('inventory.change_item', login_url="/blocked/")
@@ -578,12 +592,13 @@ def account_show(request, object_id, errors={}):
 def account_statement(request, object_id): # GET ONLY
     account = get_object_or_404(Account, pk=object_id)
     entries=list(account.entry_set.all().order_by('date'))
+    if not request.user.has_perm('inventory.view_client') and account.tipo=="Client": return http.HttpResponseRedirect("/blocked/")
+    if not request.user.has_perm('inventory.view_vendor') and account.tipo=="Vendor": return http.HttpResponseRedirect("/blocked/")
+    entries=list(Entry.objects.raw("select inventory_entry.id, doc_number, inventory_transaction.tipo, value, sum(value), date from inventory_entry inner join inventory_transaction on transaction_id = inventory_transaction.id where account_id=%i group by inventory_transaction.tipo, date order by date" % account.pk))
     total=0
     for entry in entries:
         total+=entry.value
-        entry.total=total    
-    if not request.user.has_perm('inventory.view_client') and account.tipo=="Client": return http.HttpResponseRedirect("/blocked/")
-    if not request.user.has_perm('inventory.view_vendor') and account.tipo=="Vendor": return http.HttpResponseRedirect("/blocked/")
+        entry.total=total
     return render_report(request, settings.ACCOUNT_STATEMENT_REPORT_NAME, {'account':account,'entries':entries})
 @login_required
 @permission_required('inventory.change_client', login_url="/blocked/")
@@ -605,7 +620,7 @@ def new_account(request):
     return new_object(request, AccountForm, "account", 'inventory/account_show.html', tipo='Account', extra_context={'tipo':'account'})
 
 ######################################################################################
-# Item Views
+#                                   Item Views
 ######################################################################################
 @login_required
 @permission_required('inventory.view_item', login_url="/blocked/")
@@ -626,15 +641,14 @@ def low_stock(request, errors=[]):
 @permission_required('inventory.view_item', login_url="/blocked/")
 def low_stock_report(request):
     items=Item.objects.low_stock()
+    count=items.count()
     try:report=Report.objects.get(name=settings.LOW_STOCK_REPORT_NAME)
     except Report.DoesNotExist: 
         request.GET=request.GET.copy()
         errors={'Report':[unicode(_('Unable to find a report template with the name "%s"') % (settings.LOW_STOCK_REPORT_NAME,))]}
         return low_stock(request, errors=errors)
-    return render_string_to_pdf(Template(report.body), {'items':items, 'user':request.user})  
+    return render_string_to_pdf(Template(report.body), {'items':items, 'user':request.user, 'count':count})  
     
-
-
 @login_required
 @permission_required('inventory.view_item', login_url="/blocked/")
 def price_report(request):
@@ -653,13 +667,20 @@ def inventory_report(request):
     try: q=request.GET['q']
     except KeyError: q=''
     items=Item.objects.find(q)
-    print "items = " + str(items)
+    count=items.count()
+    total_cost=0
+    total_total_cost=0
+    total_stock=0
+    for item in items:
+        total_cost+=item.cost
+        total_total_cost+=item.total_cost
+        total_stock+=item.stock
     try:report=Report.objects.get(name=settings.INVENTORY_REPORT_NAME)
     except Report.DoesNotExist: 
         request.GET=request.GET.copy()
         errors={'Report':[unicode(_('Unable to find a report template with the name "%s"') % (settings.INVENTORY_REPORT_NAME,))]}
         return item_list(request, errors=errors)
-    return render_string_to_pdf(Template(report.body), {'items':items, 'user':request.user})  
+    return render_string_to_pdf(Template(report.body), {'items':items, 'user':request.user, 'total_cost':total_cost, 'total_total_cost':total_total_cost, 'total_stock':total_stock,'count':count})  
     
     
 @login_required
@@ -679,6 +700,7 @@ def item_show(request, object_id):
             extra_context = {
                 'entry_page': _paginate(request, Entry.objects.filter(item=item, account=INVENTORY_ACCOUNT)),
                 'form': form,
+                'tipo':item.tipo,
             }
         )
 @login_required
@@ -706,7 +728,7 @@ def item_image_upload(request, object_id):
     return _r2r(request,'inventory/item_image.html', {'item':item})
         
 @login_required
-@permission_required('inventory.create_item', login_url="/blocked/")
+@permission_required('inventory.add_item', login_url="/blocked/")
 def new_item(request):
     return new_object(request, ItemForm, "item", 'inventory/item_show.html', tipo='Item')
 
@@ -714,7 +736,20 @@ def new_item(request):
 @permission_required('inventory.change_item', login_url="/blocked/")
 def edit_item(request, object_id):
     return edit_object(request, object_id, Item, ItemForm, "item")
-    
+@login_required
+@permission_required('inventory.add_service', login_url="/blocked/")
+def new_service(request):
+    print "creating a new service"
+    return new_object(request, ItemForm, "item", 'inventory/item_show.html', tipo='Service')
+@login_required
+@permission_required('inventory.view_service', login_url="/blocked/")
+def list_services(request, errors=[]):
+    try: q=request.GET['q']
+    except KeyError: q=''
+    items=Service.objects.find(q)
+    if items.count()==1: return item_show(request, items[0].pk)
+    return _r2r(request,'inventory/service_list.html', {'page':_paginate(request, items),'q':q, 'error_list':errors, 'boxform':BoxForm(),'tipo':'Service'})
+
 ######################################################################################
 # Price Views
 ######################################################################################
@@ -733,7 +768,7 @@ def price_list(request): # GET ONLY
 
 @login_required
 @permission_required('inventory.change_garanteeoffer', login_url="/blocked/")
-def price_edit(request, object_id): # AJAX POST ONLY
+def price_edit(request, object_id):
     return edit_object(request, object_id, Price, PriceForm, "price")
 ######################################################################################
 # Garantee Views
@@ -743,63 +778,55 @@ def price_edit(request, object_id): # AJAX POST ONLY
 
 @login_required
 @permission_required('inventory.change_clientgarantee', login_url="/blocked/")
-def edit_clientgarantee(request, object_id): # AJAX POST ONLY
+def edit_clientgarantee(request, object_id):
     return edit_object(request, object_id, ClientGarantee, ClientGaranteeForm, "clientgarantee")
     
 @login_required
 @permission_required('inventory.change_clientgarantee', login_url="/blocked/")
-def new_clientgarantee(request, object_id): # AJAX POST ONLY
+def new_clientgarantee(request, object_id):
     sale = get_object_or_404(Sale, pk=object_id)
     try: months=sale.item.garanteeoffer_set.filter(price=0)[0]
     except: months=0
     garantee=ClientGarantee(doc_number=sale.doc_number, date=sale.date, client=sale.client, item=sale.item, quantity=months, serial=sale.serial)
     garantee.save()
+    garantee.edit_mode=True
     return _r2r(request,'inventory/results.html', {'edit_mode':True, 'objects':[garantee],'prefix':'garantee','line_template':"inventory/transaction.html",'error_list':{}, 'info_list':{}})
-
-@login_required
-@permission_required('inventory.change_clientgarantee', login_url="/blocked/")
-def delete_clientgarantee(request, object_id):
-    return delete_object(request, object_id, ClientGarantee, 'clientgarantee')
 
 ######################################################################################
 # Vendor Garantees
 ######################################################################################
 @login_required
 @permission_required('inventory.change_vendorgarantee', login_url="/blocked/")
-def edit_vendorgarantee(request, object_id): # AJAX POST ONLY
+def edit_vendorgarantee(request, object_id):
     return edit_object(request, object_id, VendorGarantee, VendorGaranteeForm, "vendorgarantee")
     
 @login_required
 @permission_required('inventory.change_vendorgarantee', login_url="/blocked/")
-def new_vendorgarantee(request, object_id): # AJAX POST ONLY
+def new_vendorgarantee(request, object_id):
     purchase = get_object_or_404(Purchase, pk=object_id)
     garantee=VendorGarantee(doc_number=purchase.doc_number, date=purchase.date, vendor=purchase.vendor, item=purchase.item, serial=purchase.serial)
     garantee.save()
+    garantee.edit_mode=True
     return _r2r(request,'inventory/results.html', {'edit_mode':True, 'objects':[garantee],'prefix':'garantee','line_template':"inventory/transaction.html",'error_list':{}, 'info_list':{}})
 
 @login_required
-@permission_required('inventory.change_vendorgarantee', login_url="/blocked/")
-def delete_vendorgarantee(request, object_id):
-    return delete_object(request, object_id, VendorGarantee, 'vendorgarantee')
-
-@login_required
 @permission_required('inventory.change_garanteeoffer', login_url="/blocked/")
-def edit_garanteeoffer(request, object_id): # AJAX POST ONLY
+def edit_garanteeoffer(request, object_id):
     return edit_object(request, object_id, GaranteeOffer, GaranteeOfferForm, "garanteeoffer",'Garantee Offer')
 
 @login_required
 @permission_required('inventory.change_garanteeoffer', login_url="/blocked/")
-def delete_garanteeoffer(request, object_id): # AJAX POST ONLY
+def delete_garanteeoffer(request, object_id):
     return delete_object(request, object_id, GaranteeOffer, 'garanteeoffer','Garantee Offer')
     
 @login_required
 @permission_required('inventory.change_garanteeoffer', login_url="/blocked/")
-def new_garanteeoffer(request): # AJAX POST ONLY
+def new_garanteeoffer(request):
     return new_object(request, GaranteeOfferForm, 'garanteeoffer')
 
 @login_required
 @permission_required('inventory.view_garanteeoffer', login_url="/blocked/")
-def garantee_price(request): # AJAX GET ONLY
+def garantee_price(request):
     if (not request.GET['months']) or (not request.GET['item']):
         price=0
         message=None
@@ -818,7 +845,7 @@ def garantee_price(request): # AJAX GET ONLY
 ######################################################################################
 @login_required
 @permission_required('inventory.change_sale', login_url="/blocked/")
-def edit_sale(request, object_id): # AJAX POST ONLY
+def edit_sale(request, object_id):
     return edit_object(request, object_id, Sale, SaleForm, "sale")
     
 @login_required
@@ -827,7 +854,7 @@ def list_sales(request, errors={}): # GET ONLY
     return search_and_paginate_transactions(request, Sale,'inventory/sales.html', errors)
 @login_required
 @permission_required('inventory.change_sale', login_url="/blocked/")
-def new_sale(request): # AJAX POST ONLY
+def new_sale(request):
     error_list={}
     try: doc_number=request.POST['doc_number']
     except: doc_number='' 
@@ -843,24 +870,29 @@ def new_sale(request): # AJAX POST ONLY
     except:pass
     print "client = " + str(client)
     item=None
-    tax=price=cost=0
+    value=0
+    cost=0
     try:
         item = Item.objects.fetch(request.POST['item'])
-        cost = item.cost
-        price = item.price(client)
-        if client.tax_group.price_includes_tax:
-            price = price/(client.tax_group.value+1)
-        tax = item.price(client)*client.tax_group.value
+        cost = item.individual_cost
+        value = item.price(client)
     except Item.MultipleObjectsReturned: 
-#        raise forms.ValidationError('There are more than one %ss with the name %s. Try using a bar code.' % (name, data))
         error_list['item']=['There are more than one %ss with the name %s. Try using a bar code.' % ('item', request.POST['item'])]
     except Item.DoesNotExist: 
         if request.POST['item']!='': error_list['item']=["Unable to find '%s' in the list of items." % (request.POST['item'], )]
-#        raise forms.ValidationError("Unable to find '%s' in the list of items." % (data, ))
     if not client: error_list['client']=[unicode('Unable to find a client with the name specified.')]
-    sale=Sale(doc_number=doc_number, date=date, client=client, item=item, cost=cost, price=price, tax=tax)
+    # create the sale
+    sale=Sale(doc_number=doc_number, date=date, client=client, item=item, cost=cost, value=value, quantity=1)
     sale.save()
+    sale.edit_mode=True
     objects=[sale]
+    # add any linked items
+    if item:
+        for link in item.links:
+            cost = link.item.individual_cost
+            s=Sale(doc_number=doc_number, date=date, client=client, item=link.item, cost=cost, quantity=link.quantity)
+            s.save()
+            objects.insert(0,s)
     try: 
         offer=sale.item.garanteeoffer_set.filter(price=0)[0]
         garantee=ClientGarantee(doc_number=sale.doc_number, date=sale.date, client=sale.client, item=sale.item, quantity=offer.months, serial=sale.serial)
@@ -871,77 +903,200 @@ def new_sale(request): # AJAX POST ONLY
     
 def get_transaction(request, object_id, edit_mode=False):
     obj = get_object_or_404(Transaction, pk=object_id).subclass
+    obj.edit_mode=edit_mode
     if not request.user.has_perm('inventory.change_'+obj.tipo.lower()): return http.HttpResponseRedirect("/blocked/")
     return _r2r(request,'inventory/results.html', {'edit_mode':edit_mode, 'objects':[obj],'prefix':obj.tipo.lower(),'line_template':"inventory/transaction.html",'error_list':{}, 'info_list':{}})
 
-def delete_sale(request, object_id):
-    return delete_object(request, object_id, Sale, 'sale')
-
 @login_required
 @permission_required('inventory.change_clientpayment', login_url="/blocked/")
-def add_payment_to_sale(request, object_id): # AJAX POST ONLY
+def add_payment_to_sale(request, object_id):
     obj = get_object_or_404(Sale, pk=object_id)
     doc=Transaction.objects.filter(doc_number=obj.doc_number)
     total=0
     for transaction in doc:
         for entry in transaction.entry_set.filter(account=obj.client):
             if entry.active: total+=entry.value
-    payment=ClientPayment(doc_number=obj.doc_number, date=obj.date, source=obj.client, dest=PAYMENTS_RECEIVED_ACCOUNT, value=total)
+    payment=ClientPayment(doc_number=obj.doc_number, date=obj.date, credit=obj.client, debit=PAYMENTS_RECEIVED_ACCOUNT, value=total)
     payment.save()
+    payment.edit_mode=True
     return _r2r(request,'inventory/results.html', {'edit_mode':True, 'objects':[payment],'prefix':'clientpayment','line_template':"inventory/transaction.html",'error_list':{}, 'info_list':{}})
-######################################################################################
-# Accounting Views
-######################################################################################
+    
+################################################################################################
+#                                     Taxes
+################################################################################################
+  
 @login_required
-@permission_required('inventory.change_accounting', login_url="/blocked/")
-def edit_accounting(request, object_id): # AJAX POST ONLY
-    return edit_object(request, object_id, Accounting, AccountingForm, "accounting")
+def add_tax(request, object_id):
+    obj = get_object_or_404(Transaction, pk=object_id).subclass
+    if not request.user.has_perm('inventory.add_'+obj.tipo.lower()): return http.HttpResponseRedirect("/blocked/")
+    objects=[]
+    rate=TaxRate.objects.get(name=request.POST['rate'])
+    amount=Decimal(request.POST['amount'])
+    if obj.tipo=='Sale':
+        tax=SaleTax(doc_number=obj.doc_number, date=obj.date, debit=obj.client, credit=rate.sales_account, value=amount)
+    elif obj.tipo=='Purchase':
+        tax=PurchaseTax(doc_number=obj.doc_number, date=obj.date, credit=obj.vendor, debit=rate.purchases_account, value=amount)
+    if request.POST['tax_in_price']=='true':
+        print "reducing============================="
+        doc=Transaction.objects.filter(doc_number=obj.doc_number).exclude(tipo__endswith='Payment').exclude(tipo__endswith='Refund')
+        print "doc = " + str(doc)
+        for t in doc:
+            t=t.subclass
+            t.value-=t.value*rate.value
+            t.save()
+            objects.append(t)
+    tax.save()
+    tax.edit_mode=True
+    objects.append(tax)
+    return _r2r(request,'inventory/results.html', {'edit_mode':True, 'objects':objects,'prefix':tax.tipo.lower(),'line_template':"inventory/tax.html",'error_list':{}, 'info_list':{}})
+
+@login_required
+@permission_required('inventory.change_saletax', login_url="/blocked/")
+def edit_saletax(request, object_id):
+    return edit_object(request, object_id, SaleTax, SaleTaxForm, "saletax")
+
+@login_required
+@permission_required('inventory.change_purchasetax', login_url="/blocked/")
+def edit_purchasetax(request, object_id):
+    return edit_object(request, object_id, PurchaseTax, PurchaseTaxForm, "purchasetax")
     
 @login_required
-@permission_required('inventory.view_accounting', login_url="/blocked/")
-def list_accounting(request, errors={}): # GET ONLY
-    return search_and_paginate_transactions(request, Accounting,'inventory/accounting_list.html', errors)
+@permission_required('inventory.add_tax', login_url="/blocked/")
+def get_tax_form(request, object_id):
+    obj = get_object_or_404(Transaction, pk=object_id).subclass
+    default=obj.account.default_tax_rate
+    rates=TaxRate.objects.all()
+    total=Entry.objects.filter(transaction__doc_number=obj.doc_number, active=True, account=obj.subclass.account).aggregate(total=models.Sum('value'))['total'] or Decimal('0.00')
+    total=total*obj.subclass.account.multiplier
+    amount=total*default.value
+    return _r2r(request,'inventory/tax_form.html', {'rates':rates,'default':default,'total':total,'amount':amount})
+   
+################################################################################################
+#                                          Discounts
+################################################################################################
+def add_discount(request, object_id):
+    obj = get_object_or_404(Transaction, pk=object_id).subclass
+    if not request.user.has_perm('inventory.add_'+obj.tipo.lower()): return http.HttpResponseRedirect("/blocked/")
+    errors={}
+    amount=0
+    try:
+        amount=Decimal(request.POST['discount'])
+    except InvalidOperation:
+        try:
+            total=Entry.objects.filter(transaction__doc_number=obj.doc_number, active=True, account=obj.subclass.account).aggregate(total=models.Sum('value'))['total'] or Decimal('0.00')
+            total=total*obj.subclass.account.multiplier
+            amount=total-Decimal(request.POST['total'])
+        except:
+            errors[_('Amount')]=_("You must enter either the amount of the discount or the discounted total of the transaction.")
+    if obj.tipo=='Sale':
+        discount=SaleDiscount(doc_number=obj.doc_number, date=obj.date, debit=obj.client.account_group.discounts_account, credit=obj.client, value=amount)
+    elif obj.tipo=='Purchase':
+        discount=PurchaseDiscount(doc_number=obj.doc_number, date=obj.date, credit=obj.vendor.account_group.discounts_account, debit=obj.vendor, value=amount)
+    discount.save()
+    discount.edit_mode=True
+    return _r2r(request,'inventory/results.html', {'edit_mode':True, 'objects':[discount],'prefix':discount.tipo.lower(),'line_template':"inventory/discount.html",'error_list':errors, 'info_list':{}})
+    
+def edit_salediscount(request, object_id):
+    return edit_object(request, object_id, SaleDiscount, SaleDiscountForm, "salediscount")
+    
+def edit_purchasediscount(request, object_id):
+    return edit_object(request, object_id, PurchaseDiscount, PurchaseDiscountForm, "purchasediscount")
+#######################################################################################
+##                                         Equity Views
+#######################################################################################
 @login_required
-@permission_required('inventory.change_accounting', login_url="/blocked/")
-def new_accounting(request): # AJAX POST ONLY
+@permission_required('inventory.view_equity', login_url="/blocked/")
+def list_equity(request):
+    try: q=request.GET['q']
+    except KeyError: q=''
+    if q=='': page=_paginate(request, Equity.objects.all().order_by('-_date'))
+    else: page=_paginate(request, Equity.objects.filter(doc_number=q).order_by('-_date'))
+    
+    return _r2r(request,'inventory/equity_list.html', {'page':page,'prefix':'transaction','q':q})
+@login_required
+@permission_required('inventory.change_equity', login_url="/blocked/")
+def edit_equity(request, object_id):
+    return edit_object(request, object_id, Equity, EquityForm, "equity")
+@login_required
+@permission_required('inventory.change_equity', login_url="/blocked/")
+def new_equity(request):
     error_list={}
     # get the doc number
     try: doc_number=request.POST['doc_number']
     except: doc_number='' 
-    if doc_number=='': doc_number=Accounting.objects.next_doc_number()
+    if doc_number=='': doc_number=Equity.objects.next_doc_number()
     # get the date
     try: 
-        sample=Accounting.objects.filter(doc_number=doc_number)[0]
+        sample=Equity.objects.filter(doc_number=doc_number)[0]
         date=sample.date
     except:
         date=datetime.now()
+    try:
+        value=Decimal(request.POST['value'])
+    except InvalidOperation:
+        error_list={_('Value'):[_('This value should be a number')]}
     if len(error_list)==0:
-        transaction=Accounting(
+        equity=Equity(
             doc_number=doc_number, 
-            date=date, 
-            debit_account=DEFAULT_ACCOUNTING_DEBIT_ACCOUNT, 
-            credit_account=DEFAULT_ACCOUNTING_CREDIT_ACCOUNT)
-        transaction.save()
-        objects=[transaction]
+            date=date,
+            value=value,
+            )
+        equity.save()
+        equity.edit_mode=True
+        objects=[equity]
     else:
         objects=[]
-    return _r2r(request,'inventory/results.html', {'edit_mode':True, 'objects':objects,'prefix':'accounting','line_template':"inventory/accounting.html",'error_list':error_list, 'info_list':{}})
+    return _r2r(request,'inventory/results.html', {'edit_mode':True, 'objects':objects,'prefix':'equity','line_template':"inventory/equity.html",'error_list':error_list, 'info_list':{}})
     
-def delete_accounting(request, object_id):
-    return delete_object(request, object_id, Accounting, 'accounting')    
+
+#@login_required
+#@permission_required('inventory.change_accounting', login_url="/blocked/")
+#def edit_accounting(request, object_id):
+#    return edit_object(request, object_id, Accounting, AccountingForm, "accounting")
+#    
+#@login_required
+#@permission_required('inventory.view_accounting', login_url="/blocked/")
+#def list_accounting(request, errors={}): # GET ONLY
+#    return search_and_paginate_transactions(request, Accounting,'inventory/accounting_list.html', errors)
+#@login_required
+#@permission_required('inventory.change_accounting', login_url="/blocked/")
+#def new_accounting(request):
+#    error_list={}
+#    # get the doc number
+#    try: doc_number=request.POST['doc_number']
+#    except: doc_number='' 
+#    if doc_number=='': doc_number=Accounting.objects.next_doc_number()
+#    # get the date
+#    try: 
+#        sample=Accounting.objects.filter(doc_number=doc_number)[0]
+#        date=sample.date
+#    except:
+#        date=datetime.now()
+#    if len(error_list)==0:
+#        transaction=Accounting(
+#            doc_number=doc_number, 
+#            date=date, 
+#            debit_account=DEFAULT_ACCOUNTING_DEBIT_ACCOUNT, 
+#            credit_account=DEFAULT_ACCOUNTING_CREDIT_ACCOUNT)
+#        transaction.save()
+#        objects=[transaction]
+#    else:
+#        objects=[]
+#    return _r2r(request,'inventory/results.html', {'edit_mode':True, 'objects':objects,'prefix':'accounting','line_template':"inventory/accounting.html",'error_list':error_list, 'info_list':{}})
+#    
+ 
 ######################################################################################
 # Return Views
 ######################################################################################
 @login_required
 @permission_required('inventory.change_salereturn', login_url="/blocked/")
-def edit_salereturn(request, object_id): # AJAX POST ONLY
+def edit_salereturn(request, object_id):
     return edit_object(request, object_id, SaleReturn, SaleForm, "salereturn")
     
 @login_required
 @permission_required('inventory.change_salereturn', login_url="/blocked/")
-def new_salereturn(request, object_id): # AJAX POST ONLY
+def new_salereturn(request, object_id):
     sale = get_object_or_404(Sale, pk=object_id)
-    
     salereturn=SaleReturn(
         doc_number=sale.doc_number,
         date=sale.date,
@@ -949,98 +1104,85 @@ def new_salereturn(request, object_id): # AJAX POST ONLY
         item=sale.item,
         quantity=-sale.quantity,
         serial=sale.serial,
-        price=-sale.price,
+        value=-sale.value,
         cost=-sale.cost,
-        tax=-sale.tax,
-        discount=-sale.discount,
     )
     salereturn.save()
+    salereturn.edit_mode=True
     return _r2r(request,'inventory/results.html', {'edit_mode':True, 'objects':[salereturn],'prefix':'salereturn','line_template':"inventory/transaction.html",'error_list':{}, 'info_list':{}})
 
-@login_required
-@permission_required('inventory.delete_salereturn', login_url="/blocked/")
-def delete_salereturn(request, object_id):
-    return delete_object(request, object_id, Sale, 'sale')
 ########################################################################################
 @login_required
 @permission_required('inventory.change_purchasereturn', login_url="/blocked/")
-def edit_purchasereturn(request, object_id): # AJAX POST ONLY
+def edit_purchasereturn(request, object_id):
     return edit_object(request, object_id, PurchaseReturn, PurchaseForm, "purchasereturn")
     
 @login_required
 @permission_required('inventory.change_purchasereturn', login_url="/blocked/")
-def new_purchasereturn(request, object_id): # AJAX POST ONLY
+def new_purchasereturn(request, object_id):
     purchase = get_object_or_404(Purchase, pk=object_id)
     
     purchasereturn=PurchaseReturn(
         doc_number=purchase.doc_number, 
         date=purchase.date, 
-        cost=-purchase.cost,
+        value=-purchase.value,
         item=purchase.item, 
         quantity=-purchase.quantity, 
         serial=purchase.serial,
         vendor=purchase.vendor, 
     )
     purchasereturn.save()
+    purchasereturn.edit_mode=True
     return _r2r(request,'inventory/results.html', {'edit_mode':True, 'objects':[purchasereturn],'prefix':'purchasereturn','line_template':"inventory/transaction.html",'error_list':{}, 'info_list':{}})
 
-@login_required
-@permission_required('inventory.delete_purchasereturn', login_url="/blocked/")
-def delete_purchasereturn(request, object_id):
-    return delete_object(request, object_id, PurchaseReturn, 'purchasereturn')
 ######################################################################################
 # Refunds
 ######################################################################################
 
 @login_required
 @permission_required('inventory.change_clientrefund', login_url="/blocked/")
-def edit_clientrefund(request, object_id): # AJAX POST ONLY
+def edit_clientrefund(request, object_id):
     return edit_object(request, object_id, ClientRefund, ClientPaymentForm, "clientrefund")
     
 @login_required
 @permission_required('inventory.change_clientrefund', login_url="/blocked/")
-def new_clientrefund(request, object_id): # AJAX POST ONLY
+def new_clientrefund(request, object_id):
     payment = get_object_or_404(ClientPayment, pk=object_id)
-    
     refund=ClientRefund(
         doc_number=payment.doc_number, 
         date=payment.date, 
         value=-payment.value,
-        source=payment.source,  
+        credit=payment.credit,  
     )
+    print "refund.debit = " + str(refund.debit)
     refund.save()
+    refund.edit_mode=True
     return _r2r(request,'inventory/results.html', {'edit_mode':True, 'objects':[refund],'prefix':'clientrefund','line_template':"inventory/transaction.html",'error_list':{}, 'info_list':{}})
 
-@login_required
-@permission_required('inventory.delete_clientrefund', login_url="/blocked/")
-def delete_clientrefund(request, object_id):
-    return delete_object(request, object_id, ClientRefund, 'clientrefund')
 ######################################################################################
 # Vendor Refunds
 ######################################################################################
 @login_required
 @permission_required('inventory.change_vendorrefund', login_url="/blocked/")
-def edit_vendorrefund(request, object_id): # AJAX POST ONLY
+def edit_vendorrefund(request, object_id):
     return edit_object(request, object_id, VendorRefund, VendorPaymentForm, "vendorrefund")
     
 @login_required
 @permission_required('inventory.change_vendorrefund', login_url="/blocked/")
-def new_vendorrefund(request, object_id): # AJAX POST ONLY
+def new_vendorrefund(request, object_id):
     payment = get_object_or_404(VendorPayment, pk=object_id)
-    
+    print "payment.debit = " + str(payment.debit)
     refund=VendorRefund(
         doc_number=payment.doc_number, 
         date=payment.date, 
         value=-payment.value,
-        dest=payment.dest,  
+        debit=payment.debit,  
     )
+    print "saving"
     refund.save()
+    refund.edit_mode=True
     return _r2r(request,'inventory/results.html', {'edit_mode':True, 'objects':[refund],'prefix':'vendorrefund','line_template':"inventory/transaction.html",'error_list':{}, 'info_list':{}})
 
-@login_required
-@permission_required('inventory.delete_vendorrefund', login_url="/blocked/")
-def delete_vendorrefund(request, object_id):
-    return delete_object(request, object_id, VendorRefund, 'vendorrefund')
 ######################################################################################
 # Payment Views
 ######################################################################################
@@ -1048,14 +1190,13 @@ def delete_vendorrefund(request, object_id):
 ######################################################################################
 @login_required
 @permission_required('inventory.change_clientpayment', login_url="/blocked/")
-def edit_clientpayment(request, object_id): # AJAX POST ONLY
+def edit_clientpayment(request, object_id):
     return edit_object(request, object_id, ClientPayment, ClientPaymentForm, "clientpayment")
     
 @login_required
 @permission_required('inventory.change_clientpayment', login_url="/blocked/")
-def new_clientpayment(request): # AJAX POST ONLY
-    try: doc_number=request.POST['doc_number']
-    except: doc_number='7777' # TODO This should grab the next available doc_number
+def new_clientpayment(request):
+    doc_number=request.POST['doc_number']
     try: 
         sample = Sale.objects.filter(doc_number=doc_number)[0]
         date = sample.date
@@ -1067,23 +1208,21 @@ def new_clientpayment(request): # AJAX POST ONLY
         if request.POST['client']: 
             client = Client.objects.get(name=request.POST['client'])
     except:pass
-    clientpayment=ClientPayment(doc_number=doc_number, date=date, source=client, dest=PAYMENTS_RECEIVED_ACCOUNT)
+    clientpayment=ClientPayment(doc_number=doc_number, date=date, account=client)
     clientpayment.save()
+    clientpayment.edit_mode=True
     return _r2r(request,'inventory/results.html', {'edit_mode':True, 'objects':[clientpayment],'prefix':'clientpayment','line_template':"inventory/transaction.html",'error_list':{}, 'info_list':{}})
-    
-def delete_clientpayment(request, object_id):
-    return delete_object(request, object_id, ClientPayment, 'clientpayment')
 ######################################################################################
 # Vendor Payments
 ######################################################################################
 @login_required
 @permission_required('inventory.change_vendorpayment', login_url="/blocked/")
-def edit_vendorpayment(request, object_id): # AJAX POST ONLY
+def edit_vendorpayment(request, object_id):
     return edit_object(request, object_id, VendorPayment, VendorPaymentForm, "vendorpayment")
     
 @login_required
 @permission_required('inventory.change_vendorpayment', login_url="/blocked/")
-def new_vendorpayment(request): # AJAX POST ONLY
+def new_vendorpayment(request):
     try: doc_number=request.POST['doc_number']
     except: doc_number='7777' # TODO This should grab the next available doc_number
     try: 
@@ -1098,10 +1237,30 @@ def new_vendorpayment(request): # AJAX POST ONLY
     except:pass
     vendorpayment=VendorPayment(doc_number=doc_number, date=date, source=PAYMENTS_MADE_ACCOUNT, dest=vendor)
     vendorpayment.save()
+    vendorpayment.edit_mode=True
     return _r2r(request,'inventory/results.html', {'edit_mode':True, 'objects':[vendorpayment],'prefix':'vendorpayment','line_template':"inventory/transaction.html",'error_list':{}, 'info_list':{}})
     
-def delete_vendorpayment(request, object_id):
-    return delete_object(request, object_id, VendorPayment, 'vendorpayment')
+    
+@login_required
+@permission_required('inventory.add_tax', login_url="/blocked/")
+def new_tax(request):
+    doc_number=request.POST['doc_number']
+    try: 
+        sample = Sale.objects.filter(doc_number=doc_number)[0]
+        date = sample.date
+        client = sample.client
+    except:
+        date = datetime.now()
+        client = Client.objects.default()
+    try: 
+        if request.POST['client']:
+            client = Client.objects.get(name=request.POST['client'])
+    except:pass
+    clientpayment=ClientPayment(doc_number=doc_number, date=date, source=client, dest=PAYMENTS_RECEIVED_ACCOUNT)
+    clientpayment.save()
+    clientpayment.edit_mode=True
+    return _r2r(request,'inventory/results.html', {'edit_mode':True, 'objects':[clientpayment],'prefix':'clientpayment','line_template':"inventory/transaction.html",'error_list':{}, 'info_list':{}})
+
 ######################################################################################
 # Transaction Views
 ######################################################################################
@@ -1160,271 +1319,70 @@ def movements_report(request):
         errors={'Report':[unicode(_('Unable to find a report template with the name "%s"') % (settings.MOVEMENTS_REPORT_NAME,))]}
         return list_sales(request, errors=errors)
     return render_string_to_pdf(Template(report.body), {'transactions':transactions, 'user':request.user})  
-   
-class Document():
-    def __init__(self, number):
-        self._price = None
-        self._due = None
-        self._client = None
-        self._paid_on_spot = None
-        self.transactions=Transaction.objects.filter(doc_number=number)
-    def _get_number(self):
-        return self.transactions[0].doc_number
-    number=property(_get_number)
-    def __getitem__(self, index):
-        return self.transactions[index]
-    def __repr__(self):
-        return self.number
-    def _get_price(self):
-        if not self._price:
-            self._price = Entry.objects.filter(transaction__doc_number=self.number, tipo='Revenue').aggregate(total=models.Sum('value'))['total'] or Decimal('0.00')
-        return -self._price
-    price=property(_get_price)
-    value=property(_get_price)
-    def _get_due(self):
-        if not self._due:
-#            self._due = Entry.objects.filter(transaction__doc_number=self.number, tipo='Client').aggregate(total=models.Sum('value'))['total'] or Decimal('0.00')
-            self._due = Entry.objects.filter(transaction__doc_number=self.number, date=self.transactions[0]._date, account=self.client, tipo='Debit').aggregate(total=models.Sum('value'))['total'] or Decimal('0.00')
-        return self._due
-    due=property(_get_due)
-    def _get_paid_on_spot(self):
-        if not self._paid_on_spot:
-            self._paid_on_spot = Entry.objects.filter(transaction__doc_number=self.number, date=self.transactions[0]._date, account=self.client, tipo='Credit').aggregate(total=models.Sum('value'))['total'] or Decimal('0.00')
-        return self._paid_on_spot
-    paid_on_spot=property(_get_paid_on_spot)
-    def _get_unpaid_on_spot(self):
-        if not self._unpaid_on_spot:
-            self._unpaid_on_spot = Entry.objects.filter(transaction__doc_number=self.number, date=self.transactions[0]._date, account=self.client).aggregate(total=models.Sum('value'))['total'] or Decimal('0.00')
-        return self._unpaid_on_spot
-    unpaid_on_spot=property(_get_unpaid_on_spot)
-    def _get_client(self):
-        if not self._client:
-            self._client = Entry.objects.filter(transaction__doc_number=self.number, tipo='Client')[0].account
-        return self._client
-    client=property(_get_client)
-        
-def update_dict_list(x, y):
-    for k in y.keys():
-        if k in x:
-            x[k].append(y[k])
-        else:
-            x[k]=[y[k]]
-            
-def create_documents(trans):
-    d={}
-    for t in trans:
-        update_dict_list(d, {t.doc_number:t})
-    documents=[]
-    for doc in d:
-        documents.append(Document(doc))
-    return documents
-def create_documents_from_entries(entries):
-    d={}
-    for e in entries:
-        update_dict_list(d, {e.transaction.doc_number:e.transaction})
-    documents=[]
-    for doc in d:
-        documents.append(Document(doc))
-    return documents
-    
-class Series():
-    def __init__(self, documents):
-        self.documents=documents
-    def append(self, document):
-        self.documents.append(document)
-    def __getitem__(self, index):
-        return self.documents[index]    
-    def __repr__(self):
-        return str(self.documents)
-    def __unicode__(self):
-        if self.documents[0].number==self.documents[-1].number: return self.documents[0].number
-        else: return "%s - %s" % (self.documents[0].number, self.documents[-1].number)
-    def _get_first(self):
-        return self.documents[0]
-    first=property(_get_first)
-    def _get_last(self):
-        return self.documents[-1]
-    last=property(_get_last)
-    def _get_value(self):
-        total=0
-        for d in self.documents:
-            total+=d.price
-        return total
-    value=property(_get_value)
-        
-        
-def create_series(documents):
-    from operator import attrgetter
-    documents.sort(key=attrgetter('number'))
-    series=[]
-    last=0
-    price=0
-    for doc in documents:
-        if series==[]:
-            series.append(Series([doc]))
-            l=re.split("(\d*)", doc.number)
-            if len(l)>1:
-                prefix=l[0:-2]
-                last=int(l[-2])
-            else:
-                prefix=''
-                last=0
-        else:
-            x=int(re.split("(\d*)", doc.number)[-2])
-            if x-1==last or x==last: series[-1].append(doc)
-            else: series.append(Series([doc]))
-            last=x
-    return series
-    
-def separate_by_paid_on_spot(documents):
-    paid= []
-    unpaid=[]
-    for doc in documents:
-        print "doc.number = " + str(doc.number)
-        print "doc.paid_on_spot = " + str(doc.paid_on_spot)
-        print "doc.due = " + str(doc.due)
-        print "doc.paid_on_spot==doc.due = " + str(doc.paid_on_spot==doc.due)
-        if doc.paid_on_spot==doc.due: 
-            print "adding to paid"
-            paid.append(doc)
-        else: 
-            print "adding to unpaid"
-            unpaid.append(doc)
-    print "paid = " + str(paid)
-    print "unpaid = " + str(unpaid)
-    return (paid, unpaid)
-    
-def separate_payments_by_timing(payments):
-    groups={'Early':[], 'OnTime':[],'Late':[],'Down':[],'Over':[]}
-    for payment in payments: update_dict_list(groups, {payment.timing:payment})
-    return groups
-    
-def separate_by_tax_group(documents):
-    groups={}
-    for doc in documents: update_dict_list(groups, {doc.client.tax_group.name:doc})
-    return groups.values()
-#class SeriesCollection():
-#    def __init__(self, documents):
-#        
-#    def __getitem__(self, index):
-#        return self.series[index]
-#    def __repr__(self):
-#        return repr(str(self.series))
-        
-#def group_trans_by_doc_number(trans):
-#    d={}
-#    for t in trans:
-#        update_dict_list(d, {t.doc_number:t})
-#    return d
 
-#def group_docs(docs):
-#    result=[]
-#    last=0
-#    price=0
-#    for doc in docs:
-#        if result==[]:
-#            result.append([doc])
-#            l=re.split("(\d*)", doc[0].doc_number)
-#            prefix=l[0:-2]
-#            last=int(l[-2])
-#        else:
-#            x=int(re.split("(\d*)", doc[0].doc_number)[-2])
-#            if x-1==last or x==last: result[-1].append(doc)
-#            else: result.append([doc])
-#            last=x
-#    return result
-            
 @login_required
-@permission_required('inventory.view_sale', login_url="/blocked/")
-def corte(request):
+@permission_required('inventory.add_cash_closing', login_url="/blocked/")
+def new_cash_closing(request):
     form=SearchForm(request.GET)
     form.is_valid()
     start=form.cleaned_data['start']
     end=form.cleaned_data['end']
-    sales = Sale.objects.all().order_by('doc_number')
-    print "REVENUE_ACCOUNT = " + str(REVENUE_ACCOUNT)
-    sale_entries = Entry.objects.filter(tipo='Revenue')
-    print "sale_entries.count() = " + str(sale_entries.count())
-    payments = ClientPayment.objects.all().order_by('-_date')
-    cash = Entry.objects.filter(account=CASH_ACCOUNT)
-    revenue = Entry.objects.filter(account__number__startswith=REVENUE_ACCOUNT.number)
-    expense = Entry.objects.filter(account=EXPENSE_ACCOUNT)
-    tax = Entry.objects.filter(account__number__startswith=TAX_ACCOUNT.number)
+    cash_closings=CashClosing.objects.all()
+    print "start = " + str(start)
+    print "end = " + str(end)
     if not start and not end:
         from datetime import datetime
         start=datetime.date(datetime.now())
         end=start+timedelta(days=1)
-    if start:
-        sales=sales.filter(_date__gte=start)
-        sale_entries=sale_entries.filter(transaction___date__gte=start)
-        print "sale_entries.count() = " + str(sale_entries.count())
-        payments=payments.filter(_date__gte=start)
-        cash=cash.filter(date__gte=start)
-        revenue=revenue.filter(date__gte=start)
-        expense=expense.filter(date__gte=start)
-        tax=tax.filter(date__gte=start)
-        initial_cash=Entry.objects.filter(account=CASH_ACCOUNT, date__lt=start).aggregate(total=models.Sum('value'))['total'] or Decimal('0.00')
-    else:
-        initial_cash=Entry.objects.filter(account=CASH_ACCOUNT, date__lte=datetime.date(datetime.now())).aggregate(total=models.Sum('value'))['total'] or Decimal('0.00')
+    if start: cash_closings=cash_closings.filter(_date__gte=start)
     if end:
         deadline = end + timedelta(days=1)
-        sales=sales.filter(_date__lt=deadline)
-        sale_entries=sale_entries.filter(transaction___date__lt=deadline)
-        print "sale_entries.count() = " + str(sale_entries.count())
-        payments=payments.filter(_date__lt=deadline)
-        cash=cash.filter(date__lt=deadline)
-        revenue=revenue.filter(date__lt=deadline)
-        expense=expense.filter(date__lt=deadline)
-        tax=tax.filter(date__lt=deadline)
-        
-    # Organize sales:
-    # if it was made and paid today, group by tax_group
-    # otherwise put it in the "unpaid" list
-#    sales_docs=create_documents(sales)
-    sales_docs=create_documents_from_entries(sale_entries)
-    paid_sales, unpaid_sales = separate_by_paid_on_spot(sales_docs)
-    print "paid_sales = " + str(paid_sales)
-    print "unpaid_sales = " + str(unpaid_sales)
-    # put each paid doc in a list for its tax_group
-    tax_groups = separate_by_tax_group(paid_sales)
+        cash_closings=cash_closings.filter(_date__lt=deadline)
+        cash=Entry.objects.filter(account=CASH_ACCOUNT, date__lt=dt(deadline)).aggregate(total=models.Sum('value'))['total'] or Decimal('0.00')
+    if cash_closings.count() == 0:
+        doc_number=CashClosing.objects.next_doc_number()
+        c=CashClosing(doc_number=doc_number, date=start, value=cash-settings.STARTING_CASH_ACCOUNT_BALANCE)
+        c.save()
+        c.edit_mode=True
+        return _r2r(request,'inventory/results.html', {'objects':[c],'prefix':'cash_closing','line_template':"inventory/cash_closing.html",'error_list':{}, 'info_list':{}})
+    else:
+        return _r2r(request,'inventory/results.html', {'objects':[],'prefix':'cash_closing','line_template':"inventory/cash_closing.html",'error_list':{_('CashClosing'):[_('There can only be one cash_closing per day.'),]}, 'info_list':{}})
     
-    # group the documents into series
-    tax_groups_by_series=[]
-    for group in tax_groups:
-        tax_groups_by_series.append(create_series(group))
-        
-    # group payments by timing
-    # returns a dict with three lists of payments: 'Early', 'OnTime', and 'Late'
-    grouped_payments=separate_payments_by_timing(payments)
-        
-    try:report=Report.objects.get(name=settings.CORTE_REPORT_NAME)
+@login_required
+@permission_required('inventory.change_cash_closing', login_url="/blocked/")
+def edit_cash_closing(request, object_id):    
+    return edit_object(request, object_id, CashClosing, CashClosingForm, "cash_closing")
+
+def cash_closing_report(request, object_id):
+    cash_closing = get_object_or_404(CashClosing, pk=object_id)
+    try:report=Report.objects.get(name=settings.CASH_CLOSING_REPORT_NAME)
     except Report.DoesNotExist: 
         request.GET=request.GET.copy()
         errors={'Report':[unicode(_('Unable to find a report template with the name "%s"') % (settings.CORTE_REPORT_NAME,))]}
         return item_list(request, errors=errors)
-    cash=cash.aggregate(total=models.Sum('value'))['total'] or Decimal('0.00')
-    revenue=-revenue.aggregate(total=models.Sum('value'))['total'] or Decimal('0.00')
-    expense=expense.aggregate(total=models.Sum('value'))['total'] or Decimal('0.00')
-    tax=-tax.aggregate(total=models.Sum('value'))['total'] or Decimal('0.00')
     return render_string_to_pdf(Template(report.body), {
-        'start':start or datetime.now(),
-        'end':end,
-        'tax_groups':tax_groups,
-        'sales':sale_entries,
-        'payments':payments,
-        'paid_sales':paid_sales,
-        'unpaid_sales':unpaid_sales,
-        'tax_groups_by_series':tax_groups_by_series,
-        'grouped_payments':grouped_payments,
+        'start':cash_closing.start,
+        'end':cash_closing.end,
+        'groups':cash_closing.account_groups,
+        'sales':cash_closing.sale_entries,
+        'payments':cash_closing.payments,
+        'paid_sales':cash_closing.paid_sales,
+        'unpaid_sales':cash_closing.unpaid_sales,
+        'groups_by_series':cash_closing.groups_by_series,
+        'grouped_payments':cash_closing.payments_by_timing,
         'user':request.user,
         'settings.COMPANY_NAME':settings.COMPANY_NAME,
-        'cash':cash,
-        'revenue':revenue,
-        'earnings':cash-initial_cash-expense-tax,
-        'expense':expense,
-        'tax':tax,
-        'final_cash':CASH_ACCOUNT.balance,
-        'initial_cash':initial_cash
+        'revenue':cash_closing.revenue,        
+        'discount':cash_closing.discount,        
+        'totalrevenue':cash_closing.revenue-cash_closing.discount,
+        'earnings':cash_closing.earnings,
+        'expense':cash_closing.expense,
+        'tax':cash_closing.tax,
+        'final_cash':cash_closing.ending_cash,
+        'initial_cash':cash_closing.starting_cash,
+        'revenue_check':cash_closing.revenue_check,
+        'cash_check':cash_closing.cash_check,
+        'paymentstotal':cash_closing.paymentstotal,
     })  
     
 ######################################################################################
@@ -1437,12 +1395,12 @@ def list_transfers(request): # GET ONLY
 
 @login_required
 @permission_required('inventory.change_transfer', login_url="/blocked/")
-def edit_transfer(request, object_id): # AJAX POST ONLY
+def edit_transfer(request, object_id):
     return edit_object(request, object_id, Transfer, TransferForm, "transfer")
 
 @login_required
 @permission_required('inventory.change_transfer', login_url="/blocked/")
-def new_transfer(request): # AJAX POST ONLY
+def new_transfer(request):
     error_list={}
     item=None
     cost=0
@@ -1468,7 +1426,38 @@ def new_transfer(request): # AJAX POST ONLY
     transfer=Transfer(doc_number=doc_number, date=date, account=account, item=item, cost=cost)
     if len(error_list)==0:
         transfer.save()
+    transfer.edit_mode=True
     return _r2r(request,'inventory/results.html', {'edit_mode':True, 'objects':[transfer],'prefix':'transfer','line_template':"inventory/transaction.html",'error_list':error_list, 'info_list':{}})
 
-def delete_transfer(request, object_id):
-    return delete_object(request, object_id, Transfer, 'transfer')
+@login_required
+@permission_required('inventory.add_linkeditem', login_url="/blocked/")
+def new_linkeditem(request, object_id):
+    obj = get_object_or_404(Item, pk=object_id)
+    error_list={}
+    item=None
+    try:
+        item=Item.objects.fetch(request.POST['item'])
+        link=LinkedItem(parent=obj, child=item, quantity=1)
+        link.save()  
+    except Item.MultipleObjectsReturned: 
+        print "caught multiple objects error"
+        error_list['item']=['There are more than one %ss with the name %s. Try using a bar code.' % ('item', request.POST['item'])]
+    except Item.DoesNotExist: 
+        print "caught no objects error"
+        error_list['item']=["Unable to find '%s' in the list of items." % (request.POST['item'], )]        
+    if not error_list: 
+        info_list=['The linked item has been added successfully.',]
+        return _r2r(request,'inventory/linkeditem.html', {'object':link,'error_list':{}, 'info_list':{}})
+    else: return _r2r(request,'inventory/results.html', {'object':[],'error_list':{}, 'info_list':{}})
+        
+    
+@login_required
+@permission_required('inventory.change_linkeditem', login_url="/blocked/")
+def edit_linkeditem(request, object_id):
+    return edit_object(request, object_id, LinkedItem, LinkedItemForm, "linkeditem",'Linked Item')
+
+@login_required
+@permission_required('inventory.delete_linkeditem', login_url="/blocked/")
+def delete_linkeditem(request, object_id):
+    return delete_object(request, object_id, LinkedItem, 'linkeditem','Linked Item')
+ 

@@ -1,5 +1,5 @@
 {% load i18n %}
-{% if edit_mode %}
+{% if object.edit_mode %}
     <td><input id="id_transaction-{{ object.pk }}-item" title="{% trans 'Name of item' %}" class="field item lookup" value="{{object.subclass.item|default:''}}" type="text"></td>
     <td><input id="id_transaction-{{ object.pk }}-quantity" title="{% trans 'Quantity of item' %}" class="field quantity inventory-details" value="{{object.subclass.quantity|floatformat:-2}}" type="text"></td>
     <td><input id="id_transaction-{{ object.pk }}-serial" title="{% trans 'Serial number of item (if applicable)' %}" class="field serial inventory-details" value="{{object.subclass.serial|default:''}}" type="text"></td>

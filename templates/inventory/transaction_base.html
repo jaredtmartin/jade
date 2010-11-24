@@ -1,9 +1,9 @@
 {% load i18n %}
 <tr id="transaction-{{ object.pk }}" class="transaction" transaction_id={{object.pk}} tipo={{object.tipo|lower}}>
-{% if edit_mode %}
+{% if object.edit_mode %}
     <td><input id="id_transaction-{{object.pk}}-doc_number" title="{% trans 'Document Number' %}" class="field doc_number" value="{{object.doc_number}}" type="text"></td>
-    <td><a title="{% trans 'Type' %}" id="id_transaction-{{object.pk}}-tipo">{{object.get_tipo_display}}</a></td>
-    <td><input id="id_transaction-{{object.pk}}-date" title="{% trans 'Date' %}" class="field date" value="{{object.date|date:"m/d/Y"}}" type="text"></td>
+    <td><a title="{% trans 'Type' %}" id="id_transaction-{{object.pk}}-tipo">{% trans object.get_tipo_display %}</a></td>
+    <td><input id="id_transaction-{{object.pk}}-date" title="{% trans 'Date' %}" class="field date" value="{{object.date|date:date_format}}" type="text"></td>
     {% block other_fields_edit %}{% endblock %}
     <td>
         <a class="show" style="display:none;" id="id_transaction-{{object.pk}}-edit" href="#" title="{% trans 'Edit Sale' %}" onclick="editTransaction({{object.pk}}); return false;"><img src="{{MEDIA_URL}}/img/edit.png"/></a>
@@ -14,8 +14,8 @@
     </td>
 {% else %}
     <td id="id_transaction-{{ object.pk }}-doc_number" title="{% trans 'Document Number' %}" value="{{object.doc_number}}" class="field doc_number" label=""><a  href="{{object.subclass.url}}{% if tipo == "Sale" %}&tipo=Sale{% endif %}{% if tipo == "Purchase" %}&tipo=Purchase{% endif %}{% if tipo == "Count" %}&tipo=Count{% endif %}">{{object.doc_number}}</a></td>
-    <td id="id_transaction-{{ object.pk }}-tipo" title="{% trans 'Type' %}"  label="">{{object.get_tipo_display}}</td>
-    <td id="id_transaction-{{object.pk}}-date" title="{% trans 'Date' %}" value="{{object.date|date:"m/d/Y"}}" class="field date" label="">{{object.date|date:"m/d/Y"}}</td>
+    <td id="id_transaction-{{ object.pk }}-tipo" title="{% trans 'Type' %}"  label="">{% trans object.get_tipo_display %}</td>
+    <td id="id_transaction-{{object.pk}}-date" title="{% trans 'Date' %}" value="{{object.date|date:date_format}}" class="field date" label="">{{object.date|date:date_format}}</td>
     {% block other_fields_show %}{% endblock %}
     <td>
         <a class="show" id="id_transaction-{{object.pk}}-edit" href="#" title="{% trans 'Edit Sale' %}" onclick="editTransaction({{object.pk}}); return false;"><img src="{{MEDIA_URL}}/img/edit.png"/></a>

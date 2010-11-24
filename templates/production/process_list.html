@@ -2,9 +2,9 @@
 {% load i18n %}
 {% block heading %}{% trans 'Processes' %} {% endblock%}
 {% block actions %}
-    <div class="actiontab" ><a href="/production/job/list/?{% if q %}q={{q}}&{% endif %}{% if start %}start={{start}}&{% endif %}{% if end %}end={{end}}{% endif %}" class="action">{% trans 'Jobs' %}</a></div>
-    <div class="actiontab" ><a onclick="$('#design-form').dialog('open');return false;" href="#" class="action">{% trans 'Design' %}</a></div>
-    <div class="actiontab" ><a onclick="$('#plan-form').dialog('open');return false;" href="#" class="action">{% trans 'Plan' %}</a></div>
+    {% if perms.inventory.view_job %}<div class="actiontab" ><a href="/production/job/list/?{% if q %}q={{q}}&{% endif %}{% if start %}start={{start}}&{% endif %}{% if end %}end={{end}}{% endif %}" class="action">{% trans 'Jobs' %}</a></div>{% endif %}
+    {% if perms.inventory.add_process %}<div class="actiontab" ><a onclick="$('#design-form').dialog('open');return false;" href="#" class="action">{% trans 'Design' %}</a></div>{% endif %}
+    {% if perms.inventory.add_job %}<div class="actiontab" ><a onclick="$('#plan-form').dialog('open');return false;" href="#" class="action">{% trans 'Plan' %}</a></div>{% endif %}
 {% endblock%}
 {% block pre-table %}
     <div id="design-form" title="{% trans 'Create process' %}">

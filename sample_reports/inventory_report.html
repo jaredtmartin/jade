@@ -20,6 +20,10 @@
                 text-align:center;
                 text-shadow:0 1px 0 #E4F2FD;
             }
+            .company_name {
+                height: 20px;
+                font-size:20px;
+            }
             th{text-align:left;}
             .row1{  
                 -moz-background-clip:border;
@@ -45,11 +49,27 @@
                 top: 1cm;
                 left: 1cm;
                 right: 1.7cm;
+                @frame pagenum {
+                  -pdf-frame-content: pagenum;
+                  bottom: 2cm;
+                  right: 1cm;
+                  height: .5cm;
+                }
+                @frame printdate {
+                  -pdf-frame-content: printdate;
+                  bottom: 2cm;
+                  left:1cm;
+                  height: .5cm;
+                }
             }
         </style>
     </head>
     <body>
-        <h1>Lista de Inventario</h1>
+        
+        <h1>
+            <span class="company_name">{{company_name}}</span><br>
+            Lista de Inventario
+        </h1>
         <table id="tableContent">
             <thead>
                 <tr><th>Nombre</th><th>Locacion</th><th>Cantidad</th><th>Unidad</th><th>Costo</th><th>Total</th></tr>
@@ -58,7 +78,10 @@
                 {% for object in items %}
                      <tr class="{% cycle "row1" "row2" %}"><td>{{object.name}}</td><td>{{object.location}}</td><td>{{object.stock}}</td><td>{{object.unit}}</td><td>${{object.cost|default:0|floatformat:2}}</td><td>${{object.total_cost|default:0|floatformat:2}}</td></tr>                    
                 {%endfor%}
+<tr class="{% cycle "row1" "row2" %}"><th>Total</th><th></th><th>{{total_stock}}</th><th></th><th>${{total_cost|default:0|floatformat:2}}</th><th>${{total_total_cost|default:0|floatformat:2}}</th></tr>           
             </tbody>            
         </table>
+    <div id="printdate" style="text-align:left;">{{date_printed|date:"d/m/Y"}}</div>
+    <div id="pagenum" style="text-align:right;"> <pdf:pagenumber> </div>
     </body>
 </html>

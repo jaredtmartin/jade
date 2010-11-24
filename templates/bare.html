@@ -3,20 +3,20 @@
 <html>
     <head>
         <title>{% block title %}{% endblock %}</title>
-        <link type="text/css" rel="stylesheet" media="screen" href="{{MEDIA_URL}}/css/jquery-ui.css"/>
-        <link type="text/css" rel="stylesheet" media="screen" href="{{MEDIA_URL}}/css/autocomplete.css"/>
-        <link type="text/css" rel="stylesheet" media="screen" href="{{MEDIA_URL}}/admin/css/base.css"/>
-        <link type="text/css" rel="stylesheet" media="screen" href="{{MEDIA_URL}}/admin/css/forms.css"/>
-        <link type="text/css" rel="stylesheet" media="screen" href="{{MEDIA_URL}}/admin/css/widgets.css"/>
-        <link rel="icon" type="image/x-icon" href="{{MEDIA_URL}}/img/jade.ico" />
-        <link type="text/css" rel="stylesheet" media="screen" href="{{MEDIA_URL}}/css/jade.css"/>
-        <script type="text/javascript" src="{{MEDIA_URL}}/js/jquery.js"></script> 
-<!--        <script type="text/javascript" src="{{MEDIA_URL}}/js/jquery.form.js"></script>-->
-        <script type="text/javascript" src="{{MEDIA_URL}}/js/jquery-ui.js"></script> 
-<!--        <script type="text/javascript" src="{{MEDIA_URL}}/js/jquery-ui-i18n.js"></script>-->
-        <script type="text/javascript" src="{{MEDIA_URL}}/js/jade-base.js"></script>
-        <script type="text/javascript" src="{{MEDIA_URL}}/js/jquery.hotkeys.min.js"></script>
-        <script type="text/javascript" src="{{MEDIA_URL}}/js/jquery.autocomplete.js"></script> 
+        <link type="text/css" rel="stylesheet" media="screen" href="{{MEDIA_URL}}css/jquery-ui.css"/>
+        <link type="text/css" rel="stylesheet" media="screen" href="{{MEDIA_URL}}css/autocomplete.css"/>
+        <link type="text/css" rel="stylesheet" media="screen" href="{{MEDIA_URL}}admin/css/base.css"/>
+        <link type="text/css" rel="stylesheet" media="screen" href="{{MEDIA_URL}}admin/css/forms.css"/>
+        <link type="text/css" rel="stylesheet" media="screen" href="{{MEDIA_URL}}admin/css/widgets.css"/>
+        <link rel="icon" type="image/x-icon" href="{{MEDIA_URL}}img/jade.ico" />
+        <link type="text/css" rel="stylesheet" media="screen" href="{{MEDIA_URL}}css/jade.css"/>
+        <script type="text/javascript" src="{{MEDIA_URL}}js/jquery.js"></script> 
+<!--        <script type="text/javascript" src="{{MEDIA_URL}}js/jquery.form.js"></script>-->
+        <script type="text/javascript" src="{{MEDIA_URL}}js/jquery-ui.js"></script> 
+<!--        <script type="text/javascript" src="{{MEDIA_URL}}js/jquery-ui-i18n.js"></script>-->
+        <script type="text/javascript" src="{{MEDIA_URL}}js/jade-base.js"></script>
+        <script type="text/javascript" src="{{MEDIA_URL}}js/jquery.hotkeys.min.js"></script>
+        <script type="text/javascript" src="{{MEDIA_URL}}js/jquery.autocomplete.js"></script> 
         {% block js %}{% endblock %}
         {% block css %}{% endblock %}
     </head>
@@ -28,10 +28,9 @@
             <div id="user-corner">                
                 <a href="{% url jade.inventory.views.set_languages %}?lang=en" title={% trans 'English' %}><img src="{{MEDIA_URL}}/img/en.png" alt={% trans 'English' %} /></a>
                 <a href="{% url jade.inventory.views.set_languages %}?lang=es" title={% trans 'Spanish' %}><img src="{{MEDIA_URL}}/img/es.png" alt={% trans 'Spanish' %} /></a>
-                <a href="{% url jade.inventory.views.set_languages %}?lang=de" title={% trans 'German' %}><img src="{{MEDIA_URL}}/img/de.png" alt={% trans 'German' %} /></a>
                 <a href="{% url jade.inventory.views.set_languages %}?lang=fr" title={% trans 'French' %}><img src="{{MEDIA_URL}}/img/fr.png" alt={% trans 'French' %} /></a>
                 <br>
-                {% block user-corner %}              
+                {% block user-corner %}
                 {% endblock %}
             </div>
         <div id="messages">{% block messages %}{% endblock %}</div>
@@ -44,7 +43,6 @@
         <div id="content">{% block content %}{% endblock %}</div>
         
         <div id="ajax-data" style="display: none;"></div>
-        {% block right %}{% endblock %}
 <div class="clear-contentunit"></div>
         <div id="bottom">
             {% block bottom %}{% endblock %}

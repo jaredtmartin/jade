@@ -19,7 +19,10 @@
     {% if tipo == 'vendor' %}
         {% if perms.inventory.change_vendor %}
             <div class="actiontab" ><a href="/inventory/vendor/" class="action">{% trans 'New' %}</a></div>
-            {% if object %}<div class="actiontab" ><a href='/inventory/account/{{object.pk}}/delete/?redirect_url=/inventory/vendors/'>{% trans 'Delete' %}</a></div>{% endif %}
+            {% if object %}
+                <div class="actiontab" ><a href='/inventory/account/{{object.pk}}/delete/?redirect_url=/inventory/vendors/'>{% trans 'Delete' %}</a></div>
+                <div class="actiontab" ><a href='/inventory/account/{{object.pk}}/statement.pdf'>{% trans 'Statement' %}</a></div>
+            {% endif %}
         {% endif %}
     {% endif %}
     {% if tipo == 'account' %}

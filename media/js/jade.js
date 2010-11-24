@@ -1,4 +1,5 @@
 function editTransaction(object_id) {
+    if ($('#transaction-'+object_id).attr('tipo') == 'sale'){$('#last_sale').val(object_id);}
     $('#transaction-'+object_id+' .field').each(function(i){
         var input = '<td style="'+ $(this).attr('style') +'"><input id="'+ $(this).attr('id') +'" class="'+ $(this).attr('class') +'" value="'+$(this).attr('value')+'" name="'+ $(this).attr('name') +'" type="text"></td>'
         $(this).before(input).removeClass('Inventory').hide();
@@ -22,6 +23,7 @@ function editTransaction(object_id) {
     $('#transaction-'+object_id+' .edit').show();
 }
 function getTransaction(object_id, url){
+    if ($('#transaction-'+object_id).attr('tipo') == 'sale'){$('#last_sale').val(object_id);}
     $.ajax({
         url: url ,
         type:'POST',
@@ -53,12 +55,7 @@ function saveTransaction(object_id, url) {
             quantity:       jQuery('#id_transaction-'+object_id+'-quantity').val(),
             serial:         jQuery('#id_transaction-'+object_id+'-serial').val(),
             value:          jQuery('#id_transaction-'+object_id+'-value').val(),
-            cost:           jQuery('#id_transaction-'+object_id+'-cost').val(),
-            tax:            jQuery('#id_transaction-'+object_id+'-tax').val(),
-            unit_tax:       jQuery('#id_transaction-'+object_id+'-unit_tax').val(),
-            unit_cost:      jQuery('#id_transaction-'+object_id+'-unit_cost').val(),
-            unit_discount:  jQuery('#id_transaction-'+object_id+'-unit_discount').val(),
-            unit_price:     jQuery('#id_transaction-'+object_id+'-unit_price').val(),
+            unit_value:     jQuery('#id_transaction-'+object_id+'-unit_value').val(),
             account2:        jQuery('#id_transaction-'+object_id+'-account2').val(),
         },
         success: updateAndSelectItemField
@@ -108,6 +105,7 @@ function newTransaction(url) {
             doc_number: jQuery('.ui-dialog-content:visible').children().children('#doc_number').val(),
             client:     jQuery('#client.ac_input').val(),
             vendor:     jQuery('#vendor.ac_input').val(),
+            value:     jQuery('.ui-dialog-content:visible').children().children('#value').val(),
             item:     jQuery('#item.ac_input').val(),
         },
         success: updateAndSelectQuantity
@@ -196,11 +194,7 @@ function updateTotal(x){
     }
 }
 function updateTotals(){
-    updateTotal('charge');
-    updateTotal('cost');
-    updateTotal('discount');
-    updateTotal('tax');
-    updateTotal('price');
+    updateTotal('value');
 }
 function update(prefix, data){
     $('.message').remove();
@@ -220,9 +214,9 @@ function update(prefix, data){
             $('#'+prefix+'s').prepend(this);
             $('.date:first').datepicker();
             $('.item:first').autocomplete('/inventory/item_list/', {matchSubset:0, autoFill:1,});
-//            $('.account:first').autocomplete('/inventory/account_list/', {matchSubset:0, autoFill:1,});
             $('.account:first.client').autocomplete('/inventory/client_list/', {matchSubset:0, autoFill:1,});
             $('.account:first.vendor').autocomplete('/inventory/vendor_list/', {matchSubset:0, autoFill:1,});
+            if ($('.transaction:first').attr('tipo') == 'sale'){$('#last_sale').val($('.transaction:first').attr('transaction_id'));}
         }
     });
     if ($('.error').length==0){
@@ -236,8 +230,8 @@ function updateGaranteePrice(data){
     $('#ajax-data').replaceWith('<div id="ajax-data" style="display: none;"></div>');
     var d = $('#ajax-data').append(data)
     $('.message', d).appendTo($('#messages')) //.hide().slideDown('slow');
-    price=$('#price', d).html();
-    jQuery('#id_transaction-'+object_id+'-garantee_unit_price').val(price)
+    value=$('#value', d).html();
+    jQuery('#id_transaction-'+object_id+'-garantee_unit_value').val(value)
 }
 function postCount(object_id){
     hide_entries(object_id);

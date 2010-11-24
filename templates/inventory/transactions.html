@@ -1,52 +1,144 @@
 {% extends "inventory/index.html" %}
 {% load i18n %}
-
 {% load tags %}
 {% block js %}
     <script type="text/javascript" src="{{MEDIA_URL}}/js/jade.js"></script> 
 {% endblock %}
 {% block actions %}
     {% block moreactions %}
-        <div class="actiontab" ><a onclick="$('#accounting-form').dialog('open');return false;" href="#" class="action">{% trans 'New' %}</a></div>
-        <div class="actiontab" ><a href="/inventory/sales/?{% if q %}q={{q}}&{% endif %}{% if start %}start={{start}}&{% endif %}{% if end %}end={{end}}{% endif %}" class="action">{% trans 'Sales' %}</a></div>
-        <div class="actiontab" ><a href="/inventory/purchases/?{% if q %}q={{q}}&{% endif %}{% if start %}start={{start}}&{% endif %}{% if end %}end={{end}}{% endif %}" class="action">{% trans 'Purchases' %}</a></div>
-        <div class="actiontab" ><a href="/inventory/counts/?{% if q %}q={{q}}&{% endif %}{% if start %}start={{start}}&{% endif %}{% if end %}end={{end}}{% endif %}" class="action">{% trans 'Counts' %}</a></div>
-        <div class="actiontab" ><a href="/inventory/transfers/?{% if q %}q={{q}}&{% endif %}{% if start %}start={{start}}&{% endif %}{% if end %}end={{end}}{% endif %}" class="action">{% trans 'Transfers' %}</a></div>
+        {% if perms.inventory.view_sale %}<div class="actiontab" ><a href="/inventory/sales/?{% if q %}q={{q}}&{% endif %}{% if start %}start={{start}}&{% endif %}{% if end %}end={{end}}{% endif %}" class="action">{% trans 'Sales' %}</a></div>{% endif %}
+        {% if perms.inventory.view_purchase %}<div class="actiontab" ><a href="/inventory/purchases/?{% if q %}q={{q}}&{% endif %}{% if start %}start={{start}}&{% endif %}{% if end %}end={{end}}{% endif %}" class="action">{% trans 'Purchases' %}</a></div>{% endif %}
+        {% if perms.inventory.view_count %}<div class="actiontab" ><a href="/inventory/counts/?{% if q %}q={{q}}&{% endif %}{% if start %}start={{start}}&{% endif %}{% if end %}end={{end}}{% endif %}" class="action">{% trans 'Counts' %}</a></div>{% endif %}
+        {% if perms.inventory.view_transfer %}<div class="actiontab" ><a href="/inventory/transfers/?{% if q %}q={{q}}&{% endif %}{% if start %}start={{start}}&{% endif %}{% if end %}end={{end}}{% endif %}" class="action">{% trans 'Transfers' %}</a></div>{% endif %}
+        {% if perms.inventory.view_equity %}<div class="actiontab" ><a href="/inventory/equity_list/?{% if q %}q={{q}}&{% endif %}{% if start %}start={{start}}&{% endif %}{% if end %}end={{end}}{% endif %}" class="action">{% trans 'Equity' %}</a></div>{% endif %}
     {% endblock%}
     <div class="actiontab" ><a href="/inventory/transactions/movements.pdf?{% if q %}q={{q}}&{% endif %}{% if start %}start={{start}}&{% endif %}{% if end %}end={{end}}{% endif %}" class="action">{% trans 'Inventory' %}</a></div>
-    <div id="accounting-form" title="{% trans 'Create simple transaction' %}">
+    <div style="display: none;" id="discount-form" title="{% trans 'Add a discount' %}">
 	    <form>
-		    {% trans 'Doc Number' %}: <input id="doc_number" value="{{q}}" type="text"> <a href="#" onclick="$(this).prev().val('');$(this).prev().select();return false;"><img id="next_doc_number" src="{{MEDIA_URL}}/img/clear.png"/></a><br>
-		    {% trans 'Debit Account' %}: <input id="debit-account" value="" type="text"><br>
-		    {% trans 'Credit Account' %}: <input id="credit-account" value="" type="text"><br>
-		    {% trans 'Value' %}: <input id="item" value="" type="text"><a href="#" onclick="$(this).prev().val('');$(this).prev().select();return false;"><img id="clear_value" src="{{MEDIA_URL}}/img/clear.png"/></a><br>
+		    {% trans 'Discount' %}: <input id="discount_value" value="" type="text"><a href="#" onclick="$(this).prev().val('');$(this).prev().select();return false;"><img id="clear_value" src="{{MEDIA_URL}}/img/clear.png"/></a><br>
+		    {% trans 'or' %}<br>
+		    {% trans 'Total' %}: <input id="discount_total" value="" type="text"><a href="#" onclick="$(this).prev().val('');$(this).prev().select();return false;"><img id="clear_value" src="{{MEDIA_URL}}/img/clear.png"/></a><br>
 	    </form>
     </div>
     <script>
-        $(document).ready(function(){
-            $("#accounting-form").dialog({
-			    autoOpen: false,
-			    height: 280,
-			    width: 250,
-			    modal: false,
-			    buttons: {
-				    Close: function() {
-					    $(this).dialog('close');
-				    },
-			        'Create': function() {
-			            newTransaction('/inventory/accounting/new/');
-			        }
-			    },
-		    });
-            $('#accounting-form #debit-account').autocomplete('/inventory/account_list/', {matchSubset:0, autoFill:1,});
-            $('#accounting-form #credit-account').autocomplete('/inventory/account_list/', {matchSubset:0, autoFill:1,});
-            $('#accounting-form #value').keydown(function(e){
+        function getTaxForm(object_id){
+            jQuery("#last_id").val(object_id);
+            $.ajax({
+                url: '/inventory/transaction/'+object_id+'/get_tax_form/',
+                type: 'GET',
+                success: showTaxForm
+            });
+        }
+        function showTaxForm(data){
+            $('#ajax-data').replaceWith('<div id="ajax-data" style="display: none;"></div>');
+            $('#ajax-data').append(data);
+            $("#tax-form").dialog({
+		        height: 250,
+		        width: 250,
+		        position:['right','bottom'],
+		        buttons: {
+			        Close: function() {
+				        $(this).remove();
+			        },
+		            'Add': function() {
+		                addTax($('#last_id').val());
+				        $(this).remove();
+		            }
+		        },
+	        });
+            $('#tax-form #tax_amount').keydown(function(e){
                 if (e.keyCode == 13) {
-                    newTransaction('/inventory/accounting/new/');
+                    addTax(jQuery("#last_id").val());
+			        $('#tax-form').remove();
                     e.preventDefault();
                     return false;
                 }
             });
+	        $('#id_tax_rate').change(update_tax_amount);
+            $('#tax-form #tax').autocomplete('/inventory/tax_list/', {matchSubset:0, autoFill:1,});
+            $('#tax-form #tax_amount').select();
+        }
+        function update_tax_amount(){
+            $('#tax_amount').val(($('#doc_total_for_tax').val()*$('#id_tax_rate').val()).toFixed(2));
+        }
+        function addTax(object_id){
+            jQuery("#transaction-"+object_id+"-entries-table").remove();
+            hide_entries(object_id);
+            jQuery("#last_id").val(object_id);
+            $.ajax({
+                url: '/inventory/transaction/'+object_id+ '/addtax/',
+                type:'POST',
+                data:{
+                    rate:jQuery('#id_tax_rate :selected:visible').text(),
+                    amount:jQuery('#tax_amount').val(),
+                    tax_in_price:jQuery('#tax_in_price').attr('checked'),
+                },
+                success: updateAndSelectItemField
+            });
+        }
+        function addDiscount(object_id){
+            jQuery("#transaction-"+object_id+"-entries-table").remove();
+            hide_entries(object_id);
+            jQuery("#last_id").val(object_id);
+            $.ajax({
+                url: '/inventory/transaction/'+object_id+ '/add_discount/',
+                type:'POST',
+                data:{
+                    discount:jQuery('#discount_value').val(),
+                    total:jQuery('#discount_total').val(),
+                },
+                success: updateAndSelectItemField
+            });
+        }
+        $(document).ready(function(){
+<!--            $("#accounting-form").dialog({-->
+<!--			    autoOpen: false,-->
+<!--			    height: 280,-->
+<!--			    width: 250,-->
+<!--			    modal: false,-->
+<!--			    buttons: {-->
+<!--				    Close: function() {-->
+<!--					    $(this).dialog('close');-->
+<!--				    },-->
+<!--			        'Create': function() {-->
+<!--			            newTransaction('/inventory/accounting/new/');-->
+<!--			        }-->
+<!--			    },-->
+<!--		    });-->
+		    $("#discount-form").dialog({
+			    autoOpen: false,
+		        height: 250,
+		        width: 250,
+		        position:['right','bottom'],
+		        buttons: {
+			        Close: function() {
+				        $(this).dialog('close');
+			        },
+		            'Add': function() {
+		                addDiscount($('#last_id').val());
+				        $(this).dialog('close');
+		            }
+		        },
+	        });
+            $('#discount-form input').keydown(function(e){
+                if (e.keyCode == 13) {
+                    addDiscount($('#last_id').val());
+				    $('#discount-form').dialog('close');
+                    e.preventDefault();
+                    return false;
+                }
+            });
+<!--            $('#accounting-form #debit-account').autocomplete('/inventory/account_list/', {matchSubset:0, autoFill:1,});-->
+<!--            $('#accounting-form #credit-account').autocomplete('/inventory/account_list/', {matchSubset:0, autoFill:1,});-->
+<!--            -->
+<!--            $('#accounting-form #value').keydown(function(e){-->
+<!--                if (e.keyCode == 13) {-->
+<!--                    newTransaction('/inventory/accounting/new/');-->
+<!--                    e.preventDefault();-->
+<!--                    return false;-->
+<!--                }-->
+<!--            });-->
+
         });
     </script>
 {% endblock%}
@@ -55,27 +147,14 @@
 {% block pre-table %}
 
     
-    {% if q %}
-        <div id="totals">
-            <h2>Totals:</h2>
-            {% if charge %}
-                <div id="charge" class="five-column">{% trans 'Charge' %}: ${{charge|floatformat:2}}</div>
-            {% endif %}
-            {% if tax %}
-                <div id="tax" class="five-column">{% trans 'Tax' %}: ${{tax|floatformat:2}}</div>
-            {% endif %}
-            {% if discount %}
-                <div id="discount" class="five-column">{% trans 'Discount' %}: ${{discount|floatformat:2}}</div>
-            {% endif %}
-            {% if price %}
-                <div id="price" class="five-column">{% trans 'Revenue' %}: ${{price|floatformat:2}}</div>
-            {% endif %}
-            {% if cost %}
-                <div id="cost" class="five-column">{% trans 'Cost' %}: ${{cost|floatformat:2}}</div>
-            {% endif %}
-            <hr>
-            <div class="clear-contentunit"></div>
-        </div>
+    {% if q %}        
+        {% if value %}
+            <div id="totals">
+                <h2>Total:${{value|floatformat:2}}</h2>
+                <hr>
+                <div class="clear-contentunit"></div>
+            </div>
+        {% endif %}
     {% endif %}
     
 {% endblock%}
@@ -87,20 +166,14 @@
     <th>{% trans 'Item' %}</th>
     <th>{% trans 'Quantity' %}</th>
     <th>{% trans 'Serial' %}</th>
-    {% if perms.inventory.view_cost %}
-        <th  class="cost sale-details">{% trans 'Cost' %}</th>
-    {% endif %}
-    <th  class="tax sale-details">{% trans 'Tax' %}</th>
-    <th  class="discount sale-details">{% trans 'Discount' %}</th>
-    <th  class="price sale-details">{% trans 'Price' %}</th>
-<!--    <th  class="garantee-details">Garantee</th>-->
-<!--    <th  class="garantee-details">Duration</th>-->
+    <th class="value sale-details">{% trans 'Value' %}</th>
     <th>{% trans 'Actions' %}</th>
     <input type="hidden" id="last_id" value="">
+    <input type="hidden" id="last_sale" value="">
 {% endblock%}
 {% block line %}
-    {% with object.subclass.tipo as tipo %}
-        {% include "inventory/bare_transaction.html" %}
+    {% with object.subclass as object %}
+        {% include "inventory/transaction.html" %}
     {% endwith %}
 {% endblock%}
 

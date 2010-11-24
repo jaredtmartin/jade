@@ -23,7 +23,16 @@ def clean_lookup(form, name, model, by_pk=False, title=None):
     except model.DoesNotExist: 
         raise forms.ValidationError('Unable to find %s in the list of %ss.' % (data, title))
     return data
-    
+def clean_number(form, name, default=0):
+    try:
+        data=form.cleaned_data[name]
+        if data=='undefined' or data=='': 
+            print "%s was blank returning %i" % (name, default)
+            return default
+        return Decimal(data)
+    except:
+        raise forms.ValidationError('Enter a number')
+        return data
 def clean_bar_code(form, name, model):
     data = form.cleaned_data[name]
     if (not data) and (not form.fields[name].required): return None
@@ -44,7 +53,7 @@ def clean_bar_code(form, name, model):
 class SaleForm(forms.ModelForm):
     class Meta:
         model = Sale
-        fields=('doc_number','date','account','item','quantity','serial','unit_cost','unit_tax','unit_discount','unit_price')
+        fields=('doc_number','date','account','item','quantity','serial','unit_value')
     def save(self, commit=True):
         model = super(SaleForm, self).save(commit=False)
         model.client =      self.cleaned_data['account']
@@ -52,32 +61,16 @@ class SaleForm(forms.ModelForm):
         model.quantity =    self.cleaned_data['quantity']
         model.item =        self.cleaned_data['item']
         model.serial =      self.cleaned_data['serial']
-        model.tax =         (self.cleaned_data['unit_tax'] or 0)
-        model.discount =    (self.cleaned_data['unit_discount'] or 0)
-        model.price =       self.cleaned_data['unit_price'] 
-#        if not self.cleaned_data['unit_price'] and model.item: 
-#            print "resetting price"
-#            model.price = model.item.price(model.client)
-#        print "self.cleaned_data['unit_price'] = " + str(self.cleaned_data['unit_price'])
-        
-        if self.cleaned_data['unit_cost']:
-            model.cost = self.cleaned_data['unit_cost']
-        if model.item and not model.cost: model.cost = model.item.cost
+        model.value =       self.cleaned_data['unit_value'] 
         if self.cleaned_data['quantity']!=0: 
-            model.tax=              model.tax            * self.cleaned_data['quantity']
-            model.discount=         model.discount       * self.cleaned_data['quantity']
-            model.price=            model.price          * self.cleaned_data['quantity']
-            model.cost=             model.cost           * self.cleaned_data['quantity']
+            model.value=            model.value          * self.cleaned_data['quantity']
         if commit: model.save()
         return model
     doc_number =        forms.CharField()
     account =           forms.CharField(initial=settings.DEFAULT_CLIENT_NAME)
     item =              forms.CharField(required=False)
-    unit_price =        forms.DecimalField()
+    unit_value =        forms.DecimalField()
     quantity =          forms.DecimalField()
-    unit_tax =          forms.DecimalField()
-    unit_discount =     forms.DecimalField()
-    unit_cost =         forms.CharField(required=False)#forms.DecimalField()
     date =              forms.DateField(initial=datetime.now()) #, input_formats=['%Y-%m-%d', '%d/%m/%Y',]) # Uncomment this for spanish dates
     serial =            forms.CharField(required=False)
     def clean_account(self):
@@ -85,39 +78,31 @@ class SaleForm(forms.ModelForm):
     def clean_item(self):
         x=clean_bar_code(self, 'item', Item)
         return x
-    def clean_unit_cost(self):
-        try:
-            data=self.cleaned_data['unit_cost']
-            if data=='undefined': return None
-            return Decimal(data)
-        except:
-            raise forms.ValidationError('Enter a number')
-            return data
             
-class AccountingForm(forms.ModelForm):
-    class Meta:
-        model = Accounting
-        fields=('doc_number','date','account','account2','value')
-    def save(self, commit=True):
-        model = super(AccountingForm, self).save(commit=False)
-        model.debit_account =      self.cleaned_data['account']
-        model.credit_account =      self.cleaned_data['account2']
-        model.date =        self.cleaned_data['date']
-        model.value =    self.cleaned_data['value']
-        if commit: model.save()
-        return model
-    doc_number =     forms.CharField()
-    account =  forms.CharField(initial=settings.DEFAULT_ACCOUNTING_DEBIT_ACCOUNT_NAME)
-    account2 = forms.CharField(initial=settings.DEFAULT_ACCOUNTING_CREDIT_ACCOUNT_NAME)
-    value =          forms.DecimalField()
-    date =           forms.DateField(initial=datetime.now())
-    def clean_account(self):
-        print "asdafahhhhhhhhhhhhhhhhhhhhhhhhhhhhhh"
-        return clean_lookup(self, 'account', Account)
-    def clean_account2(self):
-        print "asdadadadadadddddddddddd"
-        a=self.cleaned_data
-        return clean_lookup(self, 'account2', Account, title='account')
+#class AccountingForm(forms.ModelForm):
+#    class Meta:
+#        model = Accounting
+#        fields=('doc_number','date','account','account2','value')
+#    def save(self, commit=True):
+#        model = super(AccountingForm, self).save(commit=False)
+#        model.debit_account =      self.cleaned_data['account']
+#        model.credit_account =      self.cleaned_data['account2']
+#        model.date =        self.cleaned_data['date']
+#        model.value =    self.cleaned_data['value']
+#        if commit: model.save()
+#        return model
+#    doc_number =     forms.CharField()
+#    account =  forms.CharField(initial=settings.DEFAULT_ACCOUNTING_DEBIT_ACCOUNT_NAME)
+#    account2 = forms.CharField(initial=settings.DEFAULT_ACCOUNTING_CREDIT_ACCOUNT_NAME)
+#    value =          forms.DecimalField()
+#    date =           forms.DateField(initial=datetime.now())
+#    def clean_account(self):
+#        print "asdafahhhhhhhhhhhhhhhhhhhhhhhhhhhhhh"
+#        return clean_lookup(self, 'account', Account)
+#    def clean_account2(self):
+#        print "asdadadadadadddddddddddd"
+#        a=self.cleaned_data
+#        return clean_lookup(self, 'account2', Account, title='account')
 
 class ClientGaranteeForm(forms.ModelForm):
     class Meta:
@@ -130,7 +115,7 @@ class ClientGaranteeForm(forms.ModelForm):
         model.item =        self.cleaned_data['item']
         model.quantity =    self.cleaned_data['quantity']
         model.serial =      self.cleaned_data['serial']
-        model.price =        (self.cleaned_data['value'] or 0)
+        model.value =        (self.cleaned_data['value'] or 0)
         if commit: model.save()
         return model
     doc_number =        forms.CharField()
@@ -158,7 +143,7 @@ class VendorGaranteeForm(forms.ModelForm):
         model.date =        self.cleaned_data['date']
         model.quantity =    self.cleaned_data['quantity']
         model.serial =      self.cleaned_data['serial']
-        model.price =       (self.cleaned_data['value'] or 0)
+        model.value =       (self.cleaned_data['value'] or 0)
         if commit: model.save()
         return model
     doc_number =        forms.CharField()
@@ -209,30 +194,79 @@ class VendorPaymentForm(forms.ModelForm):
     date =              forms.DateField(initial=datetime.now()) #, input_formats=['%Y-%m-%d', '%d/%m/%Y',]) # Uncomment this for spanish dates
     def clean_account(self):
         return clean_lookup(self, 'account', Vendor)
+class TaxForm(forms.ModelForm):
+    class Meta:
+        model = SaleTax
+        fields=('doc_number','date','account','value')
+    def save(self, commit=True):
+        model = super(TaxForm, self).save(commit=False)
+        model.account =      self.cleaned_data['account']
+        model.date =        self.cleaned_data['date']
+        model.value =        (self.cleaned_data['value'] or 0)
+        if commit: model.save()
+        return model
+    doc_number =        forms.CharField()
+    value =             forms.DecimalField(required=False)
+    account =           forms.CharField(initial=settings.DEFAULT_CLIENT_NAME)
+    date =              forms.DateField(initial=datetime.now()) #, input_formats=['%Y-%m-%d', '%d/%m/%Y',]) # Uncomment this for spanish dates
+
+class SaleTaxForm(TaxForm):
+    class Meta:
+        model = SaleTax
+        fields=('doc_number','date','account','value')
+    def clean_account(self):
+        return clean_lookup(self, 'account', Client)
+class EquityForm(TaxForm):
+    class Meta:
+        model = Equity
+        fields=('doc_number','date','account','value')
+    def clean_account(self):
+        return clean_lookup(self, 'account', Account)
+class PurchaseTaxForm(TaxForm):
+    class Meta:
+        model = SaleTax
+        fields=('doc_number','date','account','value')
+    def clean_account(self):
+        return clean_lookup(self, 'account', Vendor)
+        
+class SaleDiscountForm(TaxForm):
+    class Meta:
+        model = SaleTax
+        fields=('doc_number','date','account','value')
+    def clean_account(self):
+        return clean_lookup(self, 'account', Client)
+class CashClosingForm(TaxForm):
+    class Meta:
+        model = CashClosing
+        fields=('doc_number','date','account','value')
+    def clean_account(self):
+        return clean_lookup(self, 'account', Account)
+class PurchaseDiscountForm(TaxForm):
+    class Meta:
+        model = PurchaseDiscount
+        fields=('doc_number','date','account','value')
+    def clean_account(self):
+        return clean_lookup(self, 'account', Vendor)
 
 class PurchaseForm(forms.ModelForm):
     class Meta:
         model = Purchase
-        fields=('doc_number','date','account','item','quantity','serial','tax','cost')
+        fields=('doc_number','date','account','item','quantity','serial','value')
     def save(self, commit=True):
         model = super(PurchaseForm, self).save(commit=False)
         model.vendor =      self.cleaned_data['account']
         model.item =        self.cleaned_data['item']
         model.date =        self.cleaned_data['date']
-        model.tax =         self.cleaned_data['tax']
-        print "self.cleaned_data['tax'] = " + str(self.cleaned_data['tax'])
-        print "model.tax = " + str(model.tax)
         model.quantity =    self.cleaned_data['quantity']
         model.serial =      self.cleaned_data['serial']
-        model.cost =        (self.cleaned_data['cost'] or 0)
+        model.value =        (self.cleaned_data['value'] or 0)
         if commit: model.save()
         return model
     doc_number =        forms.CharField()
     account =           forms.CharField(initial=settings.DEFAULT_VENDOR_NAME)
     item =              forms.CharField(required=False)
     quantity =          forms.DecimalField()
-    cost =              forms.DecimalField()
-    tax =               forms.DecimalField()
+    value =              forms.DecimalField()
     date =              forms.DateField(initial=datetime.now()) #, input_formats=['%Y-%m-%d', '%d/%m/%Y',]) # Uncomment this for spanish dates
     serial =            forms.CharField(required=False)
     def clean_account(self):
@@ -271,20 +305,20 @@ class TransferForm(forms.ModelForm):
 class CountForm(forms.ModelForm):
     class Meta:
         model = Purchase
-        fields=('doc_number','date','item','quantity','serial','cost')
+        fields=('doc_number','date','item','quantity','serial','value')
     def save(self, commit=True):
         model = super(CountForm, self).save(commit=False)
         model.item =        self.cleaned_data['item']
         model.count =    self.cleaned_data['quantity']
         model.date =        self.cleaned_data['date']
         model.serial =      self.cleaned_data['serial']
-        model.unit_cost =        (self.cleaned_data['cost'] or 0)
+        model.unit_cost =        (self.cleaned_data['value'] or 0)
         if commit: model.save()
         return model
     doc_number =        forms.CharField()
     item =              forms.CharField(required=False)
     quantity =          forms.DecimalField(required=False)
-    cost =              forms.DecimalField()
+    value =              forms.DecimalField()
     date =              forms.DateField(initial=datetime.now()) #, input_formats=['%Y-%m-%d', '%d/%m/%Y',]) # Uncomment this for spanish dates
     serial =            forms.CharField(required=False)
     def clean_item(self):
@@ -316,9 +350,16 @@ class ItemForm(forms.ModelForm):
         exclude = ('tipo',)
     unit=forms.CharField(widget=AutoCompleteInput(url="/inventory/unit_list/"), required=False)
     description=forms.CharField(widget=Textarea(),required=False)
-    def save(self, commit=True, tipo=None):        
+    minimum = forms.CharField(required=False, initial='0')
+    maximum = forms.CharField(required=False, initial='0')
+    default_cost = forms.CharField(required=False, initial='0')
+    def save(self, commit=True, tipo=None):
         model = super(ItemForm, self).save(commit=False)
         if tipo: model.tipo=tipo
+#        print "self.cleaned_data['minimum'] = " + str(self.cleaned_data['minimum'])
+#        model.minimum =  self.cleaned_data['minimum'] or 0
+#        model.maximum =  self.cleaned_data['maximum'] or 0
+#        model.default_cost =  self.cleaned_data['default_cost'] or 0
         if commit: model.save()
         return model
     def __init__(self, *args, **kwargs):
@@ -344,8 +385,26 @@ class ItemForm(forms.ModelForm):
         except Unit.DoesNotExist: 
             raise forms.ValidationError('Unable to find %s in the list of %ss.' % (data, 'unit'))
         return data
-        
-
+    def clean_minimum(self):
+        return clean_number(self, 'minimum')
+    def clean_maximum(self):
+        return clean_number(self, 'maximum')
+    def clean_default_cost(self):
+        return clean_number(self, 'default_cost')
+    def clean_location(self):
+        data=self.cleaned_data['location']
+        if data=='undefined': return ''
+        return data
+class ServiceForm(ItemForm):
+    class Meta:
+        model = Service
+        exclude = ('tipo',)
+    def save(self, commit=True, tipo=None):        
+        model = super(ServiceForm, self).save(commit=False)
+        if tipo: model.tipo=tipo
+        if commit: model.save()
+        return model
+    
 class PriceForm(forms.ModelForm):
     class Meta:
         model = Price
@@ -358,7 +417,12 @@ class GaranteeOfferForm(forms.ModelForm):
     class Meta:
         model = GaranteeOffer
         fields=('item', 'months','price')
-
+        
+class LinkedItemForm(forms.ModelForm):
+    class Meta:
+        model = LinkedItem
+        fields=('quantity',)
+ 
 class AccountForm(forms.ModelForm):
     class Meta:
         model = Account
@@ -386,7 +450,8 @@ class ContactForm(forms.ModelForm):
     work_phone =    forms.CharField(required=False)
     fax =           forms.CharField(required=False)
     tax_number =    forms.CharField(required=False)
-    tax_group =     forms.CharField(widget=AutoCompleteInput('/inventory/tax_group_list/'))
+    account_group = forms.CharField(widget=AutoCompleteInput('/inventory/account_group_list/'))
+    receipt_group = forms.CharField(widget=AutoCompleteInput('/inventory/receipt_group_list/'))
     price_group =   forms.CharField(widget=AutoCompleteInput('/inventory/price_group_list/'))
     description =   forms.CharField(required=False)
     email =         forms.CharField(required=False)
@@ -416,8 +481,10 @@ class ContactForm(forms.ModelForm):
             self.initial['home_phone'] = instance.home_phone
             self.initial['cell_phone'] = instance.cell_phone
             self.initial['work_phone'] = instance.work_phone
-            if instance.tax_group: self.initial['tax_group'] = instance.tax_group.name
-            else: self.initial['tax_group'] = settings.DEFAULT_TAX_GROUP_NAME
+            if instance.account_group: self.initial['account_group'] = instance.account_group.name
+            else: self.initial['account_group'] = settings.DEFAULT_ACCOUNT_GROUP_NAME
+            if instance.receipt_group: self.initial['receipt_group'] = instance.receipt_group.name
+            else: self.initial['receipt_group'] = settings.DEFAULT_RECEIPT_GROUP_NAME
             if instance.price_group: self.initial['price_group'] = instance.price_group.name
             else: self.initial['price_group'] = settings.DEFAULT_PRICE_GROUP_NAME
             self.initial['fax'] = instance.fax
@@ -429,10 +496,12 @@ class ContactForm(forms.ModelForm):
             self.initial['credit_days'] = instance.credit_days
         else:
             self.initial['price_group'] = settings.DEFAULT_PRICE_GROUP_NAME
-            self.initial['tax_group'] = settings.DEFAULT_TAX_GROUP_NAME
+            self.initial['account_group'] = settings.DEFAULT_ACCOUNT_GROUP_NAME
             self.initial['credit_days'] = settings.DEFAULT_CREDIT_DAYS
-    def clean_tax_group(self):
-        return clean_lookup(self, 'tax_group', TaxGroup)
+    def clean_account_group(self):
+        return clean_lookup(self, 'account_group', AccountGroup)
+    def clean_receipt_group(self):
+        return clean_lookup(self, 'receipt_group', ReceiptGroup)
     def clean_price_group(self):
         return clean_lookup(self, 'price_group', PriceGroup)
     def clean_user(self):

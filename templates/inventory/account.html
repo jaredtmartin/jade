@@ -1,42 +1,42 @@
 {% load i18n %}
 <tr><td>
-<div id=account-{{form.instance.pk}} class="account{% if form.instance.pk %}{% else %} new{% endif %} ">
+    <div id=account-{{form.instance.pk}} class="account{% if form.instance.pk %}{% else %} new{% endif %} ">
         <input id="last_id" type="hidden" value="{{form.instance.pk}}">
         <div class="three-column">
-            <p>{{form.name.label}}: {{form.name}}</p>
-            <p>{{form.number.label}}: {{form.number}}</p>
-            <p>{{form.multiplier.label}}: {{form.multiplier}}</p>
+            <p>{% trans 'Name'%}: {{form.name}}</p>
+            <p>{% trans 'Account number'%}: {{form.number}}</p>
+            <p>{% trans 'Multiplier'%}: {{form.multiplier}}</p>
             {% if tipo != 'account' %}            
-                <p>{{form.tax_group.label}}: {{form.tax_group}}</p>
-                <p>{{form.tax_number.label}}: {{form.tax_number}}</p>
-                <p>{{form.price_group.label}}: {{form.price_group}}</p>
-                <p>{{form.registration.label}}: {{form.registration}}</p>
+                <p>{% trans 'Account Group'%}: {{form.account_group}}</p>
+                <p>{% trans 'Tax Number'%}: {{form.tax_number}}</p>
+                <p>{% trans 'Price Group'%}: {{form.price_group}}</p>
+                <p>{% trans 'Registration'%}: {{form.registration}}</p>
             {% endif %}
         </div>
         <div class="three-column">
             {% if tipo != 'account' %}
-                <p>{{form.description.label}}: {{form.description}}</p>
-                <p>{{form.home_phone.label}}: {{form.home_phone}}</p>
-                <p>{{form.cell_phone.label}}: {{form.cell_phone}}</p>
-                <p>{{form.work_phone.label}}: {{form.work_phone}}</p>
-                <p>{{form.fax.label}}: {{form.fax}}</p>
-                <p>{{form.email.label}}: {{form.email}}</p>
+                <p>{% trans 'Description '%}: {{form.description}}</p>
+                <p>{% trans 'Home phone'%}: {{form.home_phone}}</p>
+                <p>{% trans 'Cell phone'%}: {{form.cell_phone}}</p>
+                <p>{% trans 'Work phone'%}: {{form.work_phone}}</p>
+                <p>{% trans 'Fax'%}: {{form.fax}}</p>
+                <p>{% trans 'Email'%}: {{form.email}}</p>
             {% endif %}
         </div>
         <div class="three-column">
             {% if tipo != 'account' %}   
-                <p>{{form.address.label}}: {{form.address}}</p>
-                <p>{{form.state_name.label}}: {{form.state_name}}</p>
-                <p>{{form.country.label}}: {{form.country}}</p>
-                <p>{{form.credit_days.label}}: {{form.credit_days}}</p>
+                <p>{% trans 'Receipt Group'%}: {{form.receipt_group}}</p>
+                <p>{% trans 'Address'%}: {{form.address}}</p>
+                <p>{% trans 'State'%}: {{form.state_name}}</p>
+                <p>{% trans 'Country'%}: {{form.country}}</p>
+                <p>{% trans 'Credit Period (days)'%}: {{form.credit_days}}</p>
             {% endif %}
             <p><b>{% trans 'Balance' %}: ${{object.balance|default:0.00|floatformat:2}}</b></p>
             {% if tipo != 'account' %}   
-                <p>{{form.user.label}}: {{form.user}}</p>
+                <p>{% trans 'User' %}: {{form.user}}</p>
             {% endif %}
-        </div>
-        
-<div class="clear-contentunit"></div>
+        </div>            
+        <div class="clear-contentunit"></div>
         <a href="#" onclick="save_account({{form.instance.pk|default:"''"}},'/inventory/{{prefix.lower}}/{{form.instance.pk|default:''}}/'); return false;">{% trans 'Save' %}</a>
-</div>
+    </div>
 </tr></td>

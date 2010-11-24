@@ -10,8 +10,6 @@
 </ul>
 <table>
     {% for object in objects %}
-        {{object.tipo}}
-        {{object.template}}
         {% include object.template %}
     {% endfor %}
 </table>

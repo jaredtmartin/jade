@@ -65,11 +65,12 @@
     </head>
     <body>
         <h1>Corte de Caja {{start|date:"m/d/Y"}}{% if end != start %}-{{ end|date:"m/d/Y" }}{% endif %}</h1>
-{% if tax_groups_by_series %}
 <h2>Ventas:</h2>
+{% if groups_by_series %}
+        <h3>Ventas canceladas inmediatamente:</h3>
         <table id="tableContent"><tbody>
-          {% for group in tax_groups_by_series %}
-            <tr class="toprow"><td class="texto"><b>{{group.0.0.client.tax_group.name}}</b></td><td/><td/></tr>
+          {% for group in groups_by_series %}
+            <tr class="toprow"><td class="texto"><b>{{group.0.0.client.account_group.name}}</b></td><td/><td/></tr>
                 {% for series in group %}
                     {% if series.first == series.last %}
                         <tr class="{% cycle 'row1' 'row2' as rowcolors %}
@@ -88,18 +89,18 @@
         <h3>Ventas a credito:</h3>
         <table id="tableContent"><tbody>
           {% for doc in unpaid_sales %}
-             <tr class="{% cycle "row1" "row2" %}"><td/><td class="numero">{{doc.number}}</td><td class="texto">{{doc.client.name}}</td><td class="numero"> ${{doc.value|floatformat:2}}</td></tr>
+             <tr class="{% cycle "row1" "row2" %}"><td/><td class="numero">{{doc.doc_number}}</td><td class="texto">{{doc.client.name}}</td><td class="numero"> ${{doc.value|floatformat:2}}</td></tr>
           {% endfor %}
           <tr class="bottomrow"><td /><td class="texto"><b>Total</b></td><td/><td class="numero"><b>{% total_value unpaid_sales %}</b></td></tr>
         </tbody></table>
 {% endif %}
-<h4>Total de todas las Ventas:${{revenue|floatformat:2}} {% if discount %} Descuentos:${{discount|floatformat:2}} {% endif %}</h4>
+<h4>Total de todas las Ventas: ${{revenue|floatformat:2}} {% if discount %} Descuentos: ${{discount|floatformat:2}} Total: ${{totalrevenue|floatformat:2}} {% endif %}</h4>
 <hr>
 {% if grouped_payments.Late %}
         <h3>Pagos a credito:</h3>
         <table id="tableContent"><tbody>
           {% for payment in grouped_payments.Late %}
-             <tr class="{% cycle "row1" "row2" %}"><td/><td class="numero">{{payment.doc_number}}</td><td class="texto">{{payment.source.name}}</td><td class="numero"> ${{payment.value|floatformat:2}}</td></tr>
+             <tr class="{% cycle "row1" "row2" %}"><td/><td class="numero">{{payment.doc_number}}</td><td class="texto">{{payment.account.name}}</td><td class="numero"> ${{payment.value|floatformat:2}}</td></tr>
           {% endfor %}
           <tr class="bottomrow"><td /><td class="texto"><b>Total</b></td><td/><td class="numero"><b>{% total_value grouped_payments.Late %}</b></td></tr>
         </tbody></table>
@@ -109,7 +110,7 @@
         <h3>Abonos a cuenta:</h3>
         <table id="tableContent"><tbody>
           {% for payment in grouped_payments.Down %}
-             <tr class="{% cycle "row1" "row2" %}"><td/><td class="numero">{{payment.doc_number}}</td><td class="texto">{{payment.source.name}}</td><td class="numero"> ${{payment.value|floatformat:2}}</td></tr>
+             <tr class="{% cycle "row1" "row2" %}"><td/><td class="numero">{{payment.doc_number}}</td><td class="texto">{{payment.account.name}}</td><td class="numero"> ${{payment.value|floatformat:2}}</td></tr>
           {% endfor %}
           <tr class="bottomrow"><td /><td class="texto"><b>Total</b></td><td/><td class="numero"><b>{% total_value grouped_payments.Down %}</b></td></tr>
         </tbody></table>
@@ -120,7 +121,7 @@
         <h3>Anicipos:</h3>
         <table id="tableContent"><tbody>
           {% for payment in grouped_payments.Early %}
-             <tr class="{% cycle "row1" "row2" %}"><td/><td class="numero">{{payment.doc_number}}</td><td class="texto">{{payment.source.name}}</td><td class="numero"> ${{payment.value|floatformat:2}}</td></tr>
+             <tr class="{% cycle "row1" "row2" %}"><td/><td class="numero">{{payment.doc_number}}</td><td class="texto">{{payment.account.name}}</td><td class="numero"> ${{payment.value|floatformat:2}}</td></tr>
           {% endfor %}
           <tr class="bottomrow"><td /><td class="texto"><b>Total</b></td><td/><td class="numero"><b>{% total_value grouped_payments.Early %}</b></td></tr>
         </tbody></table>
@@ -130,28 +131,37 @@
         <h3>Excedente de pago:</h3>
         <table id="tableContent"><tbody>
           {% for payment in grouped_payments.Over %}
-             <tr class="{% cycle "row1" "row2" %}"><td/><td class="numero">{{payment.doc_number}}</td><td class="texto">{{payment.source.name}}</td><td class="numero"> ${{payment.value|floatformat:2}}</td></tr>
+             <tr class="{% cycle "row1" "row2" %}"><td/><td class="numero">{{payment.doc_number}}</td><td class="texto">{{payment.account.name}}</td><td class="numero"> ${{payment.value|floatformat:2}}</td></tr>
           {% endfor %}
           <tr class="bottomrow"><td /><td class="texto"><b>Total</b></td><td/><td class="numero"><b>{% total_value grouped_payments.Over %}</b></td></tr>
         </tbody></table>
 <hr>
 {% endif %}
-
+<h2>Resumen:</h2>
 <table id="cashContent"><tbody>
     <tr class="row1">
         <td class="texto">Efectivo al inicio del dia:</td><td>${{initial_cash|floatformat:2}}</td>
+        <td class="texto">Ingresos:</td><td>${{revenue|floatformat:2}}</td>
     </tr>
     <tr class="row2">
-        <th class="texto">Ganacia:</th><th>${{earnings|floatformat:2}}</th>
+        <td class="texto">Total de Pagos Recibidos</td><td>${{paymentstotal|floatformat:2}}</td>
+        <td class="texto">Descuentos:</td><td>(${{discount|floatformat:2}})</td>
     </tr>
     <tr class="row1">
-        <td class="texto">Gastos:</td><td>${{expense|floatformat:2}}</td>
-    </tr>
-    <tr class="row2">
+        <td class="texto">Total de Corte:</td><td>(${{paymentstotal|floatformat:2}})</td>
         <td class="texto">Impuestos:</td><td>${{tax|floatformat:2}}</td>
     </tr>
+    <tr class="row2">
+        <td class="texto">Efectivo al fin del dia:</td><td>(${{final_cash|floatformat:2}})</td>
+       <td class="texto">Gastos:</td><td>(${{expense|floatformat:2}})</td>
+    </tr>
     <tr class="row1">
-        <th class="texto">Efectivo al fin del dia:</th><th>${{cash|floatformat:2}}</th>
+        <th class="texto">Suma:</th><th>${{cash_check|floatformat:2}}</th>
+      <td class="texto">Ganacia:</td><td>(${{earnings|floatformat:2}})</td>
+    </tr>
+    <tr class="row2">
+        <td class="texto"></td><td></td>
+        <th class="texto">Suma:</th><th>${{revenue_check|floatformat:2}}</th>
     </tr>
 </tbody><table>
     </body>

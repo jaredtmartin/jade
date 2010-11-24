@@ -9,7 +9,7 @@ class SaleAdminForm(forms.ModelForm):
     quantity = forms.DecimalField(required=False)
     cost = forms.DecimalField(required=False)
     serial = forms.CharField(required=False)
-    unit_price = forms.DecimalField(required=False)
+    unit_value = forms.DecimalField(required=False)
     unit_tax = forms.DecimalField(required=False)
     unit_discount = forms.DecimalField(required=False)
     class Meta:
@@ -22,13 +22,11 @@ class SaleAdminForm(forms.ModelForm):
             instance = kwargs['instance']
             self.initial['date'] = datetime.strftime((instance.date or datetime.now()), '%d/%m/%Y')
             self.initial['client'] = instance.client
-            self.initial['unit_price'] = instance.unit_price
+            self.initial['unit_value'] = instance.unit_value
             self.initial['quantity'] = instance.quantity
             self.initial['item'] = instance.item
             self.initial['cost'] = instance.cost
             self.initial['serial'] = instance.serial
-            self.initial['unit_discount'] = instance.unit_discount
-            self.initial['unit_tax'] = instance.unit_tax
     def save(self, commit=True):
         model = super(SaleAdminForm, self).save(commit=False)
         model.date = self.cleaned_data['date']
@@ -37,13 +35,9 @@ class SaleAdminForm(forms.ModelForm):
         model.item = self.cleaned_data['item']
         model.cost = self.cleaned_data['cost']
         model.serial = self.cleaned_data['serial']
-        model.tax = self.cleaned_data['unit_tax']
-        model.discount = self.cleaned_data['unit_discount']
-        model.price = self.cleaned_data['unit_price']
+        model.price = self.cleaned_data['unit_value']
         if model.quantity!=0: 
-            model.tax=model.tax*model.quantity
-            model.discount=model.discount*-model.quantity
-            model.price=model.price*model.quantity
+            model.value=model.value*model.quantity
         if commit:
             model.save()
         return model
@@ -66,7 +60,7 @@ class PurchaseAdminForm(forms.ModelForm):
     vendor = forms.CharField(widget=AutoCompleteInput(url="/inventory/vendor_list/"), required=False)
     item = forms.CharField(widget=AutoCompleteInput(url="/inventory/item_list/"), required=False)
     quantity = forms.DecimalField(required=False)
-    cost = forms.DecimalField(required=False)
+    value = forms.DecimalField(required=False)
     serial = forms.CharField(required=False)
     class Meta:
         model = Purchase
@@ -80,7 +74,7 @@ class PurchaseAdminForm(forms.ModelForm):
             self.initial['vendor'] = instance.vendor
             self.initial['item'] = instance.item
             self.initial['quantity'] = instance.quantity
-            self.initial['cost'] = instance.cost
+            self.initial['value'] = instance.value
             self.initial['serial'] = instance.serial
     def save(self, commit=True):
         model = super(PurchaseAdminForm, self).save(commit=False)
@@ -88,7 +82,7 @@ class PurchaseAdminForm(forms.ModelForm):
         model.vendor = self.cleaned_data['vendor']
         model.item = self.cleaned_data['item']
         model.quantity = self.cleaned_data['quantity'] or 0
-        model.cost = self.cleaned_data['cost']
+        model.value = self.cleaned_data['value']
         model.serial = self.cleaned_data['serial']
         if commit:
             model.save()
@@ -112,7 +106,7 @@ class CountAdminForm(forms.ModelForm):
     item = forms.CharField(widget=AutoCompleteInput(url="/inventory/item_list/"), required=False)
     quantity = forms.DecimalField(required=False)
     count = forms.DecimalField(required=False)
-    cost = forms.DecimalField(required=False)
+    value = forms.DecimalField(required=False)
     serial = forms.CharField(required=False)
     class Meta:
         model = Count
@@ -126,7 +120,7 @@ class CountAdminForm(forms.ModelForm):
             self.initial['count'] = instance.count
             self.initial['item'] = instance.item
             self.initial['quantity'] = instance.quantity
-            self.initial['cost'] = instance.cost
+            self.initial['value'] = instance.value
             self.initial['serial'] = instance.serial
     def save(self, commit=True):
         model = super(CountAdminForm, self).save(commit=False)
@@ -134,10 +128,7 @@ class CountAdminForm(forms.ModelForm):
         model.count = self.cleaned_data['count']
         model.item = self.cleaned_data['item']
         model.quantity = self.cleaned_data['quantity'] or 0
-        model.cost = self.cleaned_data['cost']
-        print "setting cost"
-        print "self.cleaned_data['cost']=" + str(self.cleaned_data['cost'])
-        print "model.cost=" + str(model.cost)
+        model.value = self.cleaned_data['value']
         model.serial = self.cleaned_data['serial']
         if commit:
             model.save()
@@ -189,26 +180,23 @@ class PaymentAdminForm(forms.ModelForm):
         
 class SaleAdmin(admin.ModelAdmin):
     form = SaleAdminForm
-    list_display = ('doc_number', 'date','client', 'price','cost','discount','tax','item','quantity','serial')
+    list_display = ('doc_number', 'date','client', 'value','cost','item','quantity','serial')
 
 class ClientPaymentAdmin(admin.ModelAdmin):
     form = PaymentAdminForm
-    list_display = ('doc_number', 'value', 'source','dest')
+    list_display = ('doc_number', 'value', 'debit','credit')
 
 class VendorPaymentAdmin(admin.ModelAdmin):
     form = PaymentAdminForm
-    list_display = ('doc_number', 'value', 'source','dest')
+    list_display = ('doc_number', 'value', 'debit','credit')
 
 class CountAdmin(admin.ModelAdmin):
     form = CountAdminForm
-    list_display = ('doc_number', 'count', 'cost','item','quantity','serial')
+    list_display = ('doc_number', 'count', 'value','item','quantity','serial')
 
 class PurchaseAdmin(admin.ModelAdmin):
     form = PurchaseAdminForm
-    list_display = ('doc_number', 'vendor', 'cost','item','quantity','serial')
-#class PaymentInline(admin.TabularInline):
-#    model = Payment
-#    extra=1
+    list_display = ('doc_number', 'vendor', 'value','item','quantity','serial')
 
 class EntryInline(admin.TabularInline):
     model = Entry
@@ -225,10 +213,8 @@ class VendorAdmin(admin.ModelAdmin):
 class TransactionAdmin(admin.ModelAdmin):
     list_display = ('id', 'doc_number', 'tipo')
     inlines = [EntryInline]
-class CountDetailAdmin(admin.ModelAdmin):
-    list_display = ('transaction', 'count', 'unit_cost')
 class AccountAdmin(admin.ModelAdmin):
-    list_display = ('name', 'tipo','multiplier', 'balance', 'site')
+    list_display = ('number','name', 'tipo','multiplier', 'balance', 'site')
     search_fields = ('name', )
     list_filter = ('tipo','multiplier')
 class PriceAdmin(admin.ModelAdmin):
@@ -260,13 +246,14 @@ admin.site.register(Count, CountAdmin)
 admin.site.register(ClientPayment, ClientPaymentAdmin)
 admin.site.register(VendorPayment, VendorPaymentAdmin)
 admin.site.register(Transaction, TransactionAdmin)
+admin.site.register(TaxRate)
 admin.site.register(Unit)
+admin.site.register(ReceiptGroup)
+admin.site.register(AccountGroup)
 admin.site.register(Contact, ContactAdmin)
 admin.site.register(UserProfile)
-admin.site.register(TaxGroup)
 admin.site.register(PriceGroup)
 admin.site.register(Price, PriceAdmin)
 admin.site.register(Report, ReportAdmin)
 admin.site.register(TransactionTipo)
-admin.site.register(CountDetail, CountDetailAdmin)
 

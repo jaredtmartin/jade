@@ -4,7 +4,8 @@
 {% block other_fields_edit %}
     <td/>
     {% include "inventory/inventory_base.html" %}
-    <td><input id="id_transaction-{{ object.pk }}-cost" class="field money lookup" value="{{object.subclass.cost|floatformat:2}}" type="text"></td>
+    {% if perms.inventory.view_cost %}
+    <td><input id="id_transaction-{{ object.pk }}-cost" class="field money lookup" value="{{object.subclass.cost|floatformat:2}}" type="text"></td>{% endif %}
     <td/><td/><td/>
 {% endblock %}
 {% block other_actions_edit %}
@@ -16,7 +17,8 @@
 {% block other_fields_show %}
     <td/>
     {% include "inventory/inventory_base.html" %}
-    <td id="id_transaction-{{object.pk}}-cost" value="{{object.subclass.cost|floatformat:2}}"  class="cost field money">    ${{object.subclass.cost|floatformat:2}}</td>
+    {% if perms.inventory.view_cost %}
+    <td id="id_transaction-{{object.pk}}-cost" value="{{object.subclass.cost|floatformat:2}}"  class="cost field money">    ${{object.subclass.cost|floatformat:2}}</td>{% endif %}
     <td/><td/><td/>
 {% endblock %}
 

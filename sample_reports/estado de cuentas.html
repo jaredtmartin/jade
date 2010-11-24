@@ -1,3 +1,4 @@
+{% load i18n %}
 <html>
     <head>
         <title></title>
@@ -19,6 +20,10 @@
                 padding-top:34px;
                 text-align:center;
                 text-shadow:0 1px 0 #E4F2FD;
+            }
+            .company_name {
+                height: 20px;
+                font-size:20px;
             }
             th{text-align:left;}
             .row1{  
@@ -45,22 +50,36 @@
                 top: 1cm;
                 left: 1cm;
                 right: 1.7cm;
+                @frame pagenum {
+                  -pdf-frame-content: pagenum;
+                  bottom: 2cm;
+                  right: 1cm;
+                  height: .5cm;
+                }
+                @frame printdate {
+                  -pdf-frame-content: printdate;
+                  bottom: 2cm;
+                  left:1cm;
+                  height: .5cm;
+                }
             }
         </style>
     </head>
     <body>
-        <h1>Estado de Cuentas para {{account.name}}</h1>
+        <h1>
+            <span class="company_name">{{company_name}}</span><br>
+            Estado de Cuentas para {{account.name}}
+        </h1>
         <table id="tableContent">
             <thead>
-                <tr><th>Fecha</th><th>Tipo</th><th>Producto</th><th>Cantidad</th><th>Valor</th><th>Saldo</th></tr>
+                <tr><th>Fecha</th><th>Factura</th><th>Tipo</th><th>Valor</th><th>Saldo</th></tr>
             </thead>
             <tbody>
                 {% for entry in entries %}
                     <tr class="{% cycle "row1" "row2" %}">
-                        <td class="texto" >{{entry.date}}</td>
-                        <td class="texto" >{{entry.transaction.tipo}}</td>
-                        <td class="texto" >{{entry.item.name}}</td>
-                        <td class="numero" >{{entry.quantity|floatformat:-2}}</td>
+                        <td class="texto" >{{entry.date|date:"d/m/Y"}}</td>
+                        <td class="texto" >{{entry.doc_number}}</td>
+                        <td class="texto" >{% trans entry.transaction.tipo %}</td>
                         <td class="numero" >${{entry.value|floatformat:2}}</td>
                         <td class="numero" >${{entry.total|floatformat:2}}</td>
                     </tr>
@@ -68,5 +87,7 @@
             </tbody>
             
         </table>
+    <div id="printdate" style="text-align:left;">{{date_printed|date:"d/m/Y"}}</div>
+    <div id="pagenum" style="text-align:right;"> <pdf:pagenumber> </div>
     </body>
 </html>

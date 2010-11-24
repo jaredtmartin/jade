@@ -19,7 +19,10 @@ class ProductionManager(models.Manager):
 
 class Production(Transaction):
     class Meta:
-        proxy = True      
+        proxy = True    
+        permissions = (
+            ("view_production", "Can view productions"),
+        )  
     objects = ProductionManager()
     def _get_quantity(self):
         if self.entry('Inventory'): return self.entry('Inventory').quantity
@@ -108,6 +111,9 @@ class Process(Production):
     objects = ProcessManager()
     class Meta:
         proxy = True
+        permissions = (
+            ("view_process", "Can view processes"),
+        )
     def plan(self, doc_number, times, cost):
         return Job.objects.create(
             item=self.item,
@@ -202,6 +208,7 @@ class Job(Production):
         permissions = (
             ("start_production", "Can start production"),
             ("finish_production", "Can finish production"),
+            ("view_job", "Can view jobs"),
         )
         proxy = True
 def add_job_entries(sender, **kwargs):

@@ -2,17 +2,17 @@
 {% load i18n %}
 {% block heading %}{% trans 'Jobs' %} {% endblock%}
 {% block actions %}  
-    {% if perms.production.start_production %}
+    {% if perms.inventory.start_production %}
         {% if not page.object_list.0.started %}
             <div class="actiontab" ><a href="/production/job/start/?{% if q %}q={{q}}&{% endif %}{% if start %}start={{start}}&{% endif %}{% if end %}end={{end}}{% endif %}" class="action">{% trans 'Start' %}</a></div>
         {% endif %}
     {% endif %}
-    {% if perms.production.finish_production %}
+    {% if perms.inventory.finish_production %}
         {% if page.object_list.0.started and not page.object_list.0.finished %}
             <div class="actiontab" ><a href="/production/job/finish/?{% if q %}q={{q}}&{% endif %}{% if start %}start={{start}}&{% endif %}{% if end %}end={{end}}{% endif %}" class="action">{% trans 'Finish' %}</a></div>
         {% endif %}
     {% endif %}    
-    {% if perms.production.view_process %}
+    {% if perms.inventory.view_process %}
         <div class="actiontab" ><a href="/production/process/list/?{% if q %}q={{q}}&{% endif %}{% if start %}start={{start}}&{% endif %}{% if end %}end={{end}}{% endif %}" class="action">{% trans 'Processes' %}</a></div>
     {% endif %}
 {% endblock%}

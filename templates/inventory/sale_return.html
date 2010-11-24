@@ -4,16 +4,10 @@
 {% block other_fields_edit %}
     <td><input id="id_transaction-{{ object.pk }}-account" class="field account lookup client" title="{% trans 'Name of client' %}" value="{{object.subclass.client|default:''}}" type="text"></td>
     {% include "inventory/inventory_base.html" %}
-    <td><input id="id_transaction-{{ object.pk }}-unit_cost" class="field money" title="{% trans 'Cost per unit' %}" value="{{object.subclass.unit_cost|floatformat:2}}" type="text"></td>
-    <td><input id="id_transaction-{{ object.pk }}-unit_tax" class="field money" title="{% trans 'Tax per unit' %}" value="{{object.subclass.unit_tax|floatformat:2}}" type="text"></td>
-    <td><input id="id_transaction-{{ object.pk }}-unit_discount" class="field money" title="{% trans 'Discount per unit' %}" value="{{object.subclass.unit_discount|floatformat:2}}" type="text"></td>
-    <td><input id="id_transaction-{{ object.pk }}-unit_price" class="field money" title="{% trans 'Price per unit' %}" value="{{object.subclass.unit_price|floatformat:2}}" type="text"></td>
+    <td><input id="id_transaction-{{ object.pk }}-unit_value" class="field money" title="{% trans 'Price per unit' %}" value="{{object.subclass.unit_value|floatformat:2}}" type="text"></td>
 {% endblock %}
 {% block other_fields_show %}
     <td id="id_transaction-{{ object.pk }}-account"  value="{{object.subclass.client|default:''}}" title="{% trans 'Name of client' %}" class="field account lookup client"><a href="{{object.subclass.client.url}}">{{object.subclass.client|default:''}}</a></td>
     {% include "inventory/inventory_base.html" %}
-    <td id="id_transaction-{{object.pk}}-unit_cost"  value="{{object.subclass.unit_cost|floatformat:2}}"  title="{% trans 'Total cost' %}" class="field money">    ${{object.subclass.cost|floatformat:2}}</td>
-    <td id="id_transaction-{{object.pk}}-unit_tax"  value="{{object.subclass.unit_tax|floatformat:2}}"  title="{% trans 'Total tax' %}" class="field money">    ${{object.subclass.tax|floatformat:2}}</td>
-    <td id="id_transaction-{{object.pk}}-unit_discount" value="{{object.subclass.unit_discount|floatformat:2}}" title="{% trans 'Total discount' %}" class="field money"> ${{object.subclass.discount|floatformat:2}}</td>
-    <td id="id_transaction-{{object.pk}}-unit_price"    value="{{object.subclass.unit_price|floatformat:2}}" title="{% trans 'Total price' %}"    class="field money">    ${{object.subclass.price|floatformat:2}}</td>
+    <td id="id_transaction-{{object.pk}}-unit_value"    value="{{object.subclass.unit_value|floatformat:2}}" title="{% trans 'Total value' %}"    class="field money">    ${{object.subclass.value|floatformat:2}}</td>
 {% endblock %}

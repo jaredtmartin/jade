@@ -81,6 +81,7 @@ TEMPLATE_CONTEXT_PROCESSORS = (
     'django.core.context_processors.i18n',
     'django.core.context_processors.media',
     'django.core.context_processors.request',
+    "jade.inventory.context.company_name",
 )
 
 AUTH_PROFILE_MODULE = 'inventory.UserProfile'
@@ -112,24 +113,25 @@ class Tab():
         self.permission=permission
 BASE_TABS = [
     Tab(label='Items', url='/inventory/items/', permission='inventory.view_item'),
-    Tab(label='Transactions', url='/inventory/transactions/', permission='inventory.change_transaction'),
+    Tab(label='Transactions', url='/inventory/transactions/', permission='inventory.view_transaction'),
     
-    Tab(label='Accounts', url='/inventory/accounts/', permission='inventory.change_account'),
+    Tab(label='Accounts', url='/inventory/accounts/', permission='inventory.view_account'),
 #    Tab(label='Clients', url='/inventory/clients', permission='inventory.view_client'),
 #    Tab(label='Vendors', url='/inventory/vendors', permission='inventory.view_vendor'),
-    Tab(label='Production', url='/production/production/list/', permission='production.view_production'),
+    Tab(label='Production', url='/production/production/list/', permission='inventory.view_production'),
 ]
 ACTIONS = [
     Tab(label='Sales', url='/inventory/sales/', permission='inventory.view_sale'),
     Tab(label='Purchases', url='/inventory/purchases/', permission='inventory.view_purchase'),
     Tab(label='Counts', url='/inventory/counts/', permission='inventory.view_count'),
-    Tab(label='Transfers', url='/inventory/sales/', permission='inventory.view_transfers'),
+    Tab(label='Transfers', url='/inventory/sales/', permission='inventory.view_transfer'),
 ]
 ASSETS_ACCOUNT_DATA=('Activos','01', 1)
 CASH_ACCOUNT_DATA=('Efectivo','0101', 1)
 PAYMENTS_RECEIVED_ACCOUNT_DATA=('Efectivo','0101', 1)
 PAYMENTS_MADE_ACCOUNT_DATA=('Efectivo','0101', 1)
 INVENTORY_ACCOUNT_DATA=('Inventario','0102', 1)
+BANK_ACCOUNT_DATA=('Banco','0103', 1)
 CLIENTS_ACCOUNT_DATA=('Clientes','0103', 1)
 DEFAULT_CLIENT_DATA=('Anonimo','010301', 1)
 LIABILITIES_ACCOUNT_DATA=('Pasivos','02', -1)
@@ -164,7 +166,7 @@ DEFAULT_TAX_GROUP_NAME='Consumidor Final'
 DEFAULT_TAX_INCLUDED=True
 DEFAULT_ACCOUNTING_DEBIT_ACCOUNT_NAME='Efectivo'
 DEFAULT_ACCOUNTING_CREDIT_ACCOUNT_NAME='Gastos'
-DATE_FORMAT="d/m/Y"
+DATE_FORMAT="m/d/Y"
 RECEIPT_REPORT_NAME_SUFFIX=''
 RECEIPT_REPORT_NAME_PREFIX='Factura de '
 COUNT_SHEET_REPORT_NAME='Hoja de Cuentas Fisicas'
@@ -176,7 +178,7 @@ LOW_STOCK_REPORT_NAME='Reporte de Baja Inventario'
 GARANTEE_REPORT_NAME='Reporte de Garantias'
 JOB_REPORT_NAME='Reporte de Orden de Produccion'
 PROCESS_REPORT_NAME='Reporte de Proceso de Produccion'
-CORTE_REPORT_NAME='Corte de Caja'
+CASH_CLOSING_REPORT_NAME='Corte de Caja'
 ACCOUNT_STATEMENT_REPORT_NAME='Estado de Cuentas'
 QUOTE_TEMPLATE_NAME='Cotizacion'
 DEFAULT_UNIT_NAME='Cada Uno'
@@ -184,3 +186,6 @@ DEFAULT_CREDIT_DAYS=30
 BARCODES_FOLDER='media/barcodes/'
 LABELS_PER_LINE=4
 LABELS_PER_PAGE=44
+STARTING_CASH_ACCOUNT_BALANCE=30
+DEFAULT_ACCOUNT_GROUP_NAME='Consumidor Final'
+DEFAULT_RECEIPT_GROUP_NAME='Consumidor Final'

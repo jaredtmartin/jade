@@ -9,9 +9,6 @@
     <li class="subsubheading"><a href="#item-name">{% trans "Item Name" %}</a></li>
     <li class="subheading"><a href="#changing-a-sale">{% trans "Changing a Sale" %}</a></li>
     <li class="subsubheading"><a href="#quantity">{% trans "Quantity" %}</a></li>
-    <li class="subsubheading"><a href="#cost">{% trans "Cost" %}</a></li>
-    <li class="subsubheading"><a href="#tax">{% trans "Tax" %}</a></li>
-    <li class="subsubheading"><a href="#discount">{% trans "Discount" %}</a></li>
     <li class="subsubheading"><a href="#price">{% trans "Price" %}</a></li>
     <li class="subsubheading"><a href="#serial-number">{% trans "Serial Number" %}</a></li>
     <li class="subsubheading"><a href="#edit-and-save">{% trans "Edit & Save" %}</a></li>
@@ -47,24 +44,19 @@
 <span id="quantity"></span>
 <h2> {% trans "Quantity" %}</h2>
 <p> {% trans "After you create a sale, you'll find that your cursor is now on the quantity field, waiting for you to type the quantity of the item to be sold." %}</p>
-<span id="cost"></span>
-<h2> {% trans "Cost" %}</h2>
-<p>{% trans "You may not have access to see costs, but if you do, you can adjust the cost of the items being sold. This is important for accounting. Usually it's best to let Jade handle this one. If it seems too high or too low, it will usually even out with time. If it's too far off, it may be time to do a physical count. If so, see the chapter of the manual entitled <a href=\"#TODO\">'Physical Counts'</a>" %}</p>
-<span id="tax"></span>
-<h2> {% trans "Tax" %}</h2>
-<p> {% trans "You can type the amount of tax to be charged to the client per unit by typing it into the \"Tax\" field. You may however, prefer to let Jade calculate the tax automaticly. If so, just leave this blank for now and Jade will calculate the amout of tax due based on the tax group the client is in. It may also reduce the amount you type into the price field if the client's tax group is configured to have the tax included in the price. For more information see the <a href=\"#TODO\">Tax Groups and Price Groups</a>" %}</p>
-<span id="discount"></span>
-<h2> {% trans "Discount" %}</h2>
-<p> {% trans "If you are giving the client a discount and wish for that to be reported in the accounting, type in the value under the column \"Discount\" this will be subtracted from the price the client will be charged. Notice that this value should be entered per unit since it will later be multiplied by the quantity. For example, if we wanted to sell 3 blocks and give the client a $1.00 discount on each one, we would type in a \"1\" in this field; Jade will handle the rest of the math." %}</p>
 <span id="price"></span>
-<h2> {% trans "Price" %}</h2>
+<h2> {% trans "Value" %}</h2>
 <p> {% trans "Once you've put in the quantity, you may want to change the price.  Jade already put in the normal price for the item.  If you have more than one <a href=\"#TODO\">price group</a> configured then Jade created the sale with the price appropiate to the price group of the client specified.  But no matter what the normal price is you can change it here.  As before, be sure to type the price per unit. If you wish to change the price for an item, you can do that on the <a href=\"/inventory/items\">Item</a> page.  You can get more information about changing prices in <a href=\"/manual/items/\">Chapter 1: Items</a>." %}</p>
 <span id="serial-number"></span>
 <h2> {% trans "Serial Number" %}</h2>
 <p> {% trans "Jade will not require you to type a serial number even if the item has them, but if you do, later you'll be able to see a complete history of your serial numbers by simply clicking on them." %}</p>
 <span id="edit-and-save"></span>
 <h2> {% trans "Edit & Save" %}</h2>
-<p> {% trans "Of course you can still change the document number, date, client, and item fields if they're not right. When you're done just click on the diskette <img src=\"/media/img/save.png\"> image and the Sale will be saved, the appearance of the sale will change, and you'll receive a nice message confirming that your sale as been saved successfully. Notice that Jade now shows you the total price, total discount, and total tax, and total cost, (if you have <a href=\"#TODO\">access</a> to see costs) multiplying the values we provided by the quantity. " %}</p>
+<p> {% trans "Of course you can still change the document number, date, client, and item fields if they're not right. When you're done just click on the diskette <img src=\"/media/img/save.png\"> image and the Sale will be saved, the appearance of the sale will change, and you'll receive a nice message confirming that your sale as been saved successfully. Notice that Jade now shows you the total price rather than the unit price. " %}</p>
+<span id="discount"></span>
+<h2> {% trans "Discount" %}</h2>
+<p> {% trans "If you are giving the client a discount and wish for it to be reported in the accounting, either click on the green arrow <img src=\"/media/img/down.png\"> to the right or press the F3 key on your keyboard. This will cause the New Discount window to appear. Here you can either type the amount of the discount you wish to give the client or if you want the sale to have a given total, put that in the Total field. When you either click on Add or press Enter, the Discount will appear in the list of transactions." %}</p>
+
 <span id="garantees"></span>
 <h2> {% trans "Garantees" %}</h2>
 <p> {% trans "TODO" %}</p>

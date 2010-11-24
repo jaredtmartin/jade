@@ -32,12 +32,19 @@ class ProcessForm(forms.ModelForm):
     doc_number =        forms.CharField()
     item =              forms.CharField(required=False)
     quantity =          forms.DecimalField()
-    cost =              forms.DecimalField(required=False)
+    cost =              forms.CharField(required=False)
     serial =            forms.CharField(required=False)
     def clean_item(self):
         x=clean_bar_code(self, 'item', Item)
         return x
-        
+    def clean_cost(self):
+        try:
+            data=self.cleaned_data['cost']
+            if data=='undefined': return 0
+            return Decimal(data)
+        except:
+            raise forms.ValidationError('Enter a number')
+            return data
 class JobForm(forms.ModelForm):
     class Meta:
         model = Job
@@ -53,9 +60,17 @@ class JobForm(forms.ModelForm):
     doc_number =        forms.CharField()
     item =              forms.CharField(required=False)
     quantity =          forms.DecimalField()
-    cost =              forms.DecimalField(required=False)
+    cost =              forms.CharField(required=False)
     serial =            forms.CharField(required=False)
     def clean_item(self):
         x=clean_bar_code(self, 'item', Item)
         return x
+    def clean_cost(self):
+        try:
+            data=self.cleaned_data['cost']
+            if data=='undefined': return 0
+            return Decimal(data)
+        except:
+            raise forms.ValidationError('Enter a number')
+            return data
 
