@@ -455,7 +455,7 @@ class AccountForm(forms.ModelForm):
 class ContactForm(forms.ModelForm):
     class Meta:
         model = Account
-        fields=('name', 'number', 'multiplier', 'tax_group', 'price_group', 'address','state_name','country', 
+        fields=('name', 'number', 'multiplier', 'account_group', 'receipt_group','price_group', 'address','state_name','country', 
             'home_phone', 'cell_phone', 'work_phone', 'fax', 'tax_number', 'description', 'email', 'registration', 'user')
     address =       forms.CharField(required=False)
     state_name =    forms.CharField(required=False)
