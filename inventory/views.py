@@ -881,8 +881,11 @@ def new_sale(request):
     except:
         date=datetime.now()
         client=Client.objects.default()
-    try: client=Client.objects.get_or_create_by_name(name=request.POST['client'])
-    except:pass
+    print "request.POST['client'] = " + str(request.POST['client'])
+#    try: 
+    client=Client.objects.get_or_create_by_name(name=request.POST['client'])
+    print "DONEclient = " + str(client)
+#    except:pass
     print "client = " + str(client)
     item=None
     value=0

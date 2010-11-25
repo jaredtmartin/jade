@@ -61,26 +61,7 @@ class AccountManager(models.Manager):
     def next_number(self):
         number=super(AccountManager, self).get_query_set().all().order_by('-number')[0].number
         return increment_string_number(number)
-class ClientManager(models.Manager):
-    def default(self):
-        return super(ClientManager, self).get_query_set().get(name=settings.DEFAULT_CLIENT_NAME)
-    def next_number(self):
-        number=super(ClientManager, self).get_query_set().filter(tipo="Client").order_by('-number')[0].number
-        return increment_string_number(number)
-    def get_or_create_by_name(self, name):
-        try:
-            return super(ClientManager, self).get_query_set().get(name=name)
-        except:
-            if name and name != '':
-                if settings.AUTOCREATE_CLIENTS:
-                    price_group=PriceGroup.objects.get(name=settings.DEFAULT_PRICE_GROUP_NAME)
-                    tax_group=TaxGroup.objects.get(name=settings.DEFAULT_TAX_GROUP_NAME)
-                    number=Client.objects.next_number()
-                    return super(ClientManager, self).create(name=name,price_group=price_group,tax_group=tax_group, number=number)
-            else:
-                return super(ClientManager, self).get_query_set().get(name=settings.DEFAULT_CLIENT_NAME)
-    def get_query_set(self):
-        return super(ClientManager, self).get_query_set().filter(tipo="Client")
+
 class VendorManager(models.Manager):
     def default(self):
         return super(VendorManager, self).get_query_set().get(name=settings.DEFAULT_VENDOR_NAME)

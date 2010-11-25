@@ -554,7 +554,31 @@ class AccountGroup(models.Model):
     objects = CurrentSiteManager()
     def __unicode__(self):
         return self.name
-
+class ClientManager(models.Manager):
+    def default(self):
+        return super(ClientManager, self).get_query_set().get(name=settings.DEFAULT_CLIENT_NAME)
+    def next_number(self):
+        number=super(ClientManager, self).get_query_set().filter(tipo="Client").order_by('-number')[0].number
+        return increment_string_number(number)
+    def get_or_create_by_name(self, name):
+        try:
+            return super(ClientManager, self).get_query_set().get(name=name)
+        except:
+            print "name = " + str(name)
+            print "name and name != '' = " + str(name and name != '')
+            if name and name != '':
+                print "settings.AUTOCREATE_CLIENTS = " + str(settings.AUTOCREATE_CLIENTS)
+                if settings.AUTOCREATE_CLIENTS:
+                    price_group=PriceGroup.objects.get(name=settings.DEFAULT_PRICE_GROUP_NAME)
+                    account_group=AccountGroup.objects.get(name=settings.DEFAULT_ACCOUNT_GROUP_NAME)
+                    receipt_group=ReceiptGroup.objects.get(name=settings.DEFAULT_RECEIPT_GROUP_NAME)
+                    number=Client.objects.next_number()
+                    
+                    return super(ClientManager, self).create(name=name,price_group=price_group,account_group=account_group, receipt_group=receipt_group, number=number)
+            else:
+                return super(ClientManager, self).get_query_set().get(name=settings.DEFAULT_CLIENT_NAME)
+    def get_query_set(self):
+        return super(ClientManager, self).get_query_set().filter(tipo="Client")
 class Client(Account):
     def save(self, *args, **kwargs):
         self.tipo="Client"
