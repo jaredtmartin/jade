@@ -353,7 +353,10 @@ class Account(models.Model):
     def _get_receipt_group(self):
         try: return self.contact.receipt_group
         except Contact.DoesNotExist: return None
-    receipt_group=property(_get_receipt_group)
+    def _set_receipt_group(self, value):
+        try: self.contact.receipt_group=value
+        except: self._receipt_group=value
+    receipt_group=property(_get_receipt_group, _set_receipt_group)
     
     def _get_account_group(self):
         try: return self.contact.account_group
