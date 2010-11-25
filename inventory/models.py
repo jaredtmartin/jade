@@ -513,7 +513,8 @@ def add_contact(sender, **kwargs):
             registration=l._registration,
             user=l._user,
             price_group=l._price_group,
-            tax_group=l._tax_group,             
+            account_group=l._account_group,     
+            receipt_group=l._receipt_group,         
         )
 class TaxRate(models.Model):
     def __init__(self, *args, **kwargs):

@@ -89,6 +89,7 @@ def new_object(request, form, prefix, template='', tipo=None, extra_context={}):
             updated_form=form(instance=obj, prefix=prefix+'-'+str(obj.pk))
             info_list=['The %s has been created successfully.'% tipo, ]
             error_list={}
+            obj.edit_mode=True
         else:
             print "invalid"      
             info_list=[]
@@ -97,7 +98,6 @@ def new_object(request, form, prefix, template='', tipo=None, extra_context={}):
             error_list=f.errors
             updated_form=None
         if not tipo: tipo=prefix
-        obj.edit_mode=True
         extra_context.update({'objects':[obj],'edit_mode':True, 'form':updated_form,'info_list':info_list,'error_list':error_list,'prefix':tipo,'line_template':"inventory/"+prefix+".html"})
         return _r2r(request,'inventory/results.html', extra_context)
     else:
