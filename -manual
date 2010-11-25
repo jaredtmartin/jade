@@ -1,7 +1,0 @@
-Counts
-    When displaying counts the first quantity is the applied difference,
-    the second that is in parentheses is the count.
-    when you click edit, the quantity you are editing is the count
-    to apply the count to the inventory, click on the sproket, this will apply the difference between the amount counted and the current stock
-Sales and Purchases:
-    to do a return, click on the loopy arrow

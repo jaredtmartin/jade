@@ -949,7 +949,6 @@ class Transaction(models.Model):
         try: return self.entry(self._account_tipo).value
         except AttributeError: return self._value
     def _set_value(self, value):
-        if self._credit_tipo==self._account_tipo: value=value*-1
         try:
             self.entry(self._debit_tipo).update('value',value)
             self.entry(self._credit_tipo).update('value', -value)
@@ -1686,6 +1685,15 @@ class SaleDiscount(Discount):
     def _set_client(self, value):
         self.account=value
     client = property(_get_client, _set_client)
+    def _get_value(self):
+        try: return self.entry(self._account_tipo).value
+        except AttributeError: return self._value
+    def _set_value(self, value):
+        try:
+            self.entry(self._debit_tipo).update('value',-value)
+            self.entry(self._credit_tipo).update('value', value)
+        except: self._value = value
+    value=property(_get_value, _set_value)
 post_save.connect(add_general_entries, sender=SaleDiscount, dispatch_uid="jade.inventory.models")
 class PurchaseDiscount(Discount):
     class Meta:
@@ -1699,6 +1707,15 @@ class PurchaseDiscount(Discount):
         })
         super(PurchaseDiscount, self).__init__(*args, **kwargs)
         self.tipo='PurchaseDiscount'
+    def _get_value(self):
+        try: return -self.entry(self._account_tipo).value
+        except AttributeError: return -self._value
+    def _set_value(self, value):
+        try:
+            self.entry(self._debit_tipo).update('value',-value)
+            self.entry(self._credit_tipo).update('value', value)
+        except: self._value = value
+    value=property(_get_value, _set_value)
     def _get_vendor(self):
         return self.account
     def _set_vendor(self, value):
