@@ -26,8 +26,6 @@
 {% endblock %}
 {% block edit_save_link %}<a class="edit save" id="id_transaction-{{object.pk}}-save" title="{% trans 'Save Changes' %}" href="#" onclick="saveTransaction({{object.pk}}, '/production/{{object.tipo|lower}}/{{object.pk}}/');$('.quantity:first').select(); return false;"><img src="{{MEDIA_URL}}/img/save.png"/></a>{% endblock %}
 
-
-
 {% block other_fields_show %}
     <td/>
     {% include "inventory/inventory_base.html" %}
