@@ -24,7 +24,6 @@
     <td><input id="id_transaction-{{ object.pk }}-quantity" class="field quantity inventory-details" value="{{object.subclass.quantity|floatformat:-2}}" type="text"></td>
     <td/>
     {% if perms.inventory.view_cost %}<td><input id="id_transaction-{{ object.pk }}-cost" title="{% trans 'Only used with positive quantities. Portion of total cost applied to this item' %}" class="field money lookup" value="{{object.subclass.cost|floatformat:2}}" type="text"></td>{% endif %}
-    <td/><td/><td/>
     <td>
         <a class="show" style="display:none;" id="id_transaction-{{object.pk}}-edit" href="#" title="{% trans 'Edit Sale' %}" onclick="editTransaction({{object.pk}}); return false;"><img src="{{MEDIA_URL}}/img/edit.png"/></a>
         <a class="edit save" id="id_transaction-{{object.pk}}-save" title="{% trans 'Save Changes' %}" href="#" onclick="saveTransaction({{object.pk}}, '/production/{{object.tipo|lower}}/{{object.pk}}/');$('.quantity:first').select(); return false;"><img src="{{MEDIA_URL}}/img/save.png"/></a>
@@ -41,7 +40,6 @@
     <td id="id_transaction-{{object.pk}}-quantity"          value="{{object.subclass.quantity|floatformat:-2}}"     class="field quantity inventory-details"> {{object.subclass.quantity|floatformat:-2}}</td>
     <td/>
     {% if perms.inventory.view_cost %}<td id="id_transaction-{{object.pk}}-cost" title="{% trans 'Only used with positive quantities. Portion of total cost applied to this item' %}" value="{{object.subclass.cost|floatformat:2}}"  class="cost field money">    {{object.subclass.cost|floatformat:2}}</td>{% endif %}
-    <td/><td/><td/>
     <td>
         <a class="show" id="id_transaction-{{object.pk}}-edit" href="#" title="{% trans 'Edit Sale' %}" onclick="editTransaction({{object.pk}}); return false;"><img src="{{MEDIA_URL}}/img/edit.png"/></a>
         <a class="edit save" style="display:none;" id="id_transaction-{{object.pk}}-save" title="{% trans 'Save Changes' %}" href="#" onclick="saveTransaction({{object.pk}}, '/production/{{object.tipo|lower}}/{{object.pk}}/');$('.quantity:first').select(); return false;"><img src="{{MEDIA_URL}}/img/save.png"/></a>

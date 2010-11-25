@@ -21,7 +21,6 @@
     {% include "inventory/inventory_base.html" %}
     {% if perms.inventory.view_cost %}
     <td><input id="id_transaction-{{ object.pk }}-cost" class="field money lookup" value="{{object.subclass.cost|floatformat:2}}" type="text"></td>{% endif %}
-    <td/><td/><td/>
 {% endblock %}
 {% block other_actions_edit %}
 {% endblock %}
@@ -34,7 +33,6 @@
     {% include "inventory/inventory_base.html" %}
     {% if perms.inventory.view_cost %}
     <td id="id_transaction-{{object.pk}}-cost" value="{{object.subclass.cost|floatformat:2}}"  class="cost field money">    ${{object.subclass.cost|floatformat:2}}</td>{% endif %}
-    <td/><td/><td/>
 {% endblock %}
 
 {% block show_save_link %}<a class="edit save" style="display:none;" id="id_transaction-{{object.pk}}-save" title="{% trans 'Save Changes' %}" href="#" onclick="saveTransaction({{object.pk}}, '/production/{{object.tipo|lower}}/{{object.pk}}/');$('.quantity:first').select(); return false;"><img src="{{MEDIA_URL}}/img/save.png"/></a>{% endblock %}

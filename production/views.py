@@ -77,6 +77,11 @@ def process_new(request): # POST ONLY
     form=NewProcessForm(request.POST)
     if form.is_valid():
         process=form.save()
+        print "process = " + str(process)
+        print "process.pk = " + str(process.pk)
+        print "process.template = " + str(process.template)
+        process.edit_mode=True
+        
         info_list=[_('The process has been created.')]
     else:
         process=None

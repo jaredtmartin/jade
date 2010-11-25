@@ -761,7 +761,6 @@ class Transaction(models.Model):
     sites = models.ManyToManyField(Site)
     tipo = models.CharField(max_length=16)
     def __init__(self, *args, **kwargs):
-        self.template='inventory/accounting.html'
         self._debit=None
         self._credit=None
         self._active = kwargs.pop('active', True)
