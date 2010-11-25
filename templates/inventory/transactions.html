@@ -172,9 +172,7 @@
     <input type="hidden" id="last_sale" value="">
 {% endblock%}
 {% block line %}
-    {{object.tipo}}
-    {% with object.subclass as object %}
-        
+    {% with object.subclass as object %}        
         {% include "inventory/transaction.html" %}
     {% endwith %}
 {% endblock%}
