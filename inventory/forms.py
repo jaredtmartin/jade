@@ -406,7 +406,7 @@ class ItemForm(forms.ModelForm):
             raise forms.ValidationError('Unable to find %s in the list of %ss.' % (data, 'unit'))
         return data
     def clean_name(self):
-        return form.cleaned_data[name].strip()
+        return self.cleaned_data['name'].strip()
     def clean_minimum(self):
         return clean_number(self, 'minimum')
     def clean_maximum(self):
