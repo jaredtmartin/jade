@@ -946,6 +946,7 @@ def add_payment_to_sale(request, object_id):
 @login_required
 def add_tax(request, object_id):
     obj = get_object_or_404(Transaction, pk=object_id).subclass
+    print "'inventory.add_'+obj.tipo.lower()+'tax' = " + str('inventory.add_'+obj.tipo.lower()+'tax')
     if not request.user.has_perm('inventory.add_'+obj.tipo.lower()+'tax'): return http.HttpResponseRedirect("/blocked/")
     objects=[]
     rate=TaxRate.objects.get(name=request.POST['rate'])
@@ -984,9 +985,9 @@ def edit_purchasetax(request, object_id):
     return edit_object(request, object_id, PurchaseTax, PurchaseTaxForm, "purchasetax")
     
 @login_required
-@permission_required('inventory.add_tax', login_url="/blocked/")
 def get_tax_form(request, object_id):
     obj = get_object_or_404(Transaction, pk=object_id).subclass
+    if not request.user.has_perm('inventory.add_'+obj.tipo.lower()+'tax'): return http.HttpResponseRedirect("/blocked/")
     default=obj.account.default_tax_rate
     rates=TaxRate.objects.all()
     total=Entry.objects.filter(transaction__doc_number=obj.doc_number, active=True, account=obj.subclass.account).aggregate(total=models.Sum('value'))['total'] or Decimal('0.00')
