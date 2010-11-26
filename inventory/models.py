@@ -1742,7 +1742,7 @@ class ClientGarantee(Garantee):
         })
         super(ClientGarantee, self).__init__(*args, **kwargs)
         self.template='inventory/client_garantee.html'
-        self.credit=self.client.account_group.revenue_account
+        self._credit=self.client.account_group.revenue_account
         self.tipo='ClientGarantee'
         
     def print_url(self):
