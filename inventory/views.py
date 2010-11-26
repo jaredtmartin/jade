@@ -946,7 +946,7 @@ def add_payment_to_sale(request, object_id):
 @login_required
 def add_tax(request, object_id):
     obj = get_object_or_404(Transaction, pk=object_id).subclass
-    if not request.user.has_perm('inventory.add_'+obj.tipo.lower()): return http.HttpResponseRedirect("/blocked/")
+    if not request.user.has_perm('inventory.add_'+obj.tipo.lower()+'tax'): return http.HttpResponseRedirect("/blocked/")
     objects=[]
     rate=TaxRate.objects.get(name=request.POST['rate'])
     total=Entry.objects.filter(transaction__doc_number=obj.doc_number, active=True, account=obj.subclass.account).aggregate(total=models.Sum('value'))['total'] or Decimal('0.00')
@@ -1302,23 +1302,36 @@ def delete_transaction(request, object_id):
     return delete_object(request, object_id, Transaction, 'transaction')
 def mark_transaction(request, object_id, attr, value):
     obj = get_object_or_404(Transaction, pk=object_id).subclass
+    print "obj = " + str(obj)
     if not request.user.has_perm('inventory.change_sale') and obj.tipo=='Sale': return http.HttpResponseRedirect("/blocked/")
     if not request.user.has_perm('inventory.change_purchase') and obj.tipo=='Purchase': return http.HttpResponseRedirect("/blocked/")
     if not request.user.has_perm('inventory.change_count') and obj.tipo=='Count': return http.HttpResponseRedirect("/blocked/")
     if not request.user.has_perm('inventory.change_process') and obj.tipo=='Process': return http.HttpResponseRedirect("/blocked/")
     if not request.user.has_perm('inventory.change_production') and obj.tipo=='Production': return http.HttpResponseRedirect("/blocked/")
     if not request.user.has_perm('inventory.change_productionorder') and obj.tipo=='ProductionOrder': return http.HttpResponseRedirect("/blocked/")
-    if obj.tipo=='Process' and attr in ['delivered','active' ]:
+    if obj.tipo=='Process' and attr in ['delivered','active']:
         return _r2r(request,'inventory/results.html', {'objects':[obj],'error_list':{'Process':[_('Cannot be marked delivered or active'),]}, 'info_list':[]})
     if obj.tipo=='Job':
         if attr in ['delivered','active' ] and obj.quantity < 0 and not request.user.has_perm('production.start_production'):
             return _r2r(request,'inventory/results.html', {'objects':[obj],'error_list':{'Process':[_('You do not have sufficient rights to start production'),]}, 'info_list':[]})
         if attr in ['delivered','active' ] and obj.quantity > 0 and not request.user.has_perm('production.finish_production'):
             return _r2r(request,'inventory/results.html', {'objects':[obj],'error_list':{'Process':[_('You do not have sufficient rights to finish production'),]}, 'info_list':[]})
-    setattr(obj, attr, value)
+    print "obj.active = " + str(obj.active)
+    print "obj = " + str(obj)
+#    setattr(obj, attr, value)
+    print "type(obj) = " + str(type(obj))
+    if attr=='active': obj.active=value
+    elif attr=='delivered': obj.delivered=value
+    print "get_object_or_404(Transaction, pk=object_id).active = " + str(get_object_or_404(Transaction, pk=object_id).active)
+    print "get_object_or_404(Transaction, pk=object_id).subclass.active = " + str(get_object_or_404(Transaction, pk=object_id).subclass.active)
+    print "obj.active = " + str(obj.active)
 #    print "obj = " + str(obj)
 #    print "obj.pk = " + str(obj.pk)
     obj.save()
+    print "get_object_or_404(Transaction, pk=object_id).active = " + str(get_object_or_404(Transaction, pk=object_id).active)
+    print "get_object_or_404(Transaction, pk=object_id).subclass.active = " + str(get_object_or_404(Transaction, pk=object_id).subclass.active)
+    
+    print "obj.active = " + str(obj.active)
     return _r2r(request,'inventory/results.html', {'objects':[obj],'error_list':{}, 'info_list':[]})
 def deliver_transaction(request, object_id):
     return mark_transaction(request, object_id, 'delivered', True)

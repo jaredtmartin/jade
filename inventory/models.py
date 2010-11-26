@@ -829,11 +829,17 @@ class Transaction(models.Model):
     def __unicode__(self):
         return self.doc_number
     def _get_active(self):
+        print "helloooo = " + str(helloooo)
         try: 
+            print "self.entry_set.all() = " + str(self.entry_set.all())
             for e in self.entry_set.all():
+                print "e = " + str(e)
+                print "e.active = " + str(e.active)
                 if not e.active: return False
             return True
-        except AttributeError: return self._active
+        except AttributeError: 
+            print "flopping"
+            return self._active
         
     def _set_active(self, value):
         self._active=value
