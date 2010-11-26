@@ -160,7 +160,7 @@ class Item(models.Model):
     def _get_individual_cost(self):
         # Returns the cost of the item NOT including the cost of any linked items
         # this should be used as the cost on a sale
-        stock=abs(self.stock)
+        stock=self.stock
         if not stock or stock<=0: return self.default_cost
         return self.total_cost/stock
     individual_cost=property(_get_individual_cost)
