@@ -59,7 +59,7 @@
             $('#tax-form #tax_amount').select();
         }
         function update_tax_amount(){
-            $('#tax_amount').val(($('#doc_total_for_tax').val()*$('#id_tax_rate').val()).toFixed(2));
+            $('#tax_amount').val(($('#doc_total_for_tax').val()/($('#id_tax_rate').val()).toFixed(2)+1));
         }
         function addTax(object_id){
             jQuery("#transaction-"+object_id+"-entries-table").remove();
