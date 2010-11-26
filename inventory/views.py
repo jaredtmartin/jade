@@ -949,7 +949,10 @@ def add_tax(request, object_id):
     if not request.user.has_perm('inventory.add_'+obj.tipo.lower()): return http.HttpResponseRedirect("/blocked/")
     objects=[]
     rate=TaxRate.objects.get(name=request.POST['rate'])
+    total=Entry.objects.filter(transaction__doc_number=obj.doc_number, active=True, account=obj.subclass.account).aggregate(total=models.Sum('value'))['total'] or Decimal('0.00')
+    total=total* obj.account.multiplier
     amount=Decimal(request.POST['amount'])
+    percentage=amount/total
     if obj.tipo=='Sale':
         tax=SaleTax(doc_number=obj.doc_number, date=obj.date, debit=obj.client, credit=rate.sales_account, value=amount)
     elif obj.tipo=='Purchase':
@@ -960,7 +963,9 @@ def add_tax(request, object_id):
         print "doc = " + str(doc)
         for t in doc:
             t=t.subclass
-            t.value-=t.value*rate.value
+            print "t.value = " + str(t.value)
+            print "t.value*amount = " + str(t.value*percentage)
+            t.value-=t.value*percentage
             t.save()
             objects.append(t)
     tax.save()
