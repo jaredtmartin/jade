@@ -985,8 +985,11 @@ def get_tax_form(request, object_id):
     default=obj.account.default_tax_rate
     rates=TaxRate.objects.all()
     total=Entry.objects.filter(transaction__doc_number=obj.doc_number, active=True, account=obj.subclass.account).aggregate(total=models.Sum('value'))['total'] or Decimal('0.00')
-    total=total/(obj.subclass.account.multiplier+1)
-    amount=total*default.value
+    total=total* obj.account.multiplier
+    if default.price_includes_tax:
+        amount=total/(default.value+1)*default.value
+    else:
+        amount=total*default.value
     return _r2r(request,'inventory/tax_form.html', {'rates':rates,'default':default,'total':total,'amount':amount})
    
 ################################################################################################
