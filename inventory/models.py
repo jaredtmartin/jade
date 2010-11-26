@@ -829,16 +829,11 @@ class Transaction(models.Model):
     def __unicode__(self):
         return self.doc_number
     def _get_active(self):
-        print "helloooo = " + str(helloooo)
         try: 
-            print "self.entry_set.all() = " + str(self.entry_set.all())
             for e in self.entry_set.all():
-                print "e = " + str(e)
-                print "e.active = " + str(e.active)
                 if not e.active: return False
             return True
         except AttributeError: 
-            print "flopping"
             return self._active
         
     def _set_active(self, value):
@@ -943,14 +938,6 @@ class Transaction(models.Model):
         except AttributeError: self._delivered=value
     delivered = property(_get_delivered, _set_delivered)
     
-    def _get_active(self):
-        try: return self.entry(self.debit_tipo).active
-        except AttributeError: return self._active
-    def _set_active(self, value):
-        self._active=value
-        [e.update('active',value) for e in self.entry_set.all()]
-    active = property(_get_active, _set_active)
-
     def _get_value(self):
         try: return self.entry(self._account_tipo).value
         except AttributeError: return self._value

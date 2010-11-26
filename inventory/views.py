@@ -372,25 +372,15 @@ def doc_inactive(doc):
 @login_required
 @permission_required('inventory.view_receipt', login_url="/blocked/")
 def quote(request, doc_number):
-    doc=Sale.objects.filter(doc_number=doc_number)
-    if doc.count()==0: return fallback_to_transactions(request, doc_number, _('Unable to find sales with the specified document number.'))
+    doc=Document(doc_number)
+    if len(doc.lines)==0: return fallback_to_transactions(request, doc_number, _('Unable to find sales with the specified document number.'))
     try:report=Report.objects.get(name=settings.QUOTE_TEMPLATE_NAME)
     except Report.DoesNotExist: 
         return fallback_to_transactions(request, doc_number, _('Unable to find a report template with the name "%s"') % settings.QUOTE_TEMPLATE_NAME)
-    tax=charge=discount=0
-    for t in doc:
-        s=t.subclass
-        try: tax+=s.tax
-        except AttributeError: pass
-        try: charge+=s.charge
-        except AttributeError: pass
-        try: discount+=s.discount
-        except AttributeError: pass
-    try:
-        request.GET['test']
-        return render_string_to_pdf(Template(report.body), {'doc':doc, 'watermark_filename':report.watermark_url,'tax':tax, 'charge':charge, 'discount':discount})
-    except:
-        return render_string_to_pdf(Template(report.body), {'watermark_filename':None, 'doc':doc, 'tax':tax, 'charge':charge, 'discount':discount})
+    if 'test' in request.GET:
+        return render_string_to_pdf(Template(report.body), {'doc':doc, 'watermark_filename':report.watermark_url})
+    else:
+        return render_string_to_pdf(Template(report.body), {'watermark_filename':None, 'doc':doc})
 
 @login_required
 @permission_required('inventory.view_receipt', login_url="/blocked/")
@@ -1299,11 +1289,12 @@ def transaction_list(request, errors={}): # GET ONLY
         if request.GET['tipo']=='Purchase': return search_and_paginate_transactions(request, Transaction, template='inventory/purchases.html')
         if request.GET['tipo']=='Count': return search_and_paginate_transactions(request, Transaction, template='inventory/counts.html')
     return search_and_paginate_transactions(request, Transaction)
+@login_required
 def delete_transaction(request, object_id):
     return delete_object(request, object_id, Transaction, 'transaction')
+@login_required
 def mark_transaction(request, object_id, attr, value):
     obj = get_object_or_404(Transaction, pk=object_id).subclass
-    print "obj = " + str(obj)
     if not request.user.has_perm('inventory.change_sale') and obj.tipo=='Sale': return http.HttpResponseRedirect("/blocked/")
     if not request.user.has_perm('inventory.change_purchase') and obj.tipo=='Purchase': return http.HttpResponseRedirect("/blocked/")
     if not request.user.has_perm('inventory.change_count') and obj.tipo=='Count': return http.HttpResponseRedirect("/blocked/")
@@ -1317,22 +1308,8 @@ def mark_transaction(request, object_id, attr, value):
             return _r2r(request,'inventory/results.html', {'objects':[obj],'error_list':{'Process':[_('You do not have sufficient rights to start production'),]}, 'info_list':[]})
         if attr in ['delivered','active' ] and obj.quantity > 0 and not request.user.has_perm('production.finish_production'):
             return _r2r(request,'inventory/results.html', {'objects':[obj],'error_list':{'Process':[_('You do not have sufficient rights to finish production'),]}, 'info_list':[]})
-    print "obj.active = " + str(obj.active)
-    print "obj = " + str(obj)
-#    setattr(obj, attr, value)
-    print "type(obj) = " + str(type(obj))
-    if attr=='active': obj.active=value
-    elif attr=='delivered': obj.delivered=value
-    print "get_object_or_404(Transaction, pk=object_id).active = " + str(get_object_or_404(Transaction, pk=object_id).active)
-    print "get_object_or_404(Transaction, pk=object_id).subclass.active = " + str(get_object_or_404(Transaction, pk=object_id).subclass.active)
-    print "obj.active = " + str(obj.active)
-#    print "obj = " + str(obj)
-#    print "obj.pk = " + str(obj.pk)
+    setattr(obj, attr, value)
     obj.save()
-    print "get_object_or_404(Transaction, pk=object_id).active = " + str(get_object_or_404(Transaction, pk=object_id).active)
-    print "get_object_or_404(Transaction, pk=object_id).subclass.active = " + str(get_object_or_404(Transaction, pk=object_id).subclass.active)
-    
-    print "obj.active = " + str(obj.active)
     return _r2r(request,'inventory/results.html', {'objects':[obj],'error_list':{}, 'info_list':[]})
 def deliver_transaction(request, object_id):
     return mark_transaction(request, object_id, 'delivered', True)
