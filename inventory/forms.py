@@ -519,6 +519,7 @@ class ContactForm(forms.ModelForm):
         else:
             self.initial['price_group'] = settings.DEFAULT_PRICE_GROUP_NAME
             self.initial['account_group'] = settings.DEFAULT_ACCOUNT_GROUP_NAME
+            self.initial['receipt_group'] = settings.DEFAULT_RECEIPT_GROUP_NAME
             self.initial['credit_days'] = settings.DEFAULT_CREDIT_DAYS
     def clean_account_group(self):
         return clean_lookup(self, 'account_group', AccountGroup)
