@@ -295,14 +295,12 @@ def ajax_price_group_list(request):
     except KeyError: q=''
     return _r2r(request,'inventory/ajax_list.html', {'object_list':PriceGroup.objects.filter(name__icontains=q),'q':q})
 @login_required
-@permission_required('inventory.view_account_group', login_url="/blocked/")
 def ajax_account_group_list(request):
     try: q=request.GET['q']
     except KeyError: q=''
     return _r2r(request,'inventory/ajax_list.html', {'object_list':AccountGroup.objects.filter(name__icontains=q),'q':q})
 
 @login_required
-@permission_required('inventory.view_receipt_group', login_url="/blocked/")
 def ajax_receipt_group_list(request):
     try: q=request.GET['q']
     except KeyError: q=''
