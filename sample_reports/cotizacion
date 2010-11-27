@@ -1,0 +1,76 @@
+{% load tags %}
+<html>
+    <head>
+        <title></title>
+        <meta http-equiv="Content-Type" content="text/html;charset=ISO-8859-1" >
+        <meta http-equiv="Content-Script-Type" content="text/javascript" >
+        <meta http-equiv="Content-Style-Type" content="text/css" >
+        <style type="text/css">
+            h1 {
+                height: 60px;
+                min-width: 960px;
+                background: #e4f2fd;
+                border-bottom: 1px solid #c6d9e9;
+                font-family:Georgia,Times,"Times New Roman",serif;
+                font-weight:normal;
+                color:#555555;
+                font-size:36px;
+                line-height:1em;
+                min-width:500px;
+                padding-top:34px;
+                text-align:center;
+                text-shadow:0 1px 0 #E4F2FD;
+            }
+            th{text-align:left;}
+            .row1{  
+                -moz-background-clip:border;
+                -moz-background-inline-policy:continuous;
+                -moz-background-origin:padding;
+                background:#EDF3FE none repeat scroll 0 0;
+            }
+            .row2{
+                -moz-background-clip:border;
+                -moz-background-inline-policy:continuous;
+                -moz-background-origin:padding;
+                background:white none repeat scroll 0 0;
+            }
+            body{line-height:16px;}
+            td.numero {text-align:left;}
+            td.texto {text-align:left;}
+            table {border:solid;height:200px;}
+            @page {
+                size:letter;
+                {% if watermark_filename %}
+                    background-image: url({{watermark_filename}});
+                {% endif %}
+                top: 1cm;
+                left: 1cm;
+                right: 1.7cm;
+            }
+        </style>
+    </head>
+    <body>
+        <h1>Cotizacion {{doc.0.doc_number}}</h1>
+        <table id="tableContent">
+            <thead>
+                <tr><th></th><th>Descripcion</th><th>Cantidad</th><th>Unidad</th><th>Valor</th></tr>
+            </thead>
+            <tbody>
+                {% for sale in doc.lines %}
+            {% if sale.tipo == 'SaleDiscount' %}
+              <tr><td/><td> Descuento</td><td/><td/><td>(${{sale.value|floatformat:2}})</td></tr>
+            {% else %}
+            <tr>
+                <td class="numero">{% if sale.item.image %}<img src="{{sale.item.image.url_75x75}}">{% endif %}</td>
+                <td class="texto">{{sale.item.name}}</td>
+                <td class="numero">{{sale.quantity|floatformat:-2}}</td>
+                <td class="texto">{{sale.item.unit}}</td>
+                <td class="numero">${{sale.value|floatformat:2}}</td>
+            </tr>
+           {% endif %}
+        {%endfor%}
+            </tbody>
+            
+        </table>
+    </body>
+</html>

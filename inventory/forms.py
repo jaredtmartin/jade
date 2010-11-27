@@ -26,13 +26,18 @@ import settings
 
 def clean_lookup(form, name, model, by_pk=False, title=None):
     if not title: title=name
+        
     data = form.cleaned_data[name]
     if (not data) and (not form.fields[name].required): return data
     try: 
         if by_pk:
             data = model.objects.filter(pk=int(data)).get()
         else:
+            print "data = " + str(data)
+            print "model = " + str(model)
+            print "model.objects.filter(name=data) = " + str(model.objects.filter(name=data))
             data = model.objects.filter(name=data).get()
+            print "data = " + str(data)
     except model.MultipleObjectsReturned: 
             raise forms.ValidationError('There are more than one %ss with the name %s. Resolve this issue and try again.' % (title, data))
     except model.DoesNotExist: 
@@ -400,6 +405,8 @@ class ItemForm(forms.ModelForm):
         except Unit.DoesNotExist: 
             raise forms.ValidationError('Unable to find %s in the list of %ss.' % (data, 'unit'))
         return data
+    def clean_name(self):
+        return self.cleaned_data['name'].strip()
     def clean_minimum(self):
         return clean_number(self, 'minimum')
     def clean_maximum(self):
@@ -455,7 +462,7 @@ class AccountForm(forms.ModelForm):
 class ContactForm(forms.ModelForm):
     class Meta:
         model = Account
-        fields=('name', 'number', 'multiplier', 'tax_group', 'price_group', 'address','state_name','country', 
+        fields=('name', 'number', 'multiplier', 'account_group', 'receipt_group','price_group', 'address','state_name','country', 
             'home_phone', 'cell_phone', 'work_phone', 'fax', 'tax_number', 'description', 'email', 'registration', 'user')
     address =       forms.CharField(required=False)
     state_name =    forms.CharField(required=False)
@@ -540,7 +547,8 @@ class ContactForm(forms.ModelForm):
         model.work_phone =        self.cleaned_data['work_phone']
         model.fax =        self.cleaned_data['fax']
         model.tax_number =        self.cleaned_data['tax_number']
-        model.tax_group =        self.cleaned_data['tax_group']
+        model.account_group =        self.cleaned_data['account_group']
+        model.receipt_group =        self.cleaned_data['receipt_group']
         model.price_group =        self.cleaned_data['price_group']
         model.description =        self.cleaned_data['description']
         model.email =        self.cleaned_data['email']

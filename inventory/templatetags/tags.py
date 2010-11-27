@@ -28,9 +28,11 @@ def show(x, y):
 def price(item, user):
     return "%.2f" % item.price(user)
 
-@register.simple_tag
+@register.filter(name='tax')
 def tax(doc, tax_name):
-    return "%.2f" % doc.tax[tax_name]
+    "returns the tax with the account name given"
+    return doc.tax[tax_name]
+tax.is_safe = True
 
 @register.filter(name='neg')
 def neg(value):

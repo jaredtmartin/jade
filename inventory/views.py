@@ -89,6 +89,7 @@ def new_object(request, form, prefix, template='', tipo=None, extra_context={}):
             updated_form=form(instance=obj, prefix=prefix+'-'+str(obj.pk))
             info_list=['The %s has been created successfully.'% tipo, ]
             error_list={}
+            obj.edit_mode=True
         else:
             print "invalid"      
             info_list=[]
@@ -97,7 +98,6 @@ def new_object(request, form, prefix, template='', tipo=None, extra_context={}):
             error_list=f.errors
             updated_form=None
         if not tipo: tipo=prefix
-        obj.edit_mode=True
         extra_context.update({'objects':[obj],'edit_mode':True, 'form':updated_form,'info_list':info_list,'error_list':error_list,'prefix':tipo,'line_template':"inventory/"+prefix+".html"})
         return _r2r(request,'inventory/results.html', extra_context)
     else:
@@ -372,25 +372,15 @@ def doc_inactive(doc):
 @login_required
 @permission_required('inventory.view_receipt', login_url="/blocked/")
 def quote(request, doc_number):
-    doc=Sale.objects.filter(doc_number=doc_number)
-    if doc.count()==0: return fallback_to_transactions(request, doc_number, _('Unable to find sales with the specified document number.'))
-    try:report=Setting.objects.get('Quote report')
+    doc=Document(doc_number)
+    if len(doc.lines)==0: return fallback_to_transactions(request, doc_number, _('Unable to find sales with the specified document number.'))
+    try:report=Report.objects.get(name=settings.QUOTE_TEMPLATE_NAME)
     except Report.DoesNotExist: 
-        return fallback_to_transactions(request, doc_number, _('Unable to find a report template with the name "%s"') % Setting.objects.get('Quote report').name)
-    tax=charge=discount=0
-    for t in doc:
-        s=t.subclass
-        try: tax+=s.tax
-        except AttributeError: pass
-        try: charge+=s.charge
-        except AttributeError: pass
-        try: discount+=s.discount
-        except AttributeError: pass
-    try:
-        request.GET['test']
-        return render_string_to_pdf(Template(report.body), {'doc':doc, 'watermark_filename':report.watermark_url,'tax':tax, 'charge':charge, 'discount':discount})
-    except:
-        return render_string_to_pdf(Template(report.body), {'watermark_filename':None, 'doc':doc, 'tax':tax, 'charge':charge, 'discount':discount})
+        return fallback_to_transactions(request, doc_number, _('Unable to find a report template with the name "%s"') % settings.QUOTE_TEMPLATE_NAME)
+    if 'test' in request.GET:
+        return render_string_to_pdf(Template(report.body), {'doc':doc, 'watermark_filename':report.watermark_url})
+    else:
+        return render_string_to_pdf(Template(report.body), {'watermark_filename':None, 'doc':doc})
 
 @login_required
 @permission_required('inventory.view_receipt', login_url="/blocked/")
@@ -802,7 +792,7 @@ def new_clientgarantee(request, object_id):
     sale = get_object_or_404(Sale, pk=object_id)
     try: months=sale.item.garanteeoffer_set.filter(price=0)[0]
     except: months=0
-    garantee=ClientGarantee(doc_number=sale.doc_number, date=sale.date, client=sale.client, item=sale.item, quantity=months, serial=sale.serial)
+    garantee=ClientGarantee(doc_number=sale.doc_number, date=sale.date, client=sale.client, credit=sale.client.account_group.revenue_account, item=sale.item, quantity=months, serial=sale.serial)
     garantee.save()
     garantee.edit_mode=True
     return _r2r(request,'inventory/results.html', {'edit_mode':True, 'objects':[garantee],'prefix':'garantee','line_template':"inventory/transaction.html",'error_list':{}, 'info_list':{}})
@@ -881,8 +871,11 @@ def new_sale(request):
     except:
         date=datetime.now()
         client=Client.objects.default()
-    try: client=Client.objects.get_or_create_by_name(name=request.POST['client'])
-    except:pass
+    print "request.POST['client'] = " + str(request.POST['client'])
+#    try: 
+    client=Client.objects.get_or_create_by_name(name=request.POST['client'])
+    print "DONEclient = " + str(client)
+#    except:pass
     print "client = " + str(client)
     item=None
     value=0
@@ -943,10 +936,14 @@ def add_payment_to_sale(request, object_id):
 @login_required
 def add_tax(request, object_id):
     obj = get_object_or_404(Transaction, pk=object_id).subclass
-    if not request.user.has_perm('inventory.add_'+obj.tipo.lower()): return http.HttpResponseRedirect("/blocked/")
+    print "'inventory.add_'+obj.tipo.lower()+'tax' = " + str('inventory.add_'+obj.tipo.lower()+'tax')
+    if not request.user.has_perm('inventory.add_'+obj.tipo.lower()+'tax'): return http.HttpResponseRedirect("/blocked/")
     objects=[]
     rate=TaxRate.objects.get(name=request.POST['rate'])
+    total=Entry.objects.filter(transaction__doc_number=obj.doc_number, active=True, account=obj.subclass.account).aggregate(total=models.Sum('value'))['total'] or Decimal('0.00')
+    total=total* obj.account.multiplier
     amount=Decimal(request.POST['amount'])
+    percentage=amount/total
     if obj.tipo=='Sale':
         tax=SaleTax(doc_number=obj.doc_number, date=obj.date, debit=obj.client, credit=rate.sales_account, value=amount)
     elif obj.tipo=='Purchase':
@@ -957,7 +954,9 @@ def add_tax(request, object_id):
         print "doc = " + str(doc)
         for t in doc:
             t=t.subclass
-            t.value-=t.value*rate.value
+            print "t.value = " + str(t.value)
+            print "t.value*amount = " + str(t.value*percentage)
+            t.value-=t.value*percentage
             t.save()
             objects.append(t)
     tax.save()
@@ -976,14 +975,17 @@ def edit_purchasetax(request, object_id):
     return edit_object(request, object_id, PurchaseTax, PurchaseTaxForm, "purchasetax")
     
 @login_required
-@permission_required('inventory.add_tax', login_url="/blocked/")
 def get_tax_form(request, object_id):
     obj = get_object_or_404(Transaction, pk=object_id).subclass
+    if not request.user.has_perm('inventory.add_'+obj.tipo.lower()+'tax'): return http.HttpResponseRedirect("/blocked/")
     default=obj.account.default_tax_rate
     rates=TaxRate.objects.all()
     total=Entry.objects.filter(transaction__doc_number=obj.doc_number, active=True, account=obj.subclass.account).aggregate(total=models.Sum('value'))['total'] or Decimal('0.00')
-    total=total*obj.subclass.account.multiplier
-    amount=total*default.value
+    total=total* obj.account.multiplier
+    if default.price_includes_tax:
+        amount=total/(default.value+1)*default.value
+    else:
+        amount=total*default.value
     return _r2r(request,'inventory/tax_form.html', {'rates':rates,'default':default,'total':total,'amount':amount})
    
 ################################################################################################
@@ -1287,8 +1289,10 @@ def transaction_list(request, errors={}): # GET ONLY
         if request.GET['tipo']=='Purchase': return search_and_paginate_transactions(request, Transaction, template='inventory/purchases.html')
         if request.GET['tipo']=='Count': return search_and_paginate_transactions(request, Transaction, template='inventory/counts.html')
     return search_and_paginate_transactions(request, Transaction)
+@login_required
 def delete_transaction(request, object_id):
     return delete_object(request, object_id, Transaction, 'transaction')
+@login_required
 def mark_transaction(request, object_id, attr, value):
     obj = get_object_or_404(Transaction, pk=object_id).subclass
     if not request.user.has_perm('inventory.change_sale') and obj.tipo=='Sale': return http.HttpResponseRedirect("/blocked/")
@@ -1297,7 +1301,7 @@ def mark_transaction(request, object_id, attr, value):
     if not request.user.has_perm('inventory.change_process') and obj.tipo=='Process': return http.HttpResponseRedirect("/blocked/")
     if not request.user.has_perm('inventory.change_production') and obj.tipo=='Production': return http.HttpResponseRedirect("/blocked/")
     if not request.user.has_perm('inventory.change_productionorder') and obj.tipo=='ProductionOrder': return http.HttpResponseRedirect("/blocked/")
-    if obj.tipo=='Process' and attr in ['delivered','active' ]:
+    if obj.tipo=='Process' and attr in ['delivered','active']:
         return _r2r(request,'inventory/results.html', {'objects':[obj],'error_list':{'Process':[_('Cannot be marked delivered or active'),]}, 'info_list':[]})
     if obj.tipo=='Job':
         if attr in ['delivered','active' ] and obj.quantity < 0 and not request.user.has_perm('production.start_production'):
@@ -1305,8 +1309,6 @@ def mark_transaction(request, object_id, attr, value):
         if attr in ['delivered','active' ] and obj.quantity > 0 and not request.user.has_perm('production.finish_production'):
             return _r2r(request,'inventory/results.html', {'objects':[obj],'error_list':{'Process':[_('You do not have sufficient rights to finish production'),]}, 'info_list':[]})
     setattr(obj, attr, value)
-#    print "obj = " + str(obj)
-#    print "obj.pk = " + str(obj.pk)
     obj.save()
     return _r2r(request,'inventory/results.html', {'objects':[obj],'error_list':{}, 'info_list':[]})
 def deliver_transaction(request, object_id):

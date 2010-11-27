@@ -203,7 +203,7 @@ class Item(models.Model):
     def _get_individual_cost(self):
         # Returns the cost of the item NOT including the cost of any linked items
         # this should be used as the cost on a sale
-        stock=abs(self.stock)
+        stock=self.stock
         if not stock or stock==0: return self.default_cost
         return self.total_cost/stock
     individual_cost=property(_get_individual_cost)
@@ -396,7 +396,10 @@ class Account(models.Model):
     def _get_receipt_group(self):
         try: return self.contact.receipt_group
         except Contact.DoesNotExist: return None
-    receipt_group=property(_get_receipt_group)
+    def _set_receipt_group(self, value):
+        try: self.contact.receipt_group=value
+        except: self._receipt_group=value
+    receipt_group=property(_get_receipt_group, _set_receipt_group)
     
     def _get_account_group(self):
         try: return self.contact.account_group
@@ -553,7 +556,8 @@ def add_contact(sender, **kwargs):
             registration=l._registration,
             user=l._user,
             price_group=l._price_group,
-            tax_group=l._tax_group,             
+            account_group=l._account_group,     
+            receipt_group=l._receipt_group,         
         )
 class TaxRate(models.Model):
     def __init__(self, *args, **kwargs):
@@ -593,7 +597,28 @@ class AccountGroup(models.Model):
     objects = CurrentSiteManager()
     def __unicode__(self):
         return self.name
-
+class ClientManager(models.Manager):
+    def default(self):
+        return Setting.objects.get('Default client')
+    def next_number(self):
+        number=super(ClientManager, self).get_query_set().filter(tipo="Client").order_by('-number')[0].number
+        return increment_string_number(number)
+    def get_or_create_by_name(self, name):
+        try:
+            return super(ClientManager, self).get_query_set().get(name=name)
+        except:
+            if name and name != '':
+                if settings.AUTOCREATE_CLIENTS:
+                    price_group=Setting.objects.get('Default price group')
+                    account_group=Setting.objects.get('Default account group')
+                    receipt_group=Setting.objects.get('Default receipt group')
+                    number=Client.objects.next_number()
+                    
+                    return super(ClientManager, self).create(name=name,price_group=price_group,account_group=account_group, receipt_group=receipt_group, number=number)
+            else:
+                return super(ClientManager, self).get_query_set().get(name=settings.DEFAULT_CLIENT_NAME)
+    def get_query_set(self):
+        return super(ClientManager, self).get_query_set().filter(tipo="Client")
 class Client(Account):
     def save(self, *args, **kwargs):
         self.tipo="Client"
@@ -776,7 +801,8 @@ class Transaction(models.Model):
             for e in self.entry_set.all():
                 if not e.active: return False
             return True
-        except AttributeError: return self._active
+        except AttributeError: 
+            return self._active
         
     def _set_active(self, value):
         self._active=value
@@ -880,19 +906,10 @@ class Transaction(models.Model):
         except AttributeError: self._delivered=value
     delivered = property(_get_delivered, _set_delivered)
     
-    def _get_active(self):
-        try: return self.entry(self.debit_tipo).active
-        except AttributeError: return self._active
-    def _set_active(self, value):
-        self._active=value
-        [e.update('active',value) for e in self.entry_set.all()]
-    active = property(_get_active, _set_active)
-
     def _get_value(self):
         try: return self.entry(self._account_tipo).value
         except AttributeError: return self._value
     def _set_value(self, value):
-        if self._credit_tipo==self._account_tipo: value=value*-1
         try:
             self.entry(self._debit_tipo).update('value',value)
             self.entry(self._credit_tipo).update('value', -value)
@@ -1204,7 +1221,15 @@ class Purchase(Transaction):
             ("view_purchase", "Can view purchases"),
         )
     objects = BaseManager('Purchase','P')
-
+    def _get_value(self):
+        try: return self.entry(self._debit_tipo).value
+        except AttributeError: return self._value
+    def _set_value(self, value):
+        try:
+            self.entry(self._debit_tipo).update('value',value)
+            self.entry(self._credit_tipo).update('value', -value)
+        except: self._value = value
+    value=property(_get_value, _set_value)
     def __init__(self, *args, **kwargs):
         self._vendor = kwargs.pop('vendor', Setting.objects.get('Default vendor'))
         kwargs.update({
@@ -1629,6 +1654,15 @@ class SaleDiscount(Discount):
     def _set_client(self, value):
         self.account=value
     client = property(_get_client, _set_client)
+    def _get_value(self):
+        try: return self.entry(self._account_tipo).value
+        except AttributeError: return self._value
+    def _set_value(self, value):
+        try:
+            self.entry(self._debit_tipo).update('value',-value)
+            self.entry(self._credit_tipo).update('value', value)
+        except: self._value = value
+    value=property(_get_value, _set_value)
 post_save.connect(add_general_entries, sender=SaleDiscount, dispatch_uid="jade.inventory.models")
 class PurchaseDiscount(Discount):
     class Meta:
@@ -1642,6 +1676,15 @@ class PurchaseDiscount(Discount):
         })
         super(PurchaseDiscount, self).__init__(*args, **kwargs)
         self.tipo='PurchaseDiscount'
+    def _get_value(self):
+        try: return -self.entry(self._account_tipo).value
+        except AttributeError: return -self._value
+    def _set_value(self, value):
+        try:
+            self.entry(self._debit_tipo).update('value',-value)
+            self.entry(self._credit_tipo).update('value', value)
+        except: self._value = value
+    value=property(_get_value, _set_value)
     def _get_vendor(self):
         return self.account
     def _set_vendor(self, value):
@@ -1675,7 +1718,6 @@ class ClientGarantee(Garantee):
         })
         super(ClientGarantee, self).__init__(*args, **kwargs)
         self.template='inventory/client_garantee.html'
-        self.credit=self.client.account_group.revenue_account
         self.tipo='ClientGarantee'
         
     def print_url(self):

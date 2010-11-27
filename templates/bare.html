@@ -44,6 +44,7 @@
                 <a href="{% url jade.inventory.views.set_languages %}?lang=en" title={% trans 'English' %}><img src="{{MEDIA_URL}}/img/en.png" alt={% trans 'English' %} /></a>
                 <a href="{% url jade.inventory.views.set_languages %}?lang=es" title={% trans 'Spanish' %}><img src="{{MEDIA_URL}}/img/es.png" alt={% trans 'Spanish' %} /></a>
                 <a href="{% url jade.inventory.views.set_languages %}?lang=fr" title={% trans 'French' %}><img src="{{MEDIA_URL}}/img/fr.png" alt={% trans 'French' %} /></a>
+                <a href="/manual/"><img src="{{MEDIA_URL}}/img/help.png"/></a>
                 <br>
                 {% block user-corner %}
                 {% endblock %}

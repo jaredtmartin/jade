@@ -1,18 +1,4 @@
-<!--# Jade Inventory Control System-->
-<!--#Copyright (C) 2010  Jared T. Martin-->
 
-<!--#    This program is free software: you can redistribute it and/or modify-->
-<!--#    it under the terms of the GNU General Public License as published by-->
-<!--#    the Free Software Foundation, either version 3 of the License, or-->
-<!--#    (at your option) any later version.-->
-
-<!--#    This program is distributed in the hope that it will be useful,-->
-<!--#    but WITHOUT ANY WARRANTY; without even the implied account of-->
-<!--#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the-->
-<!--#    GNU General Public License for more details.-->
-
-<!--#    You should have received a copy of the GNU General Public License-->
-<!--#    along with this program.  If not, see <http://www.gnu.org/licenses/>.-->
 {% extends "inventory/index.html" %}
 {% load i18n %}
 
@@ -32,9 +18,9 @@
 {% block table_header %}
     <th>{% trans 'Image' %}</th><th>{% trans 'Name' %}</th><th>{% trans 'Description' %}</th><th>{% trans 'Price' %}</th>{% if perms.inventory.view_cost %}<th>{% trans 'Cost' %}</th>{%endif%}<th>{% trans 'Stock' %}</th><th>{% trans 'Unit' %}</th><th>{% trans 'Min' %}</th><th>{% trans 'Max' %}</th><th>{% trans 'Location' %}</th>
 {% endblock%}
-{% block line %}    
-    <tr><td><a href="{% if object.image %}{{object.url}}{% endif %}" id="item_image">
-        <img src="{% if object.image %}{{object.image.url_75x75}}{% endif %}">
+{% block line %}
+    <tr><td>{% if object.image %}<a href="{{object.url}}" id="item_image">
+        <img src="{{object.image.url_75x75}}">{% endif %}
     </a></td><td WORD-BREAK:BREAK-ALL;>{% link object %}</td><td WORD-BREAK:BREAK-ALL;>{{object.description}}</td><td>${% price object user %}</td>{% if perms.inventory.view_cost %}<td>${{object.cost|default:0|floatformat:2}}</td>{%endif%}<td>{{object.stock|default:0|floatformat:-2}}</td><td>{{object.unit}}</td><td>{{object.minimum|default:0|floatformat:-2}}</td><td>{{object.maximum|default:0|floatformat:-2}}</td><td>{{object.location}}</td></tr>
 {% endblock%}
 

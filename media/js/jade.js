@@ -186,7 +186,7 @@ function getGaranteePrice(object_id) {
             item:     jQuery('#id_transaction-'+object_id+'-item').val(),
             months:     jQuery('#id_transaction-'+object_id+'-garantee_months').val(),
         },
-        success: updateGaranteePrice
+        success: updateGaranteePrice,
     });
 }
 

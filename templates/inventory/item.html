@@ -1,18 +1,3 @@
-<!--# Jade Inventory Control System-->
-<!--#Copyright (C) 2010  Jared T. Martin-->
-
-<!--#    This program is free software: you can redistribute it and/or modify-->
-<!--#    it under the terms of the GNU General Public License as published by-->
-<!--#    the Free Software Foundation, either version 3 of the License, or-->
-<!--#    (at your option) any later version.-->
-
-<!--#    This program is distributed in the hope that it will be useful,-->
-<!--#    but WITHOUT ANY WARRANTY; without even the implied account of-->
-<!--#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the-->
-<!--#    GNU General Public License for more details.-->
-
-<!--#    You should have received a copy of the GNU General Public License-->
-<!--#    along with this program.  If not, see <http://www.gnu.org/licenses/>.-->
 {% load i18n %}
 {% load tags %}
 <tr><td>
@@ -45,7 +30,7 @@
         <div class="item_image_area">
             {% if form.instance.pk %}
                 <a href="{% if object.image %}{{object.image.url}}{% endif %}" id="item_image">
-                    <img src="{% if object.image %}{{object.image.url_150x150}}{% endif %}">
+                    {% if object.image %}<img src="{{object.image.url_150x150}}">{% endif %}
                 </a>
                 <input type="file" id="id_image" name="image">
                 <a href="#" onclick="ajaxFileUpload();return false;" id="buttonUpload">{% trans 'Upload' %} <img src="/media/img/save.png"></a>
