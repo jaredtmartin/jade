@@ -1,19 +1,4 @@
-<!--# Jade Inventory Control System-->
-<!--#Copyright (C) 2010  Jared T. Martin-->
-
-<!--#    This program is free software: you can redistribute it and/or modify-->
-<!--#    it under the terms of the GNU General Public License as published by-->
-<!--#    the Free Software Foundation, either version 3 of the License, or-->
-<!--#    (at your option) any later version.-->
-
-<!--#    This program is distributed in the hope that it will be useful,-->
-<!--#    but WITHOUT ANY WARRANTY; without even the implied account of-->
-<!--#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the-->
-<!--#    GNU General Public License for more details.-->
-
-<!--#    You should have received a copy of the GNU General Public License-->
-<!--#    along with this program.  If not, see <http://www.gnu.org/licenses/>.-->
-<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+{% load tags %}
 <html>
     <head>
         <title></title>
@@ -68,14 +53,16 @@
         <h1>Cuenta Fisica {{doc.0.doc_number}}</h1>
         <table id="tableContent">
             <thead>
-                <tr><th>Item</th><th>Location</th><th>Unit</th><th>Current</th><th>Count</th></tr>
+                <tr><th>Producto</th><th>Locacion</th><th>Unidad</th><th>Costo</th><th>Actual</th><th>Cuenta</th><th>Valor de Diferencia</th></tr>
             </thead>
             <tbody>
                 {% for count in doc %}
-                    <tr>
+                    <tr class="{% cycle "row1" "row2" %}">
                         <td class="texto" style="width:50%;">{{count.item.name}}</td>
                         <td class="texto" >{{count.item.location}}</td>
                         <td class="texto" >{{count.item.unit}}</td>
+                        <td class="numero" >{{count.item.unit_cost}}</td>
+                        <td class="numero" >${{count.count|minus:count.item.stock|mult:count.unit_cost|floatformat:2}}</td>
                         <td class="numero" >{{count.item.stock|floatformat:-2}}</td>
                         <td class="numero" >{% if count.count %}{{count.count|floatformat:-2}}{% else %}__________{% endif %}</td>
                     </tr>

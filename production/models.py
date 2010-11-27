@@ -15,8 +15,6 @@
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 from django.db import models
 from jade.inventory.models import Transaction, Account, Entry, make_default_account
-try: from jade.inventory.models import INVENTORY_ACCOUNT
-except:pass
 from django.db.models.signals import post_save #pre_save, , pre_delete
 from django.db.models import Q
 from datetime import datetime
@@ -26,8 +24,6 @@ from django.contrib.sites.models import Site
 from django.contrib.sites.managers import CurrentSiteManager
 from jade.inventory.managers import CurrentMultiSiteManager, AccountManager
 
-if settings.PRODUCTION_EXPENSE_ACCOUNT_DATA:
-    PRODUCTION_EXPENSE_ACCOUNT = make_default_account(settings.PRODUCTION_EXPENSE_ACCOUNT_DATA)
 class ProductionManager(models.Manager):
     def get_query_set(self):
         return super(ProductionManager, self).get_query_set().filter(Q(tipo="Process")|Q(tipo="Job"))
@@ -154,7 +150,7 @@ def add_process_entries(sender, **kwargs):
     if kwargs['created']:
         l.sites.add(Site.objects.get_current())
         l.create_related_entry(
-        account = PRODUCTION_EXPENSE_ACCOUNT,
+        account = Setting.objects.get('Production expense account'),
         tipo = 'Production',
         value = l._cost,
         item = l._item,
@@ -164,7 +160,7 @@ def add_process_entries(sender, **kwargs):
         active=False
         )
         l.create_related_entry(
-        account = INVENTORY_ACCOUNT,
+        account = Setting.objects.get('Inventory account'),
         tipo = 'Inventory',
         value = - l._cost,
         item = l._item,
@@ -231,7 +227,7 @@ def add_job_entries(sender, **kwargs):
     if kwargs['created']:
         l.sites.add(Site.objects.get_current())
         l.create_related_entry(
-        account = INVENTORY_ACCOUNT,
+        account = Setting.objects.get('Inventory account'),
         tipo = 'Inventory',
         value = l._cost,
         item = l._item,
@@ -241,7 +237,7 @@ def add_job_entries(sender, **kwargs):
         active=False,
         )
         l.create_related_entry(
-        account = PRODUCTION_EXPENSE_ACCOUNT,
+        account = Setting.objects.get('Production expense account'),
         tipo = 'Production',
         value = - l._cost,
         item = l._item,

@@ -13,7 +13,7 @@
 
 #    You should have received a copy of the GNU General Public License
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
-from jade.inventory.models import Count, Sale, Purchase, INVENTORY_ACCOUNT, CASH_ACCOUNT, REVENUE_ACCOUNT, TAX_ACCOUNT, EXPENSE_ACCOUNT
+from jade.inventory.models import Count, Sale, Purchase
 from jade.inventory.forms import *
 #from django.template import loader, Context, RequestContext
 from django.utils.translation import ugettext_lazy as _
@@ -336,7 +336,7 @@ def render_to_pdf(template_src, context_dict):
     template = get_template(template_src)
     context = Context(context_dict)
     from datetime import datetime
-    context_dict.update({'company_name':settings.COMPANY_NAME,'date_printed':datetime.now()})
+    context_dict.update({'company_name':Setting.objects.get('Company name'),'date_printed':datetime.now()})
     html  = template.render(context)
     result = StringIO.StringIO()
     pdf = pisa.pisaDocument(StringIO.StringIO(html.encode("ISO-8859-1")), dest=result, link_callback=fetch_resources)
@@ -347,7 +347,7 @@ def render_to_pdf(template_src, context_dict):
 def render_string_to_pdf(template, context_dict):
     context = Context(context_dict)
     from datetime import datetime
-    context_dict.update({'company_name':settings.COMPANY_NAME,'date_printed':datetime.now()})
+    context_dict.update({'company_name':Setting.objects.get('Company name'),'date_printed':datetime.now()})
     html  = template.render(context)
     result = StringIO.StringIO()
     pdf = pisa.pisaDocument(StringIO.StringIO(html.encode("ISO-8859-1")), dest=result, link_callback=fetch_resources)
@@ -374,9 +374,9 @@ def doc_inactive(doc):
 def quote(request, doc_number):
     doc=Sale.objects.filter(doc_number=doc_number)
     if doc.count()==0: return fallback_to_transactions(request, doc_number, _('Unable to find sales with the specified document number.'))
-    try:report=Report.objects.get(name=settings.QUOTE_TEMPLATE_NAME)
+    try:report=Setting.objects.get('Quote report')
     except Report.DoesNotExist: 
-        return fallback_to_transactions(request, doc_number, _('Unable to find a report template with the name "%s"') % settings.QUOTE_TEMPLATE_NAME)
+        return fallback_to_transactions(request, doc_number, _('Unable to find a report template with the name "%s"') % Setting.objects.get('Quote report').name)
     tax=charge=discount=0
     for t in doc:
         s=t.subclass
@@ -410,9 +410,9 @@ def sale_receipt(request, doc_number):
 def garantee_report(request, doc_number):
     doc=ClientGarantee.objects.filter(doc_number=doc_number)
     if doc.count()==0: return fallback_to_transactions(request, doc_number, _('Unable to find sales with the specified document number.'))
-    try:report=Report.objects.get(name=settings.GARANTEE_REPORT_NAME)
+    try:report=Setting.objects.get('Garantee report')
     except Report.DoesNotExist: 
-        return fallback_to_transactions(request, doc_number, _('Unable to find a report template with the name "%s"') % settings.GARANTEE_REPORT_NAME)
+        return fallback_to_transactions(request, doc_number, _('Unable to find a report template with the name "%s"') % Setting.objects.get('Garantee report').name)
     return render_string_to_pdf(Template(report.body), {'doc':doc})
 
 @login_required
@@ -420,11 +420,11 @@ def garantee_report(request, doc_number):
 def count_sheet(request, doc_number):
     doc=Count.objects.filter(doc_number=doc_number)
     if doc.count()==0: return fallback_to_transactions(request, doc_number, 'Unable to find counts with the specified document number.')
-    try:report=Report.objects.get(name=settings.COUNT_SHEET_REPORT_NAME)
+    try:report=Setting.objects.get('Count sheet report')
     except Report.DoesNotExist: 
         request.GET=request.GET.copy()
         request.GET['q']=doc_number
-        errors={'Report':[unicode('Unable to find a report template with the name"%s"' % (settings.COUNT_SHEET_REPORT_NAME,))]}
+        errors={'Report':[unicode('Unable to find a report template with the name"%s"' % (Setting.objects.get('Count sheet report').name,))]}
         return transaction_list(request, errors=errors)
     total=0
     for t in doc:
@@ -450,12 +450,12 @@ def labels(request, doc_number):
             if t.count: quantity=t.count
             else: quantity=t.item.stock
         else: quantity=t.quantity
-        filepath = os.path.join(settings.APP_LOCATION+'/'+settings.BARCODES_FOLDER, t.item.bar_code+'.png')
+        filepath = os.path.join(settings.APP_LOCATION+'/'+Setting.objects.get('Barcodes folder'), t.item.bar_code+'.png')
         for label in range(quantity):
-            if x>=settings.LABELS_PER_PAGE:
+            if x>=Setting.objects.get('Lines per page'):
                 p.showPage()
-                x-=settings.LABELS_PER_PAGE
-            p.drawImage(filepath, x%settings.LABELS_PER_LINE*150, p._pagesize[1]-(x/settings.LABELS_PER_LINE+1)*75)
+                x-=Setting.objects.get('Lines per page')
+            p.drawImage(filepath, x%Setting.objects.get('Labels per line')*150, p._pagesize[1]-(x/Setting.objects.get('Labels per line')+1)*75)
             x+=1
     p.showPage()
     p.save()
@@ -614,7 +614,7 @@ def account_statement(request, object_id): # GET ONLY
     for entry in entries:
         total+=entry.value
         entry.total=total
-    return render_report(request, settings.ACCOUNT_STATEMENT_REPORT_NAME, {'account':account,'entries':entries})
+    return render_report(request, Setting.objects.get('Account statement report').name, {'account':account,'entries':entries})
 @login_required
 @permission_required('inventory.change_client', login_url="/blocked/")
 def new_client(request):
@@ -657,10 +657,10 @@ def low_stock(request, errors=[]):
 def low_stock_report(request):
     items=Item.objects.low_stock()
     count=items.count()
-    try:report=Report.objects.get(name=settings.LOW_STOCK_REPORT_NAME)
+    try:report=Setting.objects.get('Low stock report')
     except Report.DoesNotExist: 
         request.GET=request.GET.copy()
-        errors={'Report':[unicode(_('Unable to find a report template with the name "%s"') % (settings.LOW_STOCK_REPORT_NAME,))]}
+        errors={'Report':[unicode(_('Unable to find a report template with the name "%s"') % (Setting.objects.get('Low stock report').name,))]}
         return low_stock(request, errors=errors)
     return render_string_to_pdf(Template(report.body), {'items':items, 'user':request.user, 'count':count})  
     
@@ -671,9 +671,9 @@ def price_report(request):
     except KeyError: q=''
     items=Item.objects.find(q)
     print "items = " + str(items)
-    try:report=Report.objects.get(name=settings.PRICE_REPORT_NAME)
+    try:report=Setting.objects.get('Price report')
     except Report.DoesNotExist:
-        errors={'Report':[unicode(_('Unable to find a report template with the name "%s"') % (settings.PRICE_REPORT_NAME,))]}
+        errors={'Report':[unicode(_('Unable to find a report template with the name "%s"') % (Setting.objects.get('Price report').name,))]}
         return item_list(request, errors=errors)
     return render_string_to_pdf(Template(report.body), {'items':items, 'user':request.user})
 @login_required
@@ -690,10 +690,10 @@ def inventory_report(request):
         total_cost+=item.cost
         total_total_cost+=item.total_cost
         total_stock+=item.stock
-    try:report=Report.objects.get(name=settings.INVENTORY_REPORT_NAME)
+    try:report=Setting.objects.get('Inventory report')
     except Report.DoesNotExist: 
         request.GET=request.GET.copy()
-        errors={'Report':[unicode(_('Unable to find a report template with the name "%s"') % (settings.INVENTORY_REPORT_NAME,))]}
+        errors={'Report':[unicode(_('Unable to find a report template with the name "%s"') % (Setting.objects.get('Inventory report').name,))]}
         return item_list(request, errors=errors)
     return render_string_to_pdf(Template(report.body), {'items':items, 'user':request.user, 'total_cost':total_cost, 'total_total_cost':total_total_cost, 'total_stock':total_stock,'count':count})  
     
@@ -713,7 +713,7 @@ def item_show(request, object_id):
             object_id=object_id,
             template_name = 'inventory/item_show.html',
             extra_context = {
-                'entry_page': _paginate(request, Entry.objects.filter(item=item, account=INVENTORY_ACCOUNT)),
+                'entry_page': _paginate(request, Entry.objects.filter(item=item, account=Setting.objects.get('Inventory account'))),
                 'form': form,
                 'tipo':item.tipo,
             }
@@ -931,7 +931,7 @@ def add_payment_to_sale(request, object_id):
     for transaction in doc:
         for entry in transaction.entry_set.filter(account=obj.client):
             if entry.active: total+=entry.value
-    payment=ClientPayment(doc_number=obj.doc_number, date=obj.date, credit=obj.client, debit=PAYMENTS_RECEIVED_ACCOUNT, value=total)
+    payment=ClientPayment(doc_number=obj.doc_number, date=obj.date, credit=obj.client, debit=Setting.objects.get('Payments received account'), value=total)
     payment.save()
     payment.edit_mode=True
     return _r2r(request,'inventory/results.html', {'edit_mode':True, 'objects':[payment],'prefix':'clientpayment','line_template':"inventory/transaction.html",'error_list':{}, 'info_list':{}})
@@ -1327,11 +1327,11 @@ def movements_report(request):
     except: pass
     try:transactions=transactions.filter(_date__lt=request.GET['end'])
     except: pass
-    try:report=Report.objects.get(name=settings.MOVEMENTS_REPORT_NAME)
+    try:report=Setting.objects.get('Movements report')
     except Report.DoesNotExist: 
         request.GET=request.GET.copy()
 #        request.GET['q']=doc_number
-        errors={'Report':[unicode(_('Unable to find a report template with the name "%s"') % (settings.MOVEMENTS_REPORT_NAME,))]}
+        errors={'Report':[unicode(_('Unable to find a report template with the name "%s"') % (Setting.objects.get('Movements report').name,))]}
         return list_sales(request, errors=errors)
     return render_string_to_pdf(Template(report.body), {'transactions':transactions, 'user':request.user})  
 
@@ -1356,7 +1356,7 @@ def new_cash_closing(request):
         cash=Entry.objects.filter(account=CASH_ACCOUNT, date__lt=dt(deadline)).aggregate(total=models.Sum('value'))['total'] or Decimal('0.00')
     if cash_closings.count() == 0:
         doc_number=CashClosing.objects.next_doc_number()
-        c=CashClosing(doc_number=doc_number, date=start, value=cash-settings.STARTING_CASH_ACCOUNT_BALANCE)
+        c=CashClosing(doc_number=doc_number, date=start, value=cash-Setting.objects.get('Starting cash account balance'))
         c.save()
         c.edit_mode=True
         return _r2r(request,'inventory/results.html', {'objects':[c],'prefix':'cash_closing','line_template':"inventory/cash_closing.html",'error_list':{}, 'info_list':{}})
@@ -1370,10 +1370,10 @@ def edit_cash_closing(request, object_id):
 
 def cash_closing_report(request, object_id):
     cash_closing = get_object_or_404(CashClosing, pk=object_id)
-    try:report=Report.objects.get(name=settings.CASH_CLOSING_REPORT_NAME)
+    try:report=Setting.objects.get('Cash closing report')
     except Report.DoesNotExist: 
         request.GET=request.GET.copy()
-        errors={'Report':[unicode(_('Unable to find a report template with the name "%s"') % (settings.CORTE_REPORT_NAME,))]}
+        errors={'Report':[unicode(_('Unable to find a report template with the name "%s"') % (Setting.objects.get('Cash closing report').name,))]}
         return item_list(request, errors=errors)
     return render_string_to_pdf(Template(report.body), {
         'start':cash_closing.start,
@@ -1386,7 +1386,8 @@ def cash_closing_report(request, object_id):
         'groups_by_series':cash_closing.groups_by_series,
         'grouped_payments':cash_closing.payments_by_timing,
         'user':request.user,
-        'settings.COMPANY_NAME':settings.COMPANY_NAME,
+        'settings.COMPANY_NAME':Setting.objects.get('Company name'),
+        'company_name':Setting.objects.get('Company name'),
         'revenue':cash_closing.revenue,        
         'discount':cash_closing.discount,        
         'totalrevenue':cash_closing.revenue-cash_closing.discount,

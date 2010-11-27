@@ -242,6 +242,8 @@ class EntryAdmin(admin.ModelAdmin):
     list_display = ('transaction','tipo', 'value', 'account','item','quantity')  
 class CostLinkAdmin(admin.ModelAdmin):
     list_display = ('incoming', 'outgoing','quantity','value')
+class SettingsAdmin(admin.ModelAdmin):
+    list_display = ('name', 'value','tipo')
 class ContactAdmin(admin.ModelAdmin):
     search_fields = ('account__name', )
 class ReportAdmin(admin.ModelAdmin):
@@ -263,6 +265,7 @@ admin.site.register(VendorPayment, VendorPaymentAdmin)
 admin.site.register(Transaction, TransactionAdmin)
 admin.site.register(TaxRate)
 admin.site.register(Unit)
+admin.site.register(Setting, SettingsAdmin)
 admin.site.register(ReceiptGroup)
 admin.site.register(AccountGroup)
 admin.site.register(Contact, ContactAdmin)

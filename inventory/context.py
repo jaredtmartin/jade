@@ -14,9 +14,9 @@
 #    You should have received a copy of the GNU General Public License
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 from django.conf import settings
-
+from jade.inventory.models import Setting
 def company_name(request):
     return {
-        'company_name': settings.COMPANY_NAME,
-        'date_format': settings.DATE_FORMAT,
+        'company_name': Setting.objects.get('Company name'),
+        'date_format': Setting.objects.get('Date format'),
     }

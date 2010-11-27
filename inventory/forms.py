@@ -82,7 +82,7 @@ class SaleForm(forms.ModelForm):
         if commit: model.save()
         return model
     doc_number =        forms.CharField()
-    account =           forms.CharField(initial=settings.DEFAULT_CLIENT_NAME)
+    account =           forms.CharField(initial=Setting.objects.get('Default client'))
     item =              forms.CharField(required=False)
     unit_value =        forms.DecimalField()
     quantity =          forms.DecimalField()
@@ -134,7 +134,7 @@ class ClientGaranteeForm(forms.ModelForm):
         if commit: model.save()
         return model
     doc_number =        forms.CharField()
-    account =           forms.CharField(initial=settings.DEFAULT_CLIENT_NAME)
+    account =           forms.CharField(initial=Setting.objects.get('Default client').name)
     item =              forms.CharField(required=False)
     value =             forms.DecimalField(required=False)
     quantity =          forms.DecimalField()
@@ -162,7 +162,7 @@ class VendorGaranteeForm(forms.ModelForm):
         if commit: model.save()
         return model
     doc_number =        forms.CharField()
-    account =           forms.CharField(initial=settings.DEFAULT_VENDOR_NAME)
+    account =           forms.CharField(initial=Setting.objects.get('Default vendor').name)
     item =              forms.CharField(required=False)
     value =             forms.DecimalField()
     quantity =          forms.DecimalField()
@@ -187,7 +187,7 @@ class ClientPaymentForm(forms.ModelForm):
         return model
     doc_number =        forms.CharField()
     value =             forms.DecimalField(required=False)
-    account =           forms.CharField(initial=settings.DEFAULT_CLIENT_NAME)
+    account =           forms.CharField(initial=Setting.objects.get('Default client').name)
     date =              forms.DateField(initial=datetime.now()) #, input_formats=['%Y-%m-%d', '%d/%m/%Y',]) # Uncomment this for spanish dates
     def clean_account(self):
         return clean_lookup(self, 'account', Client)
@@ -205,7 +205,7 @@ class VendorPaymentForm(forms.ModelForm):
         return model
     doc_number =        forms.CharField()
     value =             forms.DecimalField(required=False)
-    account =           forms.CharField(initial=settings.DEFAULT_VENDOR_NAME)
+    account =           forms.CharField(initial=Setting.objects.get('Default vendor').name)
     date =              forms.DateField(initial=datetime.now()) #, input_formats=['%Y-%m-%d', '%d/%m/%Y',]) # Uncomment this for spanish dates
     def clean_account(self):
         return clean_lookup(self, 'account', Vendor)
@@ -222,7 +222,7 @@ class TaxForm(forms.ModelForm):
         return model
     doc_number =        forms.CharField()
     value =             forms.DecimalField(required=False)
-    account =           forms.CharField(initial=settings.DEFAULT_CLIENT_NAME)
+    account =           forms.CharField(initial=Setting.objects.get('Default client').name)
     date =              forms.DateField(initial=datetime.now()) #, input_formats=['%Y-%m-%d', '%d/%m/%Y',]) # Uncomment this for spanish dates
 
 class SaleTaxForm(TaxForm):
@@ -278,7 +278,7 @@ class PurchaseForm(forms.ModelForm):
         if commit: model.save()
         return model
     doc_number =        forms.CharField()
-    account =           forms.CharField(initial=settings.DEFAULT_VENDOR_NAME)
+    account =           forms.CharField(initial=Setting.objects.get('Default vendor').name)
     item =              forms.CharField(required=False)
     quantity =          forms.DecimalField()
     value =              forms.DecimalField()
@@ -497,11 +497,11 @@ class ContactForm(forms.ModelForm):
             self.initial['cell_phone'] = instance.cell_phone
             self.initial['work_phone'] = instance.work_phone
             if instance.account_group: self.initial['account_group'] = instance.account_group.name
-            else: self.initial['account_group'] = settings.DEFAULT_ACCOUNT_GROUP_NAME
+            else: self.initial['account_group'] = Setting.objects.get('Default account group').name
             if instance.receipt_group: self.initial['receipt_group'] = instance.receipt_group.name
-            else: self.initial['receipt_group'] = settings.DEFAULT_RECEIPT_GROUP_NAME
+            else: self.initial['receipt_group'] = Setting.objects.get('Default receipt group').name
             if instance.price_group: self.initial['price_group'] = instance.price_group.name
-            else: self.initial['price_group'] = settings.DEFAULT_PRICE_GROUP_NAME
+            else: self.initial['price_group'] = Setting.objects.get('Default price group').name
             self.initial['fax'] = instance.fax
             self.initial['tax_number'] = instance.tax_number
             self.initial['description'] = instance.description
@@ -510,9 +510,9 @@ class ContactForm(forms.ModelForm):
             self.initial['user'] = instance.user
             self.initial['credit_days'] = instance.credit_days
         else:
-            self.initial['price_group'] = settings.DEFAULT_PRICE_GROUP_NAME
-            self.initial['account_group'] = settings.DEFAULT_ACCOUNT_GROUP_NAME
-            self.initial['credit_days'] = settings.DEFAULT_CREDIT_DAYS
+            self.initial['price_group'] = Setting.objects.get('Default price group').name
+            self.initial['account_group'] = Setting.objects.get('Default account group').name
+            self.initial['credit_days'] = Setting.objects.get('Default credit days')
     def clean_account_group(self):
         return clean_lookup(self, 'account_group', AccountGroup)
     def clean_receipt_group(self):

@@ -127,4 +127,6 @@ class SaleManager(BaseManager):
                 number[-2]=("%%0%id" % len(number[-2])) % (int(number[-2])+1)
             return "".join(number)
         except: return "1001"    
-
+class SettingsManager(models.Manager):
+    def get(self, value):
+        return super(SettingsManager, self).get_query_set().get(name=value).value
