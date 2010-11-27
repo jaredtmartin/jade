@@ -165,6 +165,7 @@ urlpatterns = patterns('',
     
     # CashClosing
     (r'^transactions/close/$', 'jade.inventory.views.new_cash_closing'),
+    (r'^cashclosings/$', 'jade.inventory.views.list_cashclosing'),
     (r'^cashclosing/(?P<object_id>\d+)/$', 'jade.inventory.views.edit_cash_closing'),
     (r'^cashclosing/(?P<object_id>\d+)/report.pdf$', 'jade.inventory.views.cash_closing_report'),
     

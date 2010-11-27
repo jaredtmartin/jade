@@ -1342,28 +1342,15 @@ def movements_report(request):
 def new_cash_closing(request):
     form=SearchForm(request.GET)
     form.is_valid()
-    start=form.cleaned_data['start']
-    end=form.cleaned_data['end']
-    cash_closings=CashClosing.objects.all()
-    print "start = " + str(start)
-    print "end = " + str(end)
-    if not start and not end:
-        from datetime import datetime
-        start=datetime.date(datetime.now())
-        end=start+timedelta(days=1)
-    if start: cash_closings=cash_closings.filter(_date__gte=start)
-    if end:
-        deadline = end + timedelta(days=1)
-        cash_closings=cash_closings.filter(_date__lt=deadline)
-        cash=Entry.objects.filter(account=CASH_ACCOUNT, date__lt=dt(deadline)).aggregate(total=models.Sum('value'))['total'] or Decimal('0.00')
-    if cash_closings.count() == 0:
-        doc_number=CashClosing.objects.next_doc_number()
-        c=CashClosing(doc_number=doc_number, date=start, value=cash-Setting.objects.get('Starting cash account balance'))
-        c.save()
-        c.edit_mode=True
-        return _r2r(request,'inventory/results.html', {'objects':[c],'prefix':'cash_closing','line_template':"inventory/cash_closing.html",'error_list':{}, 'info_list':{}})
-    else:
-        return _r2r(request,'inventory/results.html', {'objects':[],'prefix':'cash_closing','line_template':"inventory/cash_closing.html",'error_list':{_('CashClosing'):[_('There can only be one cash_closing per day.'),]}, 'info_list':{}})
+    end=datetime.date(form.cleaned_data['end'])+timedelta(days=1)
+    if not start: start=datetime.date(datetime.now())+timedelta(days=1)
+    cash=Entry.objects.filter(account=Setting.objects.get('Cash account'), date__lt=dt(end)).aggregate(total=models.Sum('value'))['total'] or Decimal('0.00')
+    doc_number=CashClosing.objects.next_doc_number()
+    c=CashClosing(doc_number=doc_number, date=start, value=cash-Setting.objects.get('Starting cash account balance'))
+    c.save()
+    c.edit_mode=True
+    return _r2r(request,'inventory/results.html', {'objects':[c],'prefix':'cash_closing','line_template':"inventory/cash_closing.html",'error_list':{}, 'info_list':{}})
+      
     
 @login_required
 @permission_required('inventory.change_cash_closing', login_url="/blocked/")
@@ -1402,7 +1389,15 @@ def cash_closing_report(request, object_id):
         'cash_check':cash_closing.cash_check,
         'paymentstotal':cash_closing.paymentstotal,
     })  
+@login_required
+@permission_required('inventory.view_cashclosing', login_url="/blocked/")
+def list_cashclosing(request):
+    try: q=request.GET['q']
+    except KeyError: q=''
+    if q=='': page=_paginate(request, CashClosing.objects.all().order_by('-_date'))
+    else: page=_paginate(request, CashClosing.objects.filter(doc_number=q).order_by('-_date'))
     
+    return _r2r(request,'inventory/cashclosing_list.html', {'page':page,'prefix':'transaction','q':q})
 ######################################################################################
 # Transfer Views
 ######################################################################################
