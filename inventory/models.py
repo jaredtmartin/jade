@@ -108,7 +108,7 @@ class ItemManager(models.Manager):
 class Item(models.Model):
     """
     """
-    name = models.CharField(_('name'), max_length=200)
+    name = models.CharField(_('name'), max_length=200, unique=True)
     bar_code = models.CharField(_('bar code'), max_length=64, blank=True)
     image=ImageWithThumbsField(_('image'), upload_to='uploaded_images', sizes=((75,75),(150,150)), null=True, blank=True)
     minimum = models.DecimalField(_('minimum'), max_digits=8, decimal_places=2, default=Decimal('0.00'), blank=True)
