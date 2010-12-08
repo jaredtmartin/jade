@@ -389,10 +389,7 @@ class ItemForm(forms.ModelForm):
             self.initial['unit'] = instance.unit
     def clean_bar_code(self):
         if (not self.cleaned_data['bar_code']) or self.cleaned_data['bar_code']=='':
-            print "HERE"
-            print "Item.objects.next_bar_code()=" + str(Item.objects.next_bar_code())
             self.cleaned_data['bar_code']=Item.objects.next_bar_code()
-            print "self.cleaned_data['bar_code']=" + str(self.cleaned_data['bar_code'])
         return self.cleaned_data['bar_code']
     def clean_unit(self):
         if self.cleaned_data['unit']=='':
