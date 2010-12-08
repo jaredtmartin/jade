@@ -203,8 +203,9 @@ class Service(Item):
         
 def create_prices_for_item(sender, **kwargs):
     if kwargs['instance'].bar_code != '':
-        if subprocess.call('ls %s%s' % (settings.BARCODES_FOLDER,kwargs['instance'].bar_code), shell=True)!=0:
+        try: if subprocess.call('ls %s%s' % (settings.BARCODES_FOLDER,kwargs['instance'].bar_code), shell=True)!=0:
             create_barcode(kwargs['instance'].bar_code, settings.BARCODES_FOLDER)
+        except:pass
     if kwargs['created']:
         for group in PriceGroup.objects.all():
             Price.objects.create(item=kwargs['instance'], group=group, site=Site.objects.get_current())
