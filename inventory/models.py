@@ -812,7 +812,7 @@ class Transaction(models.Model):
         permissions = (
             ("view_transaction", "Can view transactions"),
         )
-    
+
     def get_tipo_display(self):
         return _(self.tipo)
     def _get_date(self):
@@ -1079,6 +1079,7 @@ class Sale(Transaction):
             ("view_sale", "Can view sales"),
             ("view_receipt", "Can view sales"),
         )
+    
     objects = BaseManager('Sale')
     def print_url(self):
         return '/inventory/sale/%s/receipt.pdf'% self.doc_number
@@ -1089,6 +1090,7 @@ class Sale(Transaction):
         super(Sale, self).__init__(*args, **kwargs)
         self.template='inventory/sale.html'
         self.deliverable=True
+        self._initial_quantity=self.quantity
         self.returnable=True
         self.extra_actions=[
             Action('Add Garantee', 'garantee.png', "addGarantee(%i,'clientgarantee'); return false;"),
@@ -1097,7 +1099,25 @@ class Sale(Transaction):
             Action('Add Payment', 'garantee.png', "newTransaction('/inventory/sale/%i/pay/'); return false;"),
         ]
         self.tipo='Sale'
-
+        
+    def calculate_cost(self):
+        try:
+            if self.active: value=self.item.total_cost+self.cost
+            else: value=self.item.total_cost
+            if self.delivered: stock=self.item.stock+self.quantity
+            else: stock=self.item.stock
+            if stock*self.quantity == 0: return 0
+            return value/stock*self.quantity
+        except NameError: return 0
+        except AttributeError: return 0
+    def save(self, *args, **kwargs):
+        try: 
+            cc=self.extravalue_set.get(name='CalculatedCost')
+            if cc.value==self.cost and self._initial_quantity != self.quantity:
+                    self.cost = cc.value = self.calculate_cost()
+                    cc.save()
+        except ExtraValue.DoesNotExist: pass
+        super(Sale, self).save(*args, **kwargs)        
     def _get_delivered(self):
         try: return self.entry('Client').delivered
         except AttributeError: return self._delivered
@@ -1219,6 +1239,7 @@ def add_sale_entries(sender, **kwargs):
                 account = EXPENSE_ACCOUNT,
                 tipo = 'Expense',
                 value = l.cost)
+        if kwargs['created']: ExtraValue.objects.create(transaction = kwargs['instance'], name = 'CalculatedCost', value = kwargs['instance']._cost)
 
 post_save.connect(add_sale_entries, sender=Sale, dispatch_uid="jade.inventory.models:add_sale_entries")
 
@@ -1268,19 +1289,6 @@ class Purchase(Transaction):
         self._initial_value=self.value
         self._initial_quantity=self.quantity
         self.tipo='Purchase'
-    def save(self, *args, **kwargs):
-        try: 
-            cc=self.extravalue_set.get(name='CalculatedCost')
-            if cc.value==self.cost and self._initial_quantity != self.quantity:
-                    self.cost = cc.value = self.calculate_cost()
-                    cc.save()
-        except ExtraValue.DoesNotExist: pass
-        super(Purchase, self).save(*args, **kwargs)
-    def _get_vendor(self):
-        return self.credit
-    def _set_vendor(self, value):
-        self.credit = value
-    vendor = property(_get_vendor, _set_vendor)
     def calculate_cost(self):
         try:
             if self.active: value=self.item.total_cost-self.value
@@ -1291,11 +1299,37 @@ class Purchase(Transaction):
             return value/stock*self.quantity
         except NameError: return 0
         except AttributeError: return 0
-        
+    def save(self, *args, **kwargs):
+        try: 
+            cc=self.extravalue_set.get(name='CalculatedCost')
+            if cc.value==self.value and self._initial_quantity != self.quantity:
+                    self.value = cc.value = self.calculate_cost()
+                    cc.save()
+        except ExtraValue.DoesNotExist: pass
+        super(Purchase, self).save(*args, **kwargs)
+    def _get_vendor(self):
+        return self.credit
+    def _set_vendor(self, value):
+        self.credit = value
+    vendor = property(_get_vendor, _set_vendor)
+    def _get_value(self):
+        try: return self.entry('Inventory').value
+        except AttributeError: return self._value
+    def _set_value(self, value):
+        value=(value or 0)
+        try:
+            self.entry('Vendor').update('value',-value)
+            self.entry('Inventory').update('value', value)
+        except: self._value = value
+    value=property(_get_value, _set_value)
+       
 def add_purchase_extra_values(sender, **kwargs):
-    if kwargs['created']: ExtraValue.objects.create(transaction = kwargs['instance'], name = 'CalculatedCost', value = kwargs['instance']._value)
+    print "running funcc = "
+    if kwargs['created']: 
+        print "createing extra value = "
+        ExtraValue.objects.create(transaction = kwargs['instance'], name = 'CalculatedCost', value = kwargs['instance']._value)
 post_save.connect(add_general_entries, sender=Purchase, dispatch_uid="jade.inventory.models")
-post_save.connect(add_purchase_extra_values, sender=Purchase, dispatch_uid="jade.inventory.models")
+post_save.connect(add_purchase_extra_values, sender=Purchase, dispatch_uid="jade.insventory.models")
       
 class PurchaseReturn(Purchase):
     class Meta:

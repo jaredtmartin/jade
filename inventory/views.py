@@ -208,7 +208,7 @@ def new_purchase(request):
 
     try: 
         item=Item.objects.fetch(request.POST['item'])
-        cost=item.cost
+        value=item.cost
     except Item.MultipleObjectsReturned: 
         error_list['item']=['There are more than one %ss with the name %s. Try using a bar code.' % ('item', request.POST['item'])]
     except Item.DoesNotExist: 
