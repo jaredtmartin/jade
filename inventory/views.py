@@ -788,7 +788,7 @@ def edit_clientgarantee(request, object_id):
 @permission_required('inventory.change_clientgarantee', login_url="/blocked/")
 def new_clientgarantee(request, object_id):
     sale = get_object_or_404(Sale, pk=object_id)
-    try: months=sale.item.garanteeoffer_set.filter(price=0)[0]
+    try: months=sale.item.garanteeoffer_set.filter(price=0)[0].months
     except: months=0
     garantee=ClientGarantee(doc_number=sale.doc_number, date=sale.date, client=sale.client, credit=sale.client.account_group.revenue_account, item=sale.item, quantity=months, serial=sale.serial)
     garantee.save()

@@ -1723,6 +1723,9 @@ class Garantee(Transaction):
     # Quantity is the number of months the Garantee will be active
     class Meta:
         proxy = True
+    def __init__(self, *args, **kwargs):
+        super(Garantee, self).__init__(*args, **kwargs)
+        self._delivered=False
     def _get_expires(self):
         return self._date+timedelta(int(self.quantity)*365/12)
     expires = property(_get_expires)
