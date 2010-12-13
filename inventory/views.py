@@ -978,7 +978,7 @@ def get_tax_form(request, object_id):
     if not request.user.has_perm('inventory.add_'+obj.tipo.lower()+'tax'): return http.HttpResponseRedirect("/blocked/")
     default=obj.account.default_tax_rate
     rates=TaxRate.objects.all()
-    total=Entry.objects.filter(transaction__doc_number=obj.doc_number, active=True, account=obj.subclass.account).aggregate(total=models.Sum('value'))['total'] or Decimal('0.00')
+    total=Entry.objects.filter(transaction__doc_number=obj.doc_number, active=True, account=obj.subclass.account).exclude(transaction__tipo='SaleTax').exclude(transaction__tipo='SaleTax.').aggregate(total=models.Sum('value'))['total'] or Decimal('0.00')
     total=total* obj.account.multiplier
     if default.price_includes_tax:
         amount=total/(default.value+1)*default.value
