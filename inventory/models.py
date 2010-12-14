@@ -103,6 +103,7 @@ class ItemManager(models.Manager):
         return query.get(Q(name=q) | Q(bar_code=q))
     def low_stock(self):
         return list(Item.objects.raw("select id from (select inventory_item.*, sum(quantity) total from inventory_item left join inventory_entry on inventory_item.id=inventory_entry.item_id where (inventory_entry.delivered=True and account_id=%i) or (inventory_entry.id is null) group by inventory_item.id) asd where (total<minimum) or (total is null and minimum>0);" % INVENTORY_ACCOUNT.pk))
+        
 class Item(models.Model):
     """
     """
@@ -135,7 +136,10 @@ class Item(models.Model):
     def _get_total_cost(self):
         return Entry.objects.filter(item=self, account=INVENTORY_ACCOUNT, active=True).aggregate(total=models.Sum('value'))['total'] or Decimal('0.00')
     total_cost=property(_get_total_cost)
-    def price(self, client):
+    def price(self, client=None):
+        if not client: 
+            try:client=DEFAULT_PRICE_GROUP
+            except:pass
         # fetches the price for the given client
         if type(client)==PriceGroup: group=client
         elif type(client) in (Account, Client, Vendor):group=client.price_group
