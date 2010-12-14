@@ -1343,8 +1343,6 @@ def new_cash_closing(request):
     start=form.cleaned_data['start']
     end=form.cleaned_data['end']
     cash_closings=CashClosing.objects.all()
-    print "start = " + str(start)
-    print "end = " + str(end)
     if not start and not end:
         from datetime import datetime
         start=datetime.date(datetime.now())

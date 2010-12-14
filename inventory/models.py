@@ -13,6 +13,7 @@
 
 #    You should have received a copy of the GNU General Public License
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
 from django.utils.translation import ugettext_lazy as _
 from django.db import models
 from decimal import *
@@ -80,6 +81,7 @@ ITEM_TYPES=(
     )
 try: DEFAULT_UNIT=Unit.objects.get(name=settings.DEFAULT_UNIT_NAME)
 except:DEFAULT_UNIT=None
+
 class ItemManager(models.Manager):
     def __init__(self, tipo=None):
         super(ItemManager, self).__init__()
@@ -103,7 +105,7 @@ class ItemManager(models.Manager):
         return query.get(Q(name=q) | Q(bar_code=q))
     def low_stock(self):
         return list(Item.objects.raw("select id from (select inventory_item.*, sum(quantity) total from inventory_item left join inventory_entry on inventory_item.id=inventory_entry.item_id where (inventory_entry.delivered=True and account_id=%i) or (inventory_entry.id is null) group by inventory_item.id) asd where (total<minimum) or (total is null and minimum>0);" % INVENTORY_ACCOUNT.pk))
-        
+
 class Item(models.Model):
     """
     """
@@ -202,7 +204,7 @@ class Service(Item):
     def save(self, *args, **kwargs):
         self.tipo='Service'
         super(Service, self).save(*args, **kwargs)
-        
+
 def create_prices_for_item(sender, **kwargs):
     if kwargs['instance'].bar_code != '':
         try: 
