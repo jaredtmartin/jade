@@ -17,10 +17,7 @@
 {% load i18n %}
 {% load tags %}
 {% block left %}
-    {% block actions %}{% endblock %}
-    {% for tab in user.get_profile.tabs %}
-        {% include 'tab.html' %}
-    {% endfor %}
+    {% tabs 'Base' %}
 {% endblock %}
 {% block messages %}
     <ul>

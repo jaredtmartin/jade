@@ -13,7 +13,7 @@
 
 #    You should have received a copy of the GNU General Public License
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
-from jade.inventory.models import Count, Sale, Purchase
+from jade.inventory.models import Count, Sale, Purchase, Tab
 from jade.inventory.forms import *
 #from django.template import loader, Context, RequestContext
 from django.utils.translation import ugettext_lazy as _
@@ -301,10 +301,10 @@ def ajax_account_group_list(request):
     return _r2r(request,'inventory/ajax_list.html', {'object_list':AccountGroup.objects.filter(name__icontains=q),'q':q})
 
 @login_required
-def ajax_receipt_group_list(request):
+def ajax_report_list(request):
     try: q=request.GET['q']
     except KeyError: q=''
-    return _r2r(request,'inventory/ajax_list.html', {'object_list':ReceiptGroup.objects.filter(name__icontains=q),'q':q})
+    return _r2r(request,'inventory/ajax_list.html', {'object_list':Report.objects.filter(name__icontains=q),'q':q})
 
 @login_required
 @permission_required('inventory.view_account', login_url="/blocked/")
@@ -1483,3 +1483,64 @@ def edit_linkeditem(request, object_id):
 def delete_linkeditem(request, object_id):
     return delete_object(request, object_id, LinkedItem, 'linkeditem','Linked Item')
  
+################################################################################################
+# Login procedure
+################################################################################################
+from django.views.decorators.cache import never_cache
+from django.views.decorators.csrf import csrf_protect
+from django.contrib.auth import REDIRECT_FIELD_NAME
+from django.contrib.auth.forms import AuthenticationForm
+from django.contrib.auth import login as auth_login
+@csrf_protect
+@never_cache
+def login(request, template_name='registration/login.html',
+          redirect_field_name=REDIRECT_FIELD_NAME,
+          authentication_form=AuthenticationForm):
+    """Displays the login form and handles the login action."""
+
+    redirect_to = request.REQUEST.get(redirect_field_name, '')
+    
+    if request.method == "POST":
+        form = authentication_form(data=request.POST)
+        if form.is_valid():
+            # Light security check -- make sure redirect_to isn't garbage.
+            if not redirect_to or ' ' in redirect_to:
+                redirect_to = Setting.get("Login redirect url")
+            
+            # Heavier security check -- redirects to http://example.com should 
+            # not be allowed, but things like /view/?param=http://example.com 
+            # should be allowed. This regex checks if there is a '//' *before* a
+            # question mark.
+            elif '//' in redirect_to and re.match(r'[^\?]*//', redirect_to):
+                    redirect_to = Setting.get("Login redirect url")
+            
+            # Okay, security checks complete. Log the user in.
+            user=form.get_user()
+            auth_login(request, user)
+
+            if request.session.test_cookie_worked():
+                request.session.delete_test_cookie()
+            profile=user.get_profile()
+            profile.tabs.all().delete()
+            for t in Tab.objects.all():
+                print "checking %s" % t.name
+                if user.has_perm(t.perm):
+                    profile.tabs.add(t)
+            return HttpResponseRedirect(redirect_to)
+
+    else:
+        form = authentication_form(request)
+    
+    request.session.set_test_cookie()
+    
+    if Site._meta.installed:
+        current_site = Site.objects.get_current()
+    else:
+        current_site = RequestSite(request)
+    
+    return render_to_response(template_name, {
+        'form': form,
+        redirect_field_name: redirect_to,
+        'site': current_site,
+        'site_name': current_site.name,
+    }, context_instance=RequestContext(request))

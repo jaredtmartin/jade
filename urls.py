@@ -50,7 +50,7 @@ urlpatterns = patterns('',
     (r'^manual/', include('jade.manual.urls')), 
     (r'^production/', include('jade.production.urls')), 
     (r'^blocked/$',direct_to_template, {'template': 'blocked.html'},"blocked"),
-    (r'^login/$', 'django.contrib.auth.views.login', {'template_name': 'login.html'}, "login"),
+    (r'^login/$', 'jade.inventory.views.login', {'template_name': 'login.html'}, "login"),
     (r'^logout/$', 'django.contrib.auth.views.logout', {'template_name': 'logout.html'}, "logout"),
 #    (r'^i18n/', include('django.conf.urls.i18n')),
 

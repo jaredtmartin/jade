@@ -23,7 +23,9 @@ register = template.Library()
 def show(x, y):
     if x==y: return ''
     else: return ' style="display:none;" '
-    
+@register.simple_tag
+def tab(tab):
+    return '<div class="%s"><a href="%s">%s</a></div>' % (tab.klass, tab.url, _(tab.name))
 @register.simple_tag
 def price(item, user):
     return "%.2f" % item.price(user)

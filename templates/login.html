@@ -21,7 +21,7 @@
     {% if form.errors %}
         <p>{% trans "Your username and password didn't match. Please try again." %}</p>
     {% endif %}
-    <form method="post" action="{% url django.contrib.auth.views.login %}">
+    <form method="post" action="{% url jade.inventory.views.login %}">
         {% csrf_token %}
         <div class="login-box">
             <span class="title">Jade</span> <span class="subtitle">{% trans 'Inventory and Accounting System' %}</span>

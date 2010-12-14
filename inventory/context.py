@@ -17,6 +17,6 @@ from django.conf import settings
 from jade.inventory.models import Setting
 def company_name(request):
     return {
-        'company_name': Setting.objects.get('Company name'),
-        'date_format': Setting.objects.get('Date format'),
+        'company_name': Setting.get('Company name'),
+        'date_format': Setting.get('Date format'),
     }
