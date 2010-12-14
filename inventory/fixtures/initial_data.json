@@ -67,8 +67,6 @@
 {"pk": 1, "model": "inventory.pricegroup", "fields": {"name": "Mayoreo"}},
 {"pk": 1, "model": "inventory.accountgroup", "fields": {"revenue_account": 17, "name": "Consumidor Final", "returns_account": 19, "site": 1, "default_tax_rate": 1, "discounts_account": 18}},
 {"pk": 1, "model": "inventory.accountgroup", "fields": {"revenue_account": 30, "name": "Credito Fiscal", "returns_account": 32, "site": 1, "default_tax_rate": 2, "discounts_account": 31}},
-{"pk": 8, "model": "inventory.vendor", "fields": {"site": 1, "multiplier": 1, "name": "No Especificado", "number": "020101","tipo":"Vendor"}},
-{"pk": 33, "model": "inventory.client", "fields": {"site": 1, "multiplier": 1, "name": "Anonimo", "number": "0104001","tipo":"Client"}}
-
+{"pk": 8, "model": "inventory.vendor", "fields": {"site": 1, "multiplier": 1, "name": "No Especificado", "number": "020101","tipo":"Vendor"}}
 ]
 
