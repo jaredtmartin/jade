@@ -208,7 +208,7 @@ def new_purchase(request):
 
     try: 
         item=Item.objects.fetch(request.POST['item'])
-        cost=item.cost
+        value=item.cost
     except Item.MultipleObjectsReturned: 
         error_list['item']=['There are more than one %ss with the name %s. Try using a bar code.' % ('item', request.POST['item'])]
     except Item.DoesNotExist: 
@@ -295,14 +295,12 @@ def ajax_price_group_list(request):
     except KeyError: q=''
     return _r2r(request,'inventory/ajax_list.html', {'object_list':PriceGroup.objects.filter(name__icontains=q),'q':q})
 @login_required
-@permission_required('inventory.view_account_group', login_url="/blocked/")
 def ajax_account_group_list(request):
     try: q=request.GET['q']
     except KeyError: q=''
     return _r2r(request,'inventory/ajax_list.html', {'object_list':AccountGroup.objects.filter(name__icontains=q),'q':q})
 
 @login_required
-@permission_required('inventory.view_receipt_group', login_url="/blocked/")
 def ajax_receipt_group_list(request):
     try: q=request.GET['q']
     except KeyError: q=''
@@ -790,7 +788,7 @@ def edit_clientgarantee(request, object_id):
 @permission_required('inventory.change_clientgarantee', login_url="/blocked/")
 def new_clientgarantee(request, object_id):
     sale = get_object_or_404(Sale, pk=object_id)
-    try: months=sale.item.garanteeoffer_set.filter(price=0)[0]
+    try: months=sale.item.garanteeoffer_set.filter(price=0)[0].months
     except: months=0
     garantee=ClientGarantee(doc_number=sale.doc_number, date=sale.date, client=sale.client, credit=sale.client.account_group.revenue_account, item=sale.item, quantity=months, serial=sale.serial)
     garantee.save()
@@ -940,7 +938,7 @@ def add_tax(request, object_id):
     if not request.user.has_perm('inventory.add_'+obj.tipo.lower()+'tax'): return http.HttpResponseRedirect("/blocked/")
     objects=[]
     rate=TaxRate.objects.get(name=request.POST['rate'])
-    total=Entry.objects.filter(transaction__doc_number=obj.doc_number, active=True, account=obj.subclass.account).aggregate(total=models.Sum('value'))['total'] or Decimal('0.00')
+    total=Entry.objects.filter(transaction__doc_number=obj.doc_number, active=True, account=obj.subclass.account).exclude(transaction__tipo='SaleTax').exclude(transaction__tipo='SaleTax.').aggregate(total=models.Sum('value'))['total'] or Decimal('0.00')
     total=total* obj.account.multiplier
     amount=Decimal(request.POST['amount'])
     percentage=amount/total
@@ -980,7 +978,7 @@ def get_tax_form(request, object_id):
     if not request.user.has_perm('inventory.add_'+obj.tipo.lower()+'tax'): return http.HttpResponseRedirect("/blocked/")
     default=obj.account.default_tax_rate
     rates=TaxRate.objects.all()
-    total=Entry.objects.filter(transaction__doc_number=obj.doc_number, active=True, account=obj.subclass.account).aggregate(total=models.Sum('value'))['total'] or Decimal('0.00')
+    total=Entry.objects.filter(transaction__doc_number=obj.doc_number, active=True, account=obj.subclass.account).exclude(transaction__tipo='SaleTax').exclude(transaction__tipo='SaleTax.').aggregate(total=models.Sum('value'))['total'] or Decimal('0.00')
     total=total* obj.account.multiplier
     if default.price_includes_tax:
         amount=total/(default.value+1)*default.value
@@ -1342,15 +1340,26 @@ def movements_report(request):
 def new_cash_closing(request):
     form=SearchForm(request.GET)
     form.is_valid()
-    end=datetime.date(form.cleaned_data['end'])+timedelta(days=1)
-    if not start: start=datetime.date(datetime.now())+timedelta(days=1)
-    cash=Entry.objects.filter(account=Setting.objects.get('Cash account'), date__lt=dt(end)).aggregate(total=models.Sum('value'))['total'] or Decimal('0.00')
-    doc_number=CashClosing.objects.next_doc_number()
-    c=CashClosing(doc_number=doc_number, date=start, value=cash-Setting.objects.get('Starting cash account balance'))
-    c.save()
-    c.edit_mode=True
-    return _r2r(request,'inventory/results.html', {'objects':[c],'prefix':'cash_closing','line_template':"inventory/cash_closing.html",'error_list':{}, 'info_list':{}})
-      
+    start=form.cleaned_data['start']
+    end=form.cleaned_data['end']
+    cash_closings=CashClosing.objects.all()
+    if not start and not end:
+        from datetime import datetime
+        start=datetime.date(datetime.now())
+        end=start+timedelta(days=1)
+    if start: cash_closings=cash_closings.filter(_date__gte=start)
+    if end:
+        deadline = end + timedelta(days=1)
+        cash_closings=cash_closings.filter(_date__lt=deadline)
+        cash=Entry.objects.filter(account=Setting.objects.get('Cash account'), date__lt=dt(deadline)).aggregate(total=models.Sum('value'))['total'] or Decimal('0.00')
+    if cash_closings.count() == 0:
+        doc_number=CashClosing.objects.next_doc_number()
+        c=CashClosing(doc_number=doc_number, date=start, value=cash-Setting.objects.get('Starting cash account balance'))
+        c.save()
+        c.edit_mode=True
+        return _r2r(request,'inventory/results.html', {'objects':[c],'prefix':'cash_closing','line_template':"inventory/cash_closing.html",'error_list':{}, 'info_list':{}})
+    else:
+        return _r2r(request,'inventory/results.html', {'objects':[],'prefix':'cash_closing','line_template':"inventory/cash_closing.html",'error_list':{_('CashClosing'):[_('There can only be one cash_closing per day.'),]}, 'info_list':{}})
     
 @login_required
 @permission_required('inventory.change_cash_closing', login_url="/blocked/")

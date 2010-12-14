@@ -65,6 +65,7 @@
                         <td class="numero" >${{count.count|minus:count.item.stock|mult:count.unit_cost|floatformat:2}}</td>
                         <td class="numero" >{{count.item.stock|floatformat:-2}}</td>
                         <td class="numero" >{% if count.count %}{{count.count|floatformat:-2}}{% else %}__________{% endif %}</td>
+                        <td class="numero" >{{count.count|minus:count.item.stock|mult:count.unit_cost|floatformat:-2}}</td>
                     </tr>
                 {%endfor%}
             </tbody>

@@ -13,6 +13,7 @@
 
 #    You should have received a copy of the GNU General Public License
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
 from django.utils.translation import ugettext_lazy as _
 from django.db import models
 from decimal import *
@@ -123,19 +124,18 @@ ITEM_TYPES=(
     ('Product', _('Product')),
     ('Service', _('Service')),
     )
+
 class ItemManager(models.Manager):
     def __init__(self, tipo=None):
         super(ItemManager, self).__init__()
         self.tipo=tipo
     def next_bar_code(self):
-        print "a"
-#        try:
-        number=super(ItemManager, self).get_query_set().all().order_by('-bar_code')[0].bar_code
+        try: number=super(ItemManager, self).get_query_set().filter(auto_bar_code=True).order_by('-bar_code')[0].bar_code
+        except IndexError: number='1001'
         number=increment_string_number(number)
         while Item.objects.filter(bar_code=number).count()>0:
             number=increment_string_number(number)
         return number
-#        except: return '1'
     def find(self, q):
         query=super(ItemManager, self).get_query_set()
         if self.tipo: query=query.filter(tipo=self.tipo)
@@ -151,7 +151,7 @@ class ItemManager(models.Manager):
 class Item(models.Model):
     """
     """
-    name = models.CharField(_('name'), max_length=200)
+    name = models.CharField(_('name'), max_length=200, unique=True)
     bar_code = models.CharField(_('bar code'), max_length=64, blank=True)
     image=ImageWithThumbsField(_('image'), upload_to='uploaded_images', sizes=((75,75),(150,150)), null=True, blank=True)
     minimum = models.DecimalField(_('minimum'), max_digits=8, decimal_places=2, default=Decimal('0.00'), blank=True)
@@ -180,7 +180,10 @@ class Item(models.Model):
     def _get_total_cost(self):
         return Entry.objects.filter(item=self, account=Setting.objects.get('Inventory account'), active=True).aggregate(total=models.Sum('value'))['total'] or Decimal('0.00')
     total_cost=property(_get_total_cost)
-    def price(self, client):
+    def price(self, client=None):
+        if not client: 
+            try:client=DEFAULT_PRICE_GROUP
+            except:pass
         # fetches the price for the given client
         if type(client)==PriceGroup: group=client
         elif type(client) in (Account, Client, Vendor):group=client.price_group
@@ -243,11 +246,13 @@ class Service(Item):
     def save(self, *args, **kwargs):
         self.tipo='Service'
         super(Service, self).save(*args, **kwargs)
-        
+
 def create_prices_for_item(sender, **kwargs):
     if kwargs['instance'].bar_code != '':
-        if subprocess.call('ls %s%s' % (Setting.BARCODES_FOLDER,kwargs['instance'].bar_code), shell=True)!=0:
-            create_barcode(kwargs['instance'].bar_code, Setting.BARCODES_FOLDER)
+        try: 
+            if subprocess.call('ls %s%s' % (Setting.BARCODES_FOLDER,kwargs['instance'].bar_code), shell=True)!=0:
+                create_barcode(kwargs['instance'].bar_code, Setting.BARCODES_FOLDER)
+        except:pass
     if kwargs['created']:
         for group in PriceGroup.objects.all():
             Price.objects.create(item=kwargs['instance'], group=group, site=Site.objects.get_current())
@@ -780,7 +785,7 @@ class Transaction(models.Model):
         permissions = (
             ("view_transaction", "Can view transactions"),
         )
-    
+
     def get_tipo_display(self):
         return _(self.tipo)
     def _get_date(self):
@@ -1047,6 +1052,7 @@ class Sale(Transaction):
             ("view_sale", "Can view sales"),
             ("view_receipt", "Can view sales"),
         )
+    
     objects = BaseManager('Sale')
     def print_url(self):
         return '/inventory/sale/%s/receipt.pdf'% self.doc_number
@@ -1057,6 +1063,7 @@ class Sale(Transaction):
         super(Sale, self).__init__(*args, **kwargs)
         self.template='inventory/sale.html'
         self.deliverable=True
+        self._initial_quantity=self.quantity
         self.returnable=True
         self.extra_actions=[
             Action('Add Garantee', 'garantee.png', "addGarantee(%i,'clientgarantee'); return false;"),
@@ -1065,7 +1072,25 @@ class Sale(Transaction):
             Action('Add Payment', 'garantee.png', "newTransaction('/inventory/sale/%i/pay/'); return false;"),
         ]
         self.tipo='Sale'
-
+        
+    def calculate_cost(self):
+        try:
+            if self.active: value=self.item.total_cost+self.cost
+            else: value=self.item.total_cost
+            if self.delivered: stock=self.item.stock+self.quantity
+            else: stock=self.item.stock
+            if stock*self.quantity == 0: return 0
+            return value/stock*self.quantity
+        except NameError: return 0
+        except AttributeError: return 0
+    def save(self, *args, **kwargs):
+        try: 
+            cc=self.extravalue_set.get(name='CalculatedCost')
+            if cc.value==self.cost and self._initial_quantity != self.quantity:
+                    self.cost = cc.value = self.calculate_cost()
+                    cc.save()
+        except ExtraValue.DoesNotExist: pass
+        super(Sale, self).save(*args, **kwargs)        
     def _get_delivered(self):
         try: return self.entry('Client').delivered
         except AttributeError: return self._delivered
@@ -1187,6 +1212,7 @@ def add_sale_entries(sender, **kwargs):
                 account = Setting.objects.get('Expense account'),
                 tipo = 'Expense',
                 value = l.cost)
+        if kwargs['created']: ExtraValue.objects.create(transaction = kwargs['instance'], name = 'CalculatedCost', value = kwargs['instance']._cost)
 
 post_save.connect(add_sale_entries, sender=Sale, dispatch_uid="jade.inventory.models:add_sale_entries")
 
@@ -1244,19 +1270,6 @@ class Purchase(Transaction):
         self._initial_value=self.value
         self._initial_quantity=self.quantity
         self.tipo='Purchase'
-    def save(self, *args, **kwargs):
-        try: 
-            cc=self.extravalue_set.get(name='CalculatedCost')
-            if cc.value==self.cost and self._initial_quantity != self.quantity:
-                    self.cost = cc.value = self.calculate_cost()
-                    cc.save()
-        except ExtraValue.DoesNotExist: pass
-        super(Purchase, self).save(*args, **kwargs)
-    def _get_vendor(self):
-        return self.credit
-    def _set_vendor(self, value):
-        self.credit = value
-    vendor = property(_get_vendor, _set_vendor)
     def calculate_cost(self):
         try:
             if self.active: value=self.item.total_cost-self.value
@@ -1267,11 +1280,37 @@ class Purchase(Transaction):
             return value/stock*self.quantity
         except NameError: return 0
         except AttributeError: return 0
-        
+    def save(self, *args, **kwargs):
+        try: 
+            cc=self.extravalue_set.get(name='CalculatedCost')
+            if cc.value==self.value and self._initial_quantity != self.quantity:
+                    self.value = cc.value = self.calculate_cost()
+                    cc.save()
+        except ExtraValue.DoesNotExist: pass
+        super(Purchase, self).save(*args, **kwargs)
+    def _get_vendor(self):
+        return self.credit
+    def _set_vendor(self, value):
+        self.credit = value
+    vendor = property(_get_vendor, _set_vendor)
+    def _get_value(self):
+        try: return self.entry('Inventory').value
+        except AttributeError: return self._value
+    def _set_value(self, value):
+        value=(value or 0)
+        try:
+            self.entry('Vendor').update('value',-value)
+            self.entry('Inventory').update('value', value)
+        except: self._value = value
+    value=property(_get_value, _set_value)
+       
 def add_purchase_extra_values(sender, **kwargs):
-    if kwargs['created']: ExtraValue.objects.create(transaction = kwargs['instance'], name = 'CalculatedCost', value = kwargs['instance']._value)
+    print "running funcc = "
+    if kwargs['created']: 
+        print "createing extra value = "
+        ExtraValue.objects.create(transaction = kwargs['instance'], name = 'CalculatedCost', value = kwargs['instance']._value)
 post_save.connect(add_general_entries, sender=Purchase, dispatch_uid="jade.inventory.models")
-post_save.connect(add_purchase_extra_values, sender=Purchase, dispatch_uid="jade.inventory.models")
+post_save.connect(add_purchase_extra_values, sender=Purchase, dispatch_uid="jade.insventory.models")
       
 class PurchaseReturn(Purchase):
     class Meta:
@@ -1699,6 +1738,9 @@ class Garantee(Transaction):
     # Quantity is the number of months the Garantee will be active
     class Meta:
         proxy = True
+    def __init__(self, *args, **kwargs):
+        super(Garantee, self).__init__(*args, **kwargs)
+        self._delivered=False
     def _get_expires(self):
         return self._date+timedelta(int(self.quantity)*365/12)
     expires = property(_get_expires)

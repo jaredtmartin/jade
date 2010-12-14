@@ -29,16 +29,18 @@
         {{form.description.label}}:<br>{{form.description}}
         <div class="item_image_area">
             {% if form.instance.pk %}
-                <a href="{% if object.image %}{{object.image.url}}{% endif %}" id="item_image">
-                    {% if object.image %}<img src="{{object.image.url_150x150}}">{% endif %}
-                </a>
+                {% if object.image %}
+                    <a href="{{object.image.url}}" id="item_image">
+                        {% if object.image %}<img src="{{object.image.url_150x150}}">{% endif %}
+                    </a>
+                {% endif %}
                 <input type="file" id="id_image" name="image">
                 <a href="#" onclick="ajaxFileUpload();return false;" id="buttonUpload">{% trans 'Upload' %} <img src="/media/img/save.png"></a>
             {% endif %}
         </div>
     </form>
     <hr class="clear-contentunit" />
-    <a href="#" onclick="save_{{tipo|lower}}({{form.instance.id|default:"''"}}); return false;">{% trans 'Save' %} <img src="/media/img/save.png"></a>
+    <a href="#" onclick="save_item({{form.instance.id|default:"''"}}); return false;">{% trans 'Save' %} <img src="/media/img/save.png"></a>
     {% if form.instance.pk %}
         <div class="item-block" id="prices-block">
             <h2>{% trans 'Prices' %}</h2>

@@ -389,10 +389,7 @@ class ItemForm(forms.ModelForm):
             self.initial['unit'] = instance.unit
     def clean_bar_code(self):
         if (not self.cleaned_data['bar_code']) or self.cleaned_data['bar_code']=='':
-            print "HERE"
-            print "Item.objects.next_bar_code()=" + str(Item.objects.next_bar_code())
             self.cleaned_data['bar_code']=Item.objects.next_bar_code()
-            print "self.cleaned_data['bar_code']=" + str(self.cleaned_data['bar_code'])
         return self.cleaned_data['bar_code']
     def clean_unit(self):
         if self.cleaned_data['unit']=='':
@@ -520,6 +517,7 @@ class ContactForm(forms.ModelForm):
             self.initial['price_group'] = Setting.objects.get('Default price group').name
             self.initial['account_group'] = Setting.objects.get('Default account group').name
             self.initial['credit_days'] = Setting.objects.get('Default credit days')
+
     def clean_account_group(self):
         return clean_lookup(self, 'account_group', AccountGroup)
     def clean_receipt_group(self):
