@@ -27,6 +27,10 @@ def show(x, y):
 def tab(tab):
     return '<div class="%s"><a href="%s">%s</a></div>' % (tab.klass, tab.url, _(tab.name))
 @register.simple_tag
+def tabs(user, keyword):
+    for tab in user.get_profile().tabs.filter(keywords__icontains=keyword):
+        return '<div class="%s"><a href="%s">%s</a></div>' % (tab.klass, tab.url, _(tab.name))
+@register.simple_tag
 def price(item, user):
     return "%.2f" % item.price(user)
 

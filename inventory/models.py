@@ -432,13 +432,10 @@ class Account(models.Model):
         try: return self.contact.state_name
         except: return None
     def _set_state_name(self, value):
-    #        print "setting state_name to" + value
         try: 
             self.contact.state_name = value
-    #            print "saved to contact"
         except: 
             self._state_name= value
-    #            print "saved to mem"
     state_name=property(_get_state_name, _set_state_name)
     def _get_country(self):
         try: return self.contact.country
