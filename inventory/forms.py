@@ -459,7 +459,7 @@ class AccountForm(forms.ModelForm):
 class ContactForm(forms.ModelForm):
     class Meta:
         model = Account
-        fields=('name', 'number', 'multiplier', 'account_group', 'receipt_group','price_group', 'address','state_name','country', 
+        fields=('name', 'number', 'multiplier', 'account_group', 'receipt','price_group', 'address','state_name','country', 
             'home_phone', 'cell_phone', 'work_phone', 'fax', 'tax_number', 'description', 'email', 'registration', 'user')
     address =       forms.CharField(required=False)
     state_name =    forms.CharField(required=False)
@@ -470,7 +470,7 @@ class ContactForm(forms.ModelForm):
     fax =           forms.CharField(required=False)
     tax_number =    forms.CharField(required=False)
     account_group = forms.CharField(widget=AutoCompleteInput('/inventory/account_group_list/'))
-    receipt_group = forms.CharField(widget=AutoCompleteInput('/inventory/receipt_group_list/'))
+    receipt =       forms.CharField(widget=AutoCompleteInput('/inventory/report_list/'))
     price_group =   forms.CharField(widget=AutoCompleteInput('/inventory/price_group_list/'))
     description =   forms.CharField(required=False)
     email =         forms.CharField(required=False)
@@ -502,8 +502,8 @@ class ContactForm(forms.ModelForm):
             self.initial['work_phone'] = instance.work_phone
             if instance.account_group: self.initial['account_group'] = instance.account_group.name
             else: self.initial['account_group'] = settings.DEFAULT_ACCOUNT_GROUP_NAME
-            if instance.receipt_group: self.initial['receipt_group'] = instance.receipt_group.name
-            else: self.initial['receipt_group'] = settings.DEFAULT_RECEIPT_GROUP_NAME
+            if instance.receipt: self.initial['receipt'] = instance.receipt.name
+            else: self.initial['receipt'] = settings.DEFAULT_RECEIPT_NAME
             if instance.price_group: self.initial['price_group'] = instance.price_group.name
             else: self.initial['price_group'] = settings.DEFAULT_PRICE_GROUP_NAME
             self.initial['fax'] = instance.fax
@@ -516,12 +516,12 @@ class ContactForm(forms.ModelForm):
         else:
             self.initial['price_group'] = settings.DEFAULT_PRICE_GROUP_NAME
             self.initial['account_group'] = settings.DEFAULT_ACCOUNT_GROUP_NAME
-            self.initial['receipt_group'] = settings.DEFAULT_RECEIPT_GROUP_NAME
+            self.initial['receipt'] = settings.DEFAULT_RECEIPT_NAME
             self.initial['credit_days'] = settings.DEFAULT_CREDIT_DAYS
     def clean_account_group(self):
         return clean_lookup(self, 'account_group', AccountGroup)
-    def clean_receipt_group(self):
-        return clean_lookup(self, 'receipt_group', ReceiptGroup)
+    def clean_receipt(self):
+        return clean_lookup(self, 'receipt', Report)
     def clean_price_group(self):
         return clean_lookup(self, 'price_group', PriceGroup)
     def clean_user(self):
@@ -546,7 +546,7 @@ class ContactForm(forms.ModelForm):
         model.fax =        self.cleaned_data['fax']
         model.tax_number =        self.cleaned_data['tax_number']
         model.account_group =        self.cleaned_data['account_group']
-        model.receipt_group =        self.cleaned_data['receipt_group']
+        model.receipt =        self.cleaned_data['receipt']
         model.price_group =        self.cleaned_data['price_group']
         model.description =        self.cleaned_data['description']
         model.email =        self.cleaned_data['email']

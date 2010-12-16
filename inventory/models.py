@@ -352,17 +352,17 @@ class Account(models.Model):
         except: return None
     discounts_account=property(_get_discounts_account)
     def _get_receipt(self):
-        try: return self.contact.receipt_group.receipt
+        try: return self.contact.receipt.receipt
         except Contact.DoesNotExist: return None
     receipt=property(_get_receipt)
     
-    def _get_receipt_group(self):
-        try: return self.contact.receipt_group
+    def _get_receipt(self):
+        try: return self.contact.receipt
         except Contact.DoesNotExist: return None
-    def _set_receipt_group(self, value):
-        try: self.contact.receipt_group=value
-        except: self._receipt_group=value
-    receipt_group=property(_get_receipt_group, _set_receipt_group)
+    def _set_receipt(self, value):
+        try: self.contact.receipt=value
+        except: self._receipt=value
+    receipt=property(_get_receipt, _set_receipt)
     
     def _get_account_group(self):
         try: return self.contact.account_group
@@ -520,7 +520,7 @@ def add_contact(sender, **kwargs):
             user=l._user,
             price_group=l._price_group,
             account_group=l._account_group,     
-            receipt_group=l._receipt_group,         
+            receipt=l._receipt,         
         )
 class TaxRate(models.Model):
     def __init__(self, *args, **kwargs):
@@ -577,10 +577,10 @@ class ClientManager(models.Manager):
                 if settings.AUTOCREATE_CLIENTS:
                     price_group=PriceGroup.objects.get(name=settings.DEFAULT_PRICE_GROUP_NAME)
                     account_group=AccountGroup.objects.get(name=settings.DEFAULT_ACCOUNT_GROUP_NAME)
-                    receipt_group=ReceiptGroup.objects.get(name=settings.DEFAULT_RECEIPT_GROUP_NAME)
+                    receipt=ReceiptGroup.objects.get(name=settings.DEFAULT_RECEIPT_NAME)
                     number=Client.objects.next_number()
                     
-                    return super(ClientManager, self).create(name=name,price_group=price_group,account_group=account_group, receipt_group=receipt_group, number=number)
+                    return super(ClientManager, self).create(name=name,price_group=price_group,account_group=account_group, receipt=receipt, number=number)
             else:
                 return super(ClientManager, self).get_query_set().get(name=settings.DEFAULT_CLIENT_NAME)
     def get_query_set(self):
@@ -671,7 +671,7 @@ class Contact(models.Model):
         super(Contact, self).save(*args, **kwargs)
     tax_group_name = models.CharField(max_length=32)
     price_group = models.ForeignKey(PriceGroup)
-    receipt_group = models.ForeignKey(ReceiptGroup)
+    receipt = models.ForeignKey(Report)
     account_group = models.ForeignKey(AccountGroup)
     address = models.CharField(max_length=32, blank=True, default="")
     state_name = models.CharField(max_length=32, blank=True, default="")

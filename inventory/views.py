@@ -301,10 +301,10 @@ def ajax_account_group_list(request):
     return _r2r(request,'inventory/ajax_list.html', {'object_list':AccountGroup.objects.filter(name__icontains=q),'q':q})
 
 @login_required
-def ajax_receipt_group_list(request):
+def ajax_report_list(request):
     try: q=request.GET['q']
     except KeyError: q=''
-    return _r2r(request,'inventory/ajax_list.html', {'object_list':ReceiptGroup.objects.filter(name__icontains=q),'q':q})
+    return _r2r(request,'inventory/ajax_list.html', {'object_list':Report.objects.filter(name__icontains=q),'q':q})
 
 @login_required
 @permission_required('inventory.view_account', login_url="/blocked/")
