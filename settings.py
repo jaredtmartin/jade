@@ -141,6 +141,7 @@ ACTIONS = [
     Tab(label='Counts', url='/inventory/counts/', permission='inventory.view_count'),
     Tab(label='Transfers', url='/inventory/sales/', permission='inventory.view_transfer'),
 ]
+
 #ASSETS_ACCOUNT_DATA=('Activos','01', 1)
 #CASH_ACCOUNT_DATA=('Efectivo','0101', 1)
 #PAYMENTS_RECEIVED_ACCOUNT_DATA=('Efectivo','0101', 1)
@@ -204,3 +205,4 @@ ACTIONS = [
 #STARTING_CASH_ACCOUNT_BALANCE=30
 #DEFAULT_ACCOUNT_GROUP_NAME='Consumidor Final'
 #DEFAULT_RECEIPT_GROUP_NAME='Consumidor Final'
+

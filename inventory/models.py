@@ -407,6 +407,7 @@ class Account(models.Model):
         try: return self.contact.receipt
         except Contact.DoesNotExist: return None
     receipt=property(_get_receipt)   
+
     def _get_account_group(self):
         try: return self.contact.account_group
         except: return self._account_group
@@ -618,7 +619,6 @@ class ClientManager(models.Manager):
                     account_group=Setting.get('Default account group')
                     receipt=Setting.get('Default receipt')
                     number=Client.objects.next_number()
-                    
                     return super(ClientManager, self).create(name=name,price_group=price_group,account_group=account_group, receipt=receipt, number=number)
             else:
                 return super(ClientManager, self).get_query_set().get(name=settings.DEFAULT_CLIENT_NAME)

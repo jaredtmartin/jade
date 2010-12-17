@@ -470,7 +470,7 @@ class ContactForm(forms.ModelForm):
     fax =           forms.CharField(required=False)
     tax_number =    forms.CharField(required=False)
     account_group = forms.CharField(widget=AutoCompleteInput('/inventory/account_group_list/'))
-    receipt = forms.CharField(widget=AutoCompleteInput('/inventory/report_list/'))
+    receipt =       forms.CharField(widget=AutoCompleteInput('/inventory/report_list/'))
     price_group =   forms.CharField(widget=AutoCompleteInput('/inventory/price_group_list/'))
     description =   forms.CharField(required=False)
     email =         forms.CharField(required=False)
@@ -517,7 +517,7 @@ class ContactForm(forms.ModelForm):
             self.initial['price_group'] = Setting.get('Default price group').name
             self.initial['account_group'] = Setting.get('Default account group').name
             self.initial['credit_days'] = Setting.get('Default credit days')
-
+            self.initial['receipt'] = Setting.get('Default receipt')
     def clean_account_group(self):
         return clean_lookup(self, 'account_group', AccountGroup)
     def clean_receipt(self):

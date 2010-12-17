@@ -61,8 +61,6 @@
 {"pk": 22, "model": "inventory.account", "fields": {"site": 1, "multiplier": 1, "name": "Gastos de Cuentas Fisicas", "number": "0502","tipo":"Account"}},
 {"pk": 23, "model": "inventory.account", "fields": {"site": 1, "multiplier": 1, "name": "Gastos de Transferencias", "number": "0503","tipo":"Account"}},
 {"pk": 24, "model": "inventory.account", "fields": {"site": 1, "multiplier": 1, "name": "Gastos de Produccion", "number": "0504","tipo":"Account"}},
-
-
 {"pk": 23, "model": "inventory.setting", "fields": {"_value": "9", "name": "Tax account", "tipo": "jade.inventory.models.Account"}},
 {"pk": 22, "model": "inventory.setting", "fields": {"_value": "8", "name": "Default Vendor", "tipo": "jade.inventory.models.Account"}},
 {"pk": 21, "model": "inventory.setting", "fields": {"_value": "7", "name": "Vendors account", "tipo": "jade.inventory.models.Account"}},
@@ -111,5 +109,6 @@
 {"pk": 6, "model": "inventory.tab", "fields": {"name": "Purchases", "url": "/inventory/purchases/", "perm": "inventory.view_purchase", "klass":"Tab", "keywords":"Transactions"}},
 {"pk": 7, "model": "inventory.tab", "fields": {"name": "Counts", "url": "/inventory/counts/", "perm": "inventory.view_count", "klass":"Tab", "keywords":"Transactions"}},
 {"pk": 8, "model": "inventory.tab", "fields": {"name": "Transfer", "url": "/inventory/transfers/", "perm": "inventory.view_sale", "klass":"Tab", "keywords":"Transactions"}}
+
 ]
 
