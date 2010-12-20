@@ -17,7 +17,8 @@
 {% load i18n %}
 {% load tags %}
 {% block left %}
-    {% tabs user 'Base' %}
+    {% block actions %}{% endblock %}
+    {% tabs user tabkw %}
 {% endblock %}
 {% block messages %}
     <ul>

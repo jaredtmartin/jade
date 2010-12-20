@@ -17,6 +17,7 @@ from django import template
 from inventory import models
 from decimal import *
 from django.utils.translation import ugettext_lazy as _
+from django.db.models import Q
 register = template.Library()
 
 @register.simple_tag
@@ -28,8 +29,10 @@ def tab(tab):
     return '<div class="%s"><a href="%s">%s</a></div>' % (tab.klass, tab.url, _(tab.name))
 @register.simple_tag
 def tabs(user, keyword):
-    for tab in user.get_profile().tabs.filter(keywords__icontains=keyword):
-        return '<div class="%s"><a href="%s">%s</a></div>' % (tab.klass, tab.url, _(tab.name))
+    html=u''
+    for tab in user.get_profile().tabs.filter(Q(keywords__icontains=keyword)|Q(keywords="")):
+        html+= u'<div class="%s"><a href="%s">%s</a></div>' % (tab.klass, tab.url, _(tab.name))
+    return html
 @register.simple_tag
 def price(item, user):
     return "%.2f" % item.price(user)

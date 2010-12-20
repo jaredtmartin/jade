@@ -704,6 +704,7 @@ def item_show(request, object_id):
                 'entry_page': _paginate(request, Entry.objects.filter(item=item, account=Setting.objects.get('Inventory account'))),
                 'form': form,
                 'tipo':item.tipo,
+                'tabkw':'show_item'
             }
         )
 @login_required
@@ -1521,11 +1522,17 @@ def login(request, template_name='registration/login.html',
             if request.session.test_cookie_worked():
                 request.session.delete_test_cookie()
             profile=user.get_profile()
-            profile.tabs.all().delete()
+#            profile.tabs.all().delete()
+            print "here"
+            print "Tab.objects.all() = " + str(Tab.objects.all())
             for t in Tab.objects.all():
                 print "checking %s" % t.name
                 if user.has_perm(t.perm):
+                    print "adding %s" % t.name
                     profile.tabs.add(t)
+                elif t in profile.tabs.all(): # Here we assume that he doesnt have rights
+                    profile.tabs.remove(t)
+                    
             return HttpResponseRedirect(redirect_to)
 
     else:

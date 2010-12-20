@@ -48,7 +48,7 @@ class Tab(models.Model):
     url = models.CharField('url', max_length=32)
     perm = models.CharField('permission', max_length=32)
     klass = models.CharField('class', max_length=32)
-    keywords = models.CharField('keywords', max_length=32)
+    keywords = models.CharField('keywords', max_length=32,  default="", blank=True)
     def __unicode__(self):
         return self.name
     
@@ -757,6 +757,8 @@ def add_user_profile(sender, **kwargs):
             UserProfile.objects.create(user=l, price_group=pg)
         except:pass
 post_save.connect(add_user_profile, sender=User, dispatch_uid="jade.inventory.moddels")
+def for_kw(self, kw): return self.get_query_set().filter(Q(keywords__icontains=kw)|Q(keywords=None)).value
+UserProfile.tabs.for_kw=for_kw
 
 class Transaction(models.Model):
     _date = models.DateTimeField(default=datetime.now())

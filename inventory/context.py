@@ -19,4 +19,5 @@ def company_name(request):
     return {
         'company_name': Setting.get('Company name'),
         'date_format': Setting.get('Date format'),
+        'tabkw': 'base',
     }
