@@ -33,6 +33,8 @@
                     <a href="{{object.image.url}}" id="item_image">
                         {% if object.image %}<img src="{{object.image.url_150x150}}">{% endif %}
                     </a>
+                {% else %}
+                    <div id="item_image"></div>
                 {% endif %}
                 <input type="file" id="id_image" name="image">
                 <a href="#" onclick="ajaxFileUpload();return false;" id="buttonUpload">{% trans 'Upload' %} <img src="/media/img/save.png"></a>
