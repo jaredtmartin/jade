@@ -82,6 +82,7 @@ def new_object(request, form, prefix, template='', tipo=None, extra_context={}):
     if tipo and not request.user.has_perm('inventory.change_'+tipo.lower()): return http.HttpResponseRedirect("/blocked/")
     if request.POST:
         f = form(request.POST)
+        print "f = " + str(f)
         if f.is_valid():      
             m=f.save(commit=False)
             if tipo:obj=f.save(tipo=tipo)
@@ -104,6 +105,7 @@ def new_object(request, form, prefix, template='', tipo=None, extra_context={}):
         form=form(prefix=prefix+'-')
         if not tipo: tipo=prefix
         extra_context.update({'form':form,'prefix':tipo,'tipo':tipo})
+        print "extra_context = " + str(extra_context)
         return _r2r(request,template, extra_context)
     
 def search_entries(user, form, tipo=None):
@@ -701,7 +703,7 @@ def item_show(request, object_id):
             object_id=object_id,
             template_name = 'inventory/item_show.html',
             extra_context = {
-                'entry_page': _paginate(request, Entry.objects.filter(item=item, account=Setting.objects.get('Inventory account'))),
+                'entry_page': _paginate(request, Entry.objects.filter(item=item, account=Setting.get('Inventory account'))),
                 'form': form,
                 'tipo':item.tipo,
                 'tabkw':'show_item'
@@ -939,9 +941,13 @@ def add_tax(request, object_id):
     if not request.user.has_perm('inventory.add_'+obj.tipo.lower()+'tax'): return http.HttpResponseRedirect("/blocked/")
     objects=[]
     rate=TaxRate.objects.get(name=request.POST['rate'])
+    print "rate = " + str(rate)
     total=Entry.objects.filter(transaction__doc_number=obj.doc_number, active=True, account=obj.subclass.account).exclude(transaction__tipo='SaleTax').exclude(transaction__tipo='SaleTax.').aggregate(total=models.Sum('value'))['total'] or Decimal('0.00')
+    print "total = " + str(total)
     total=total* obj.account.multiplier
     amount=Decimal(request.POST['amount'])
+    print "amount = " + str(amount)
+    print "rate.sales_account = " + str(rate.sales_account)
     percentage=amount/total
     if obj.tipo=='Sale':
         tax=SaleTax(doc_number=obj.doc_number, date=obj.date, debit=obj.client, credit=rate.sales_account, value=amount)

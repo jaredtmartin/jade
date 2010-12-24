@@ -393,7 +393,7 @@ class ItemForm(forms.ModelForm):
         return self.cleaned_data['bar_code']
     def clean_unit(self):
         if self.cleaned_data['unit']=='':
-            self.cleaned_data['unit']=settings.DEFAULT_UNIT_NAME
+            self.cleaned_data['unit']=Setting.get('Default unit').name
         data = self.cleaned_data['unit']
         if (not data) and (not self.fields['unit'].required): return data
         try: data = Unit.objects.get_or_create(name=data)[0]

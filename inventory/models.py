@@ -614,14 +614,14 @@ class ClientManager(models.Manager):
             return super(ClientManager, self).get_query_set().get(name=name)
         except:
             if name and name != '':
-                if settings.AUTOCREATE_CLIENTS:
+                if Setting.get('Autocreate clients'):
                     price_group=Setting.get('Default price group')
                     account_group=Setting.get('Default account group')
                     receipt=Setting.get('Default receipt')
                     number=Client.objects.next_number()
                     return super(ClientManager, self).create(name=name,price_group=price_group,account_group=account_group, receipt=receipt, number=number)
             else:
-                return super(ClientManager, self).get_query_set().get(name=settings.DEFAULT_CLIENT_NAME)
+                return Setting.get('Default client')
     def get_query_set(self):
         return super(ClientManager, self).get_query_set().filter(tipo="Client")
 
