@@ -1,0 +1,19 @@
+[
+{"pk": 7, "model": "common.setting", "fields": {"_value": "1", "name": "Default tax rate", "tipo": "jade.accounting.models.TaxRate"}},
+{"pk": 9, "model": "common.setting", "fields": {"_value": "1", "name": "Default receipt", "tipo": "jade.reports.models.Report"}},
+
+
+{"pk": 1, "model": "inventory.unit", "fields": {"name": "each"}},
+{"pk": 1, "model": "inventory.item", "fields": {"name": "Frog", "bar_code": "1001", "image": "", "description": "", "maximum": "0.00", "default_cost": "10.00", "minimum": "0.00", "auto_bar_code": true, "bar_code_image": "", "unit": 1, "location": ""}},
+{"pk": 1, "model": "inventory.pricegroup", "fields": {"name": "Public"}},
+{"pk": 1, "model": "inventory.price", "fields": {"relative": "1.00", "item": 1, "fixed": "0.00", "group": 1, "site": 1}},
+{"pk": 1, "model": "accounting.account", "fields": {"site": 1, "multiplier": 1, "name": "Revenue", "number": ""}},
+{"pk": 2, "model": "accounting.account", "fields": {"site": 1, "multiplier": 1, "name": "Discounts", "number": ""}},
+{"pk": 3, "model": "accounting.account", "fields": {"site": 1, "multiplier": 1, "name": "Returns", "number": ""}},
+{"pk": 4, "model": "accounting.account", "fields": {"site": 1, "multiplier": 1, "name": "Cash", "number": ""}},
+{"pk": 5, "model": "accounting.account", "fields": {"site": 1, "multiplier": 1, "name": "Expense", "number": ""}},
+{"pk": 6, "model": "accounting.account", "fields": {"site": 1, "multiplier": 1, "name": "Tax", "number": ""}},
+{"pk": 7, "model": "accounting.account", "fields": {"site": 1, "multiplier": 1, "name": "Inventory", "number": ""}},
+{"pk": 1, "model": "accounting.taxrate", "fields": {"account": 6, "name": "Tax", "value": "2.34", "price_includes_tax": true}},
+{"pk": 1, "model": "accounting.accountgroup", "fields": {"revenue_account": 1, "name": "General", "returns_account": 3, "site": 1, "default_tax_rate": 1, "discounts_account": 2}}
+]
