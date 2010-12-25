@@ -374,9 +374,9 @@ def doc_inactive(doc):
 def quote(request, doc_number):
     doc=Document(doc_number)
     if len(doc.lines)==0: return fallback_to_transactions(request, doc_number, _('Unable to find sales with the specified document number.'))
-    try:report=Report.objects.get(name=settings.QUOTE_TEMPLATE_NAME)
+    try:report=Setting.get('Quote report')
     except Report.DoesNotExist: 
-        return fallback_to_transactions(request, doc_number, _('Unable to find a report template with the name "%s"') % settings.QUOTE_TEMPLATE_NAME)
+        return fallback_to_transactions(request, doc_number, _('Unable to find a report for quotes. Check the system setting called "Quote report".') )
     if 'test' in request.GET:
         return render_string_to_pdf(request, Template(report.body), {'doc':doc, 'watermark_filename':report.watermark_url})
     else:

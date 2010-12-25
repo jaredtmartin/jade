@@ -62,25 +62,6 @@ class AccountManager(models.Manager):
         number=super(AccountManager, self).get_query_set().all().order_by('-number')[0].number
         return increment_string_number(number)
 
-class VendorManager(models.Manager):
-    def default(self):
-        return super(VendorManager, self).get_query_set().get(name=settings.DEFAULT_VENDOR_NAME)
-    def get_query_set(self):
-        return super(VendorManager, self).get_query_set().filter(tipo="Vendor")
-    def next_number(self):
-        number=super(VendorManager, self).get_query_set().filter(tipo="Vendor").order_by('-number')[0].number
-        return increment_string_number(number)
-    def get_or_create_by_name(self, name):    
-        try:
-            return super(VendorManager, self).get_query_set().get(name=name)
-        except:
-            if name and name != '':
-                if settings.AUTOCREATE_VENDORS:
-                    price_group=PriceGroup.objects.get(name=settings.DEFAULT_PRICE_GROUP_NAME)
-                    tax_group=TaxGroup.objects.get(name=settings.DEFAULT_TAX_GROUP_NAME)
-                    return super(VendorManager, self).create(name=name,price_group=price_group,tax_group=tax_group)
-            else:
-                return super(VendorManager, self).get_query_set().get(name=settings.DEFAULT_VENDOR_NAME)
 class EntryManager(models.Manager):
     def get_query_set(self):
         return super(EntryManager, self).get_query_set().filter(site=Site.objects.get_current())

@@ -663,7 +663,27 @@ class ClientManager(models.Manager):
                 return Setting.get('Default client')
     def get_query_set(self):
         return super(ClientManager, self).get_query_set().filter(tipo="Client")
-
+class VendorManager(models.Manager):
+    def default(self):
+        return Setting.get('Default vendor')
+    def get_query_set(self):
+        return super(VendorManager, self).get_query_set().filter(tipo="Vendor")
+    def next_number(self):
+        number=super(VendorManager, self).get_query_set().filter(tipo="Vendor").order_by('-number')[0].number
+        return increment_string_number(number)
+    def get_or_create_by_name(self, name):    
+        try:
+            return super(VendorManager, self).get_query_set().get(name=name)
+        except:
+            if name and name != '':
+                if Setting.get('Autocreate vendors'):
+                    price_group=Setting.get('Default price group')
+                    account_group=Setting.get('Default account group')
+                    receipt=Setting.get('Default receipt')
+                    number=Vendor.objects.next_number()
+                    return super(VendorManager, self).create(name=name,price_group=price_group,account_group=account_group, receipt=receipt, number=number)
+            else:
+                return Setting.get('Default vendor')
 def make_default_account(data, model=Account):
     try: return model.objects.get(name=data[0])
     except model.DoesNotExist: 
