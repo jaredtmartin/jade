@@ -128,11 +128,15 @@ class ItemManager(models.Manager):
         super(ItemManager, self).__init__()
         self.tipo=tipo
     def next_bar_code(self):
-        try: number=super(ItemManager, self).get_query_set().filter(auto_bar_code=True).order_by('-bar_code')[0].bar_code
-        except IndexError: number='1001'
-        number=increment_string_number(number)
+        last=Setting.objects.get(name='Last automatic barcode')
+        number = increment_string_number(last.value)
+#        try: number=super(ItemManager, self).get_query_set().filter(auto_bar_code=True).order_by('-bar_code')[0].bar_code
+#        except IndexError: number='1001'
+#        number=increment_string_number(number)
         while Item.objects.filter(bar_code=number).count()>0:
             number=increment_string_number(number)
+            last.value=number
+            last.save()
         return number
     def find(self, q):
         query=super(ItemManager, self).get_query_set()
@@ -152,7 +156,7 @@ class Item(models.Model):
     """
     name = models.CharField(_('name'), max_length=200, unique=True)
     bar_code = models.CharField(_('bar code'), max_length=64, blank=True)
-    image=ImageWithThumbsField(_('image'), upload_to='uploaded_images', sizes=((75,75),(150,150)), null=True, blank=True)
+    image = ImageWithThumbsField(_('image'), upload_to='uploaded_images', sizes=((75,75),(150,150)), null=True, blank=True)
     minimum = models.DecimalField(_('minimum'), max_digits=8, decimal_places=2, default=Decimal('0.00'), blank=True)
     maximum = models.DecimalField(_('maximum'), max_digits=8, decimal_places=2, default=Decimal('0.00'), blank=True)
     default_cost = models.DecimalField(_('default_cost'), max_digits=8, decimal_places=2, default=Decimal('0.00'), blank=True)
@@ -161,7 +165,7 @@ class Item(models.Model):
     unit = models.ForeignKey(Unit, default=None, blank=True)
     auto_bar_code = models.BooleanField(_('automatic bar code'), default=False)
     tipo = models.CharField(_('type'), max_length=16, choices=ITEM_TYPES, default='Product')
-    objects=ItemManager()
+    objects = ItemManager()
     class Meta:
         ordering = ('name',)
         permissions = (
@@ -288,6 +292,41 @@ def create_prices_for_price_group(sender, **kwargs):
         for item in Item.objects.all():
             Price.objects.create(item=item, group=kwargs['instance'], site=Site.objects.get_current())
 post_save.connect(create_prices_for_price_group, sender=PriceGroup, dispatch_uid="jade.inventory.models")
+
+class SettingsManager(models.Manager):
+    def __call__(self, value):
+        return self.get_query_set().get(name=value).value
+        try: return self.get_query_set().get(name=value).value
+        except Setting.DoesNotExist: return None
+
+class Setting(models.Model):
+    name = models.CharField('name', max_length=32)
+    tipo = models.CharField('tipo', max_length=64)
+    _value = models.CharField('_value', max_length=64)
+    get=SettingsManager()
+    objects=models.Manager()
+    def _get_value(self):
+        if self.tipo =='': return None
+        elif self.tipo=='__builtin__.str': return self._value
+        elif self.tipo=='__builtin__.int': return int(self._value)
+        elif self.tipo=='__builtin__.bool': return bool(self._value)
+        elif self.tipo=='decimal.Decimal': return decimal.Decimal(self._value)
+        elif self.tipo=='__builtin__.unicode': return unicode(self._value)
+        else: return eval(self.tipo).objects.get(pk=int(self._value))
+
+    def _set_value(self, value):
+        self.tipo="%s.%s" % (value.__class__.__module__,value.__class__.__name__)
+        if self.tipo == '__builtin__.str' : self._value = value
+        elif self.tipo == '__builtin__.int': self._value = str(value)
+        elif self.tipo=='decimal.Decimal' : self._value = str(value) 
+        elif self.tipo=='__builtin__.bool': 
+            if value: self._value = 'True'
+            else: self._value = ''
+        elif self.tipo == '__builtin__.unicode': self._value = value
+        elif isinstance(value, models.Model ): self._value=value.pk   
+    value=property(_get_value,_set_value)
+    def __unicode__(self):
+        return self.name
 
 class Price(models.Model):
     def save(self, *args, **kwargs):

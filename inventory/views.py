@@ -344,8 +344,8 @@ def render_to_pdf(template_src, context_dict):
         return http.HttpResponse(result.getvalue(), mimetype='application/pdf')
     return http.HttpResponse('We had some errors<pre>%s</pre>' % cgi.escape(html))
     
-def render_string_to_pdf(template, context_dict):
-    context = Context(context_dict)
+def render_string_to_pdf(request, template, context_dict):
+    context = RequestContext(request, context_dict)
     from datetime import datetime
     context_dict.update({'company_name':Setting.objects.get('Company name'),'date_printed':datetime.now()})
     html  = template.render(context)
@@ -364,7 +364,7 @@ def render_report(request, name, context={}):
     try:report=Report.objects.get(name=name)
     except Report.DoesNotExist: 
         return account_show(request, context['account'].pk, errors={'Report':[unicode(_('Unable to find a report template with the name "%s"') % (name,)  ),]})
-    return render_string_to_pdf(Template(report.body), context)
+    return render_string_to_pdf(request, Template(report.body), context)
 def doc_inactive(doc):
     for line in doc:
         if line.active or line.delivered: return False
@@ -378,9 +378,9 @@ def quote(request, doc_number):
     except Report.DoesNotExist: 
         return fallback_to_transactions(request, doc_number, _('Unable to find a report template with the name "%s"') % settings.QUOTE_TEMPLATE_NAME)
     if 'test' in request.GET:
-        return render_string_to_pdf(Template(report.body), {'doc':doc, 'watermark_filename':report.watermark_url})
+        return render_string_to_pdf(request, Template(report.body), {'doc':doc, 'watermark_filename':report.watermark_url})
     else:
-        return render_string_to_pdf(Template(report.body), {'watermark_filename':None, 'doc':doc})
+        return render_string_to_pdf(request, Template(report.body), {'watermark_filename':None, 'doc':doc})
 
 @login_required
 @permission_required('inventory.view_receipt', login_url="/blocked/")
@@ -391,9 +391,9 @@ def sale_receipt(request, doc_number):
     report=doc[0].subclass.client.receipt
     print "report = " + str(report)
     if 'test' in request.GET:
-        return render_string_to_pdf(Template(report.body), {'doc':doc, 'watermark_filename':report.watermark_url})
+        return render_string_to_pdf(request, Template(report.body), {'doc':doc, 'watermark_filename':report.watermark_url})
     else:
-        return render_string_to_pdf(Template(report.body), {'watermark_filename':None, 'doc':doc})
+        return render_string_to_pdf(request, Template(report.body), {'watermark_filename':None, 'doc':doc})
 
 @login_required
 @permission_required('inventory.view_receipt', login_url="/blocked/")
@@ -403,7 +403,7 @@ def garantee_report(request, doc_number):
     try:report=Setting.objects.get('Garantee report')
     except Report.DoesNotExist: 
         return fallback_to_transactions(request, doc_number, _('Unable to find a report template with the name "%s"') % Setting.objects.get('Garantee report').name)
-    return render_string_to_pdf(Template(report.body), {'doc':doc})
+    return render_string_to_pdf(request, Template(report.body), {'doc':doc})
 
 @login_required
 @permission_required('inventory.view_receipt', login_url="/blocked/")
@@ -421,7 +421,7 @@ def count_sheet(request, doc_number):
         s=t.subclass
         try: total+=s.cost
         except AttributeError: pass
-    return render_string_to_pdf(Template(report.body), {'watermark_filename':report.watermark_url, 'doc':doc,'total':total})
+    return render_string_to_pdf(request, Template(report.body), {'watermark_filename':report.watermark_url, 'doc':doc,'total':total})
        
 @login_required
 @permission_required('inventory.view_receipt', login_url="/blocked/")
@@ -652,7 +652,7 @@ def low_stock_report(request):
         request.GET=request.GET.copy()
         errors={'Report':[unicode(_('Unable to find a report template with the name "%s"') % (Setting.objects.get('Low stock report').name,))]}
         return low_stock(request, errors=errors)
-    return render_string_to_pdf(Template(report.body), {'items':items, 'user':request.user, 'count':count})  
+    return render_string_to_pdf(request, Template(report.body), {'items':items, 'user':request.user, 'count':count})  
     
 @login_required
 @permission_required('inventory.view_item', login_url="/blocked/")
@@ -665,7 +665,7 @@ def price_report(request):
     except Report.DoesNotExist:
         errors={'Report':[unicode(_('Unable to find a report template with the name "%s"') % (Setting.objects.get('Price report').name,))]}
         return item_list(request, errors=errors)
-    return render_string_to_pdf(Template(report.body), {'items':items, 'user':request.user})
+    return render_string_to_pdf(request, Template(report.body), {'items':items, 'user':request.user})
 @login_required
 @permission_required('inventory.view_item', login_url="/blocked/")
 def inventory_report(request):
@@ -685,7 +685,7 @@ def inventory_report(request):
         request.GET=request.GET.copy()
         errors={'Report':[unicode(_('Unable to find a report template with the name "%s"') % (Setting.objects.get('Inventory report').name,))]}
         return item_list(request, errors=errors)
-    return render_string_to_pdf(Template(report.body), {'items':items, 'user':request.user, 'total_cost':total_cost, 'total_total_cost':total_total_cost, 'total_stock':total_stock,'count':count})  
+    return render_string_to_pdf(request, Template(report.body), {'items':items, 'user':request.user, 'total_cost':total_cost, 'total_total_cost':total_total_cost, 'total_stock':total_stock,'count':count})  
     
     
 @login_required
@@ -1340,7 +1340,7 @@ def movements_report(request):
 #        request.GET['q']=doc_number
         errors={'Report':[unicode(_('Unable to find a report template with the name "%s"') % (Setting.objects.get('Movements report').name,))]}
         return list_sales(request, errors=errors)
-    return render_string_to_pdf(Template(report.body), {'transactions':transactions, 'user':request.user})  
+    return render_string_to_pdf(request, Template(report.body), {'transactions':transactions, 'user':request.user})  
 
 @login_required
 @permission_required('inventory.add_cash_closing', login_url="/blocked/")
@@ -1380,7 +1380,7 @@ def cash_closing_report(request, object_id):
         request.GET=request.GET.copy()
         errors={'Report':[unicode(_('Unable to find a report template with the name "%s"') % (Setting.objects.get('Cash closing report').name,))]}
         return item_list(request, errors=errors)
-    return render_string_to_pdf(Template(report.body), {
+    return render_string_to_pdf(request, Template(report.body), {
         'start':cash_closing.start,
         'end':cash_closing.end,
         'groups':cash_closing.account_groups,
