@@ -2000,6 +2000,7 @@ class Count(Transaction):
         self.errors={}
         return True
 def add_count_details(sender, **kwargs):
+    print "running"
     if kwargs['created']:
         l=kwargs['instance']
         ExtraValue.objects.create(transaction = kwargs['instance'], name = 'Count', value = kwargs['instance']._count)

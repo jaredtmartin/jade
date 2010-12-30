@@ -129,7 +129,7 @@ class TestAjaxViews(TestCase):
         response = self.testclient.get("/inventory/user_list/")
         self.failUnlessEqual(response.status_code, 200)
         self.failUnlessEqual(len(response.context['object_list']), 1)
-        response = self.testclient.get("/inventory/user_list/?q=Jar")
+        response = self.testclient.get("/inventory/user_list/?q=test")
         self.failUnlessEqual(response.status_code, 200)
         self.failUnlessEqual(len(response.context['object_list']), 1)
     def testVendorList(self):
@@ -170,7 +170,7 @@ class TestAjaxViews(TestCase):
     def testItemList(self):
         response = self.testclient.get("/inventory/item_list/")
         self.failUnlessEqual(response.status_code, 200)
-        self.failUnlessEqual(len(response.context['object_list']), 3)
+        self.failUnlessEqual(len(response.context['object_list']), 2)
         response = self.testclient.get("/inventory/account_list/?q=Fro")
         self.failUnlessEqual(response.status_code, 200)
         self.failUnlessEqual(len(response.context['object_list']), 1)
@@ -263,9 +263,9 @@ class TestCounts(TestCase):
         self.failUnlessEqual(p.quantity, Decimal('3'))
         self.failUnlessEqual(p.value, Decimal('6'))
     def testCountPostAsSale(self):
-        c=Count.objects.create(item=Item.objects.all()[0], unit_value=2, count=10)
+        c=Count.objects.create(item=Item.objects.all()[0], unit_cost=2, count=10)
         c.post()
-        c=Count.objects.create(item=Item.objects.all()[0], unit_value=2, count=3)
+        c=Count.objects.create(item=Item.objects.all()[0], unit_cost=2, count=3)
         response = self.testclient.post('/inventory/count/%i/post-as-sale/' % c.pk, {})
         self.failUnlessEqual(response.status_code, 200)
         self.failUnlessEqual(response.context['error_list'], {})
