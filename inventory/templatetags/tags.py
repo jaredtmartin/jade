@@ -116,7 +116,7 @@ plus.is_safe = True
 @register.filter(name='minus')
 def minus(value, arg):
     "subtracts the arg from the value"
-    return value - arg
+    return (value or 0) - arg
 minus.is_safe = True
 
 @register.simple_tag

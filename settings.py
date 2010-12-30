@@ -66,7 +66,7 @@ MEDIA_ROOT = os.path.join(os.path.abspath(os.path.dirname(__file__)), 'media')
 # Examples: "http://media.lawrence.com", "http://example.com/media/"
 MEDIA_URL = '/media/'
 APP_LOCATION='/home/jared/Jade/jade'
-
+BARCODES_FOLDER='media/barcodes/'
 # URL prefix for admin media -- CSS, JavaScript and images. Make sure to use a
 # trailing slash.
 # Examples: "http://foo.com/media/", "/media/".

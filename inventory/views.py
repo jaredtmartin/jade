@@ -53,6 +53,15 @@ def _r2r(request, template, context={}):
     return render_to_response(template, context, context_instance=RequestContext(request))
 
 def edit_object(request, object_id, model, form, prefix, tipo=None, extra_context={}):
+    # Looks up an object, returning 404 if not found, and either updates the object with form, or returns a form to fill out
+    # To: Test: 
+    # returns 404 if not found.
+    # returns correct form and correct item when GET
+    # saves item correctly when POST
+    # uses correct form if specified and if not
+    # TODO
+    # Should work without tipo
+    # Should work in different languages
     obj = get_object_or_404(model, pk=object_id)
     if not request.user.has_perm('inventory.change_'+obj.tipo.lower()): return http.HttpResponseRedirect("/blocked/")
     f = form(request.POST, instance=obj)
@@ -71,6 +80,8 @@ def edit_object(request, object_id, model, form, prefix, tipo=None, extra_contex
     return _r2r(request,'inventory/results.html', extra_context)
     
 def delete_object(request, object_id, model, prefix, tipo=None):
+    # Looks up the object and deletes it if you have permission
+    # Test: That it deletes it.
     obj = get_object_or_404(model, pk=object_id)
     if not request.user.has_perm('inventory.delete_'+obj.tipo.lower()): return http.HttpResponseRedirect("/blocked/")
     if not tipo: tipo=obj.get_tipo_display()
@@ -82,7 +93,6 @@ def new_object(request, form, prefix, template='', tipo=None, extra_context={}):
     if tipo and not request.user.has_perm('inventory.change_'+tipo.lower()): return http.HttpResponseRedirect("/blocked/")
     if request.POST:
         f = form(request.POST)
-        print "f = " + str(f)
         if f.is_valid():      
             m=f.save(commit=False)
             if tipo:obj=f.save(tipo=tipo)
@@ -92,10 +102,8 @@ def new_object(request, form, prefix, template='', tipo=None, extra_context={}):
             error_list={}
             obj.edit_mode=True
         else:
-            print "invalid"      
             info_list=[]
             obj=None
-            print "f.errors = " + str(f.errors)
             error_list=f.errors
             updated_form=None
         if not tipo: tipo=prefix
@@ -105,10 +113,13 @@ def new_object(request, form, prefix, template='', tipo=None, extra_context={}):
         form=form(prefix=prefix+'-')
         if not tipo: tipo=prefix
         extra_context.update({'form':form,'prefix':tipo,'tipo':tipo})
-        print "extra_context = " + str(extra_context)
+        #print "extra_context = " + str(extra_context)
         return _r2r(request,template, extra_context)
     
 def search_entries(user, form, tipo=None):
+    # Searches entrys based on q, start, and end
+    # also filters that they are of type tipo if tipo is given
+    # TODO Doesnt check for user permissions
     entries = Entry.objects.all().order_by('-date')
     if tipo: entries=entries.filter(tipo=tipo)
     if not form.cleaned_data['q']=='': entries=entries.filter(transaction__doc_number=form.cleaned_data['q'])
@@ -117,6 +128,7 @@ def search_entries(user, form, tipo=None):
     return entries
 
 def search_transactions(user, form, transactions, strict=True):
+    # searches for transactions based on q, start, and end, and users rights
     if not user.has_perm('inventory.view_sale'):transactions=transactions.exclude(tipo='Sale')
     if not user.has_perm('inventory.view_purchase'):transactions=transactions.exclude(tipo='Purchase')
     if not user.has_perm('inventory.view_count'):transactions=transactions.exclude(tipo='Count')
@@ -131,6 +143,8 @@ def search_transactions(user, form, transactions, strict=True):
     return transactions
     
 def paginate_transactions(request, form, collection, template='inventory/transactions.html', errors=[]):
+    # takes a collection of transactions and paginates them
+    # TODO This function also creates some sums. This should probably be in a separate function
     page = _paginate(request,collection)
     tax = cost = charge = discount = price = None
     try:q=form.cleaned_data['q']
@@ -168,6 +182,7 @@ def paginate_transactions(request, form, collection, template='inventory/transac
         'error_list':form.errors,
         })
 def search_and_paginate_transactions(request, model, template='inventory/transactions.html', errors={}, strict=True):
+    # Searches for transactions and paginates them
     form=SearchForm(request.GET, validate=True)
     q=form.cleaned_data['q']
     start=form.cleaned_data['start']
@@ -182,7 +197,8 @@ def search_and_paginate_transactions(request, model, template='inventory/transac
 ######################################################################################
 @login_required
 @permission_required('inventory.view_purchase', login_url="/blocked/")
-def list_purchases(request): # GET ONLY
+def list_purchases(request):
+    # returns a paginated list of purchases filtered by 'q', 'start', and 'end'
     return search_and_paginate_transactions(request, Purchase,'inventory/purchases.html')
 
 @login_required
@@ -336,7 +352,7 @@ def render_to_pdf(template_src, context_dict):
     template = get_template(template_src)
     context = Context(context_dict)
     from datetime import datetime
-    context_dict.update({'company_name':Setting.objects.get('Company name'),'date_printed':datetime.now()})
+    context_dict.update({'company_name':Setting.get('Company name'),'date_#printed':datetime.now()})
     html  = template.render(context)
     result = StringIO.StringIO()
     pdf = pisa.pisaDocument(StringIO.StringIO(html.encode("ISO-8859-1")), dest=result, link_callback=fetch_resources)
@@ -347,7 +363,7 @@ def render_to_pdf(template_src, context_dict):
 def render_string_to_pdf(request, template, context_dict):
     context = RequestContext(request, context_dict)
     from datetime import datetime
-    context_dict.update({'company_name':Setting.objects.get('Company name'),'date_printed':datetime.now()})
+    context_dict.update({'company_name':Setting.get('Company name'),'date_#printed':datetime.now()})
     html  = template.render(context)
     result = StringIO.StringIO()
     pdf = pisa.pisaDocument(StringIO.StringIO(html.encode("ISO-8859-1")), dest=result, link_callback=fetch_resources)
@@ -389,7 +405,7 @@ def sale_receipt(request, doc_number):
     if len(doc.lines)==0: return fallback_to_transactions(request, doc_number, _('Unable to find sales with the specified document number.'))
     if doc.inactive(): return quote(request, doc_number)
     report=doc[0].subclass.client.receipt
-    print "report = " + str(report)
+    #print "report = " + str(report)
     if 'test' in request.GET:
         return render_string_to_pdf(request, Template(report.body), {'doc':doc, 'watermark_filename':report.watermark_url})
     else:
@@ -400,9 +416,9 @@ def sale_receipt(request, doc_number):
 def garantee_report(request, doc_number):
     doc=ClientGarantee.objects.filter(doc_number=doc_number)
     if doc.count()==0: return fallback_to_transactions(request, doc_number, _('Unable to find sales with the specified document number.'))
-    try:report=Setting.objects.get('Garantee report')
+    try:report=Setting.get('Garantee report')
     except Report.DoesNotExist: 
-        return fallback_to_transactions(request, doc_number, _('Unable to find a report template with the name "%s"') % Setting.objects.get('Garantee report').name)
+        return fallback_to_transactions(request, doc_number, _('Unable to find a report template with the name "%s"') % Setting.get('Garantee report').name)
     return render_string_to_pdf(request, Template(report.body), {'doc':doc})
 
 @login_required
@@ -410,11 +426,11 @@ def garantee_report(request, doc_number):
 def count_sheet(request, doc_number):
     doc=Count.objects.filter(doc_number=doc_number)
     if doc.count()==0: return fallback_to_transactions(request, doc_number, 'Unable to find counts with the specified document number.')
-    try:report=Setting.objects.get('Count sheet report')
+    try:report=Setting.get('Count sheet report')
     except Report.DoesNotExist: 
         request.GET=request.GET.copy()
         request.GET['q']=doc_number
-        errors={'Report':[unicode('Unable to find a report template with the name"%s"' % (Setting.objects.get('Count sheet report').name,))]}
+        errors={'Report':[unicode('Unable to find a report template with the name"%s"' % (Setting.get('Count sheet report').name,))]}
         return transaction_list(request, errors=errors)
     total=0
     for t in doc:
@@ -440,12 +456,12 @@ def labels(request, doc_number):
             if t.count: quantity=t.count
             else: quantity=t.item.stock
         else: quantity=t.quantity
-        filepath = os.path.join(settings.APP_LOCATION+'/'+Setting.objects.get('Barcodes folder'), t.item.bar_code+'.png')
+        filepath = os.path.join(settings.APP_LOCATION+'/'+settings.BARCODES_FOLDER, t.item.bar_code+'.png')
         for label in range(quantity):
-            if x>=Setting.objects.get('Lines per page'):
+            if x>=Setting.get('Lines per page'):
                 p.showPage()
-                x-=Setting.objects.get('Lines per page')
-            p.drawImage(filepath, x%Setting.objects.get('Labels per line')*150, p._pagesize[1]-(x/Setting.objects.get('Labels per line')+1)*75)
+                x-=Setting.get('Lines per page')
+            p.drawImage(filepath, x%Setting.get('Labels per line')*150, p._pagesize[1]-(x/Setting.get('Labels per line')+1)*75)
             x+=1
     p.showPage()
     p.save()
@@ -560,12 +576,12 @@ def vendor_list(request):
     except KeyError: q=''
     return _r2r(request,'inventory/vendor_list.html', {'page':_paginate(request, Vendor.objects.filter(name__icontains=q)),'q':q})
 
-@login_required
-@permission_required('inventory.view_branch', login_url="/blocked/")
-def branch_list(request):
-    try: q=request.GET['q']
-    except KeyError: q=''
-    return _r2r(request,'inventory/branch_list.html', {'page':_paginate(request, Branch.objects.filter(name__icontains=q)),'q':q})
+#@login_required
+#@permission_required('inventory.view_branch', login_url="/blocked/")
+#def branch_list(request):
+#    try: q=request.GET['q']
+#    except KeyError: q=''
+#    return _r2r(request,'inventory/branch_list.html', {'page':_paginate(request, Branch.objects.filter(name__icontains=q)),'q':q})
 
 @login_required
 def account_show(request, object_id, errors={}):
@@ -604,7 +620,7 @@ def account_statement(request, object_id): # GET ONLY
     for entry in entries:
         total+=entry.value
         entry.total=total
-    return render_report(request, Setting.objects.get('Account statement report').name, {'account':account,'entries':entries})
+    return render_report(request, Setting.get('Account statement report').name, {'account':account,'entries':entries})
 @login_required
 @permission_required('inventory.change_client', login_url="/blocked/")
 def new_client(request):
@@ -621,7 +637,6 @@ def new_vendor(request):
 @login_required
 @permission_required('inventory.change_account', login_url="/blocked/")
 def new_account(request):
-    print "asdjhaskdjhaskjdh"
     return new_object(request, AccountForm, "account", 'inventory/account_show.html', tipo='Account', extra_context={'tipo':'account'})
 
 ######################################################################################
@@ -646,11 +661,11 @@ def low_stock(request, errors=[]):
 @permission_required('inventory.view_item', login_url="/blocked/")
 def low_stock_report(request):
     items=Item.objects.low_stock()
-    count=items.count()
-    try:report=Setting.objects.get('Low stock report')
+    count=len(items)
+    try:report=Setting.get('Low stock report')
     except Report.DoesNotExist: 
         request.GET=request.GET.copy()
-        errors={'Report':[unicode(_('Unable to find a report template with the name "%s"') % (Setting.objects.get('Low stock report').name,))]}
+        errors={'Report':[unicode(_('Unable to find a report template with the name "%s"') % (Setting.get('Low stock report').name,))]}
         return low_stock(request, errors=errors)
     return render_string_to_pdf(request, Template(report.body), {'items':items, 'user':request.user, 'count':count})  
     
@@ -660,10 +675,10 @@ def price_report(request):
     try: q=request.GET['q']
     except KeyError: q=''
     items=Item.objects.find(q)
-    print "items = " + str(items)
-    try:report=Setting.objects.get('Price report')
+    #print "items = " + str(items)
+    try:report=Setting.get('Price report')
     except Report.DoesNotExist:
-        errors={'Report':[unicode(_('Unable to find a report template with the name "%s"') % (Setting.objects.get('Price report').name,))]}
+        errors={'Report':[unicode(_('Unable to find a report template with the name "%s"') % (Setting.get('Price report').name,))]}
         return item_list(request, errors=errors)
     return render_string_to_pdf(request, Template(report.body), {'items':items, 'user':request.user})
 @login_required
@@ -680,10 +695,10 @@ def inventory_report(request):
         total_cost+=item.cost
         total_total_cost+=item.total_cost
         total_stock+=item.stock
-    try:report=Setting.objects.get('Inventory report')
+    try:report=Setting.get('Inventory report')
     except Report.DoesNotExist: 
         request.GET=request.GET.copy()
-        errors={'Report':[unicode(_('Unable to find a report template with the name "%s"') % (Setting.objects.get('Inventory report').name,))]}
+        errors={'Report':[unicode(_('Unable to find a report template with the name "%s"') % (Setting.get('Inventory report').name,))]}
         return item_list(request, errors=errors)
     return render_string_to_pdf(request, Template(report.body), {'items':items, 'user':request.user, 'total_cost':total_cost, 'total_total_cost':total_total_cost, 'total_stock':total_stock,'count':count})  
     
@@ -720,17 +735,12 @@ def delete_item(request, object_id):
 @permission_required('inventory.change_item', login_url="/blocked/")
 def item_image_upload(request, object_id):
     item = get_object_or_404(Item, pk=object_id)
-    print "item = " + str(item)
-    print "request.POST = " + str(request.POST)
-    print "len(request.FILES) = " + str(len(request.FILES))
     form = ItemImageForm(request.POST, request.FILES)
-    print "form = " + str(form)
     result=form.is_valid()
-    print "result = " + str(result)
+    #print "result = " + str(result)
     if result: 
         item.image=form.cleaned_data['image']
         item.save()
-        print "form.cleaned_data['image'] = " + str(form.cleaned_data['image'])
     return _r2r(request,'inventory/item_image.html', {'item':item})
         
 @login_required
@@ -745,7 +755,6 @@ def edit_item(request, object_id):
 @login_required
 @permission_required('inventory.add_service', login_url="/blocked/")
 def new_service(request):
-    print "creating a new service"
     return new_object(request, ItemForm, "item", 'inventory/item_show.html', tipo='Service')
 @login_required
 @permission_required('inventory.view_service', login_url="/blocked/")
@@ -872,12 +881,7 @@ def new_sale(request):
     except:
         date=datetime.now()
         client=Client.objects.default()
-    print "request.POST['client'] = " + str(request.POST['client'])
-#    try: 
     client=Client.objects.get_or_create_by_name(name=request.POST['client'])
-    print "DONEclient = " + str(client)
-#    except:pass
-    print "client = " + str(client)
     item=None
     value=0
     cost=0
@@ -925,7 +929,7 @@ def add_payment_to_sale(request, object_id):
     for transaction in doc:
         for entry in transaction.entry_set.filter(account=obj.client):
             if entry.active: total+=entry.value
-    payment=ClientPayment(doc_number=obj.doc_number, date=obj.date, credit=obj.client, debit=Setting.objects.get('Payments received account'), value=total)
+    payment=ClientPayment(doc_number=obj.doc_number, date=obj.date, credit=obj.client, debit=Setting.get('Payments received account'), value=total)
     payment.save()
     payment.edit_mode=True
     return _r2r(request,'inventory/results.html', {'edit_mode':True, 'objects':[payment],'prefix':'clientpayment','line_template':"inventory/transaction.html",'error_list':{}, 'info_list':{}})
@@ -937,30 +941,21 @@ def add_payment_to_sale(request, object_id):
 @login_required
 def add_tax(request, object_id):
     obj = get_object_or_404(Transaction, pk=object_id).subclass
-    print "'inventory.add_'+obj.tipo.lower()+'tax' = " + str('inventory.add_'+obj.tipo.lower()+'tax')
     if not request.user.has_perm('inventory.add_'+obj.tipo.lower()+'tax'): return http.HttpResponseRedirect("/blocked/")
     objects=[]
     rate=TaxRate.objects.get(name=request.POST['rate'])
-    print "rate = " + str(rate)
     total=Entry.objects.filter(transaction__doc_number=obj.doc_number, active=True, account=obj.subclass.account).exclude(transaction__tipo='SaleTax').exclude(transaction__tipo='SaleTax.').aggregate(total=models.Sum('value'))['total'] or Decimal('0.00')
-    print "total = " + str(total)
     total=total* obj.account.multiplier
     amount=Decimal(request.POST['amount'])
-    print "amount = " + str(amount)
-    print "rate.sales_account = " + str(rate.sales_account)
     percentage=amount/total
     if obj.tipo=='Sale':
         tax=SaleTax(doc_number=obj.doc_number, date=obj.date, debit=obj.client, credit=rate.sales_account, value=amount)
     elif obj.tipo=='Purchase':
         tax=PurchaseTax(doc_number=obj.doc_number, date=obj.date, credit=obj.vendor, debit=rate.purchases_account, value=amount)
     if request.POST['tax_in_price']=='true':
-        print "reducing============================="
         doc=Transaction.objects.filter(doc_number=obj.doc_number).exclude(tipo__endswith='Payment').exclude(tipo__endswith='Refund')
-        print "doc = " + str(doc)
         for t in doc:
             t=t.subclass
-            print "t.value = " + str(t.value)
-            print "t.value*amount = " + str(t.value*percentage)
             t.value-=t.value*percentage
             t.save()
             objects.append(t)
@@ -1176,7 +1171,6 @@ def new_clientrefund(request, object_id):
         value=-payment.value,
         credit=payment.credit,  
     )
-    print "refund.debit = " + str(refund.debit)
     refund.save()
     refund.edit_mode=True
     return _r2r(request,'inventory/results.html', {'edit_mode':True, 'objects':[refund],'prefix':'clientrefund','line_template':"inventory/transaction.html",'error_list':{}, 'info_list':{}})
@@ -1193,14 +1187,12 @@ def edit_vendorrefund(request, object_id):
 @permission_required('inventory.change_vendorrefund', login_url="/blocked/")
 def new_vendorrefund(request, object_id):
     payment = get_object_or_404(VendorPayment, pk=object_id)
-    print "payment.debit = " + str(payment.debit)
     refund=VendorRefund(
         doc_number=payment.doc_number, 
         date=payment.date, 
         value=-payment.value,
         debit=payment.debit,  
     )
-    print "saving"
     refund.save()
     refund.edit_mode=True
     return _r2r(request,'inventory/results.html', {'edit_mode':True, 'objects':[refund],'prefix':'vendorrefund','line_template':"inventory/transaction.html",'error_list':{}, 'info_list':{}})
@@ -1334,11 +1326,11 @@ def movements_report(request):
     except: pass
     try:transactions=transactions.filter(_date__lt=request.GET['end'])
     except: pass
-    try:report=Setting.objects.get('Movements report')
+    try:report=Setting.get('Movements report')
     except Report.DoesNotExist: 
         request.GET=request.GET.copy()
 #        request.GET['q']=doc_number
-        errors={'Report':[unicode(_('Unable to find a report template with the name "%s"') % (Setting.objects.get('Movements report').name,))]}
+        errors={'Report':[unicode(_('Unable to find a report template with the name "%s"') % (Setting.get('Movements report').name,))]}
         return list_sales(request, errors=errors)
     return render_string_to_pdf(request, Template(report.body), {'transactions':transactions, 'user':request.user})  
 
@@ -1358,10 +1350,10 @@ def new_cash_closing(request):
     if end:
         deadline = end + timedelta(days=1)
         cash_closings=cash_closings.filter(_date__lt=deadline)
-        cash=Entry.objects.filter(account=Setting.objects.get('Cash account'), date__lt=dt(deadline)).aggregate(total=models.Sum('value'))['total'] or Decimal('0.00')
+        cash=Entry.objects.filter(account=Setting.get('Cash account'), date__lt=dt(deadline)).aggregate(total=models.Sum('value'))['total'] or Decimal('0.00')
     if cash_closings.count() == 0:
         doc_number=CashClosing.objects.next_doc_number()
-        c=CashClosing(doc_number=doc_number, date=start, value=cash-Setting.objects.get('Starting cash account balance'))
+        c=CashClosing(doc_number=doc_number, date=start, value=cash-Setting.get('Starting cash account balance'))
         c.save()
         c.edit_mode=True
         return _r2r(request,'inventory/results.html', {'objects':[c],'prefix':'cash_closing','line_template':"inventory/cash_closing.html",'error_list':{}, 'info_list':{}})
@@ -1375,10 +1367,10 @@ def edit_cash_closing(request, object_id):
 
 def cash_closing_report(request, object_id):
     cash_closing = get_object_or_404(CashClosing, pk=object_id)
-    try:report=Setting.objects.get('Cash closing report')
+    try:report=Setting.get('Cash closing report')
     except Report.DoesNotExist: 
         request.GET=request.GET.copy()
-        errors={'Report':[unicode(_('Unable to find a report template with the name "%s"') % (Setting.objects.get('Cash closing report').name,))]}
+        errors={'Report':[unicode(_('Unable to find a report template with the name "%s"') % (Setting.get('Cash closing report').name,))]}
         return item_list(request, errors=errors)
     return render_string_to_pdf(request, Template(report.body), {
         'start':cash_closing.start,
@@ -1391,8 +1383,8 @@ def cash_closing_report(request, object_id):
         'groups_by_series':cash_closing.groups_by_series,
         'grouped_payments':cash_closing.payments_by_timing,
         'user':request.user,
-        'settings.COMPANY_NAME':Setting.objects.get('Company name'),
-        'company_name':Setting.objects.get('Company name'),
+        'settings.COMPANY_NAME':Setting.get('Company name'),
+        'company_name':Setting.get('Company name'),
         'revenue':cash_closing.revenue,        
         'discount':cash_closing.discount,        
         'totalrevenue':cash_closing.revenue-cash_closing.discount,
@@ -1469,10 +1461,8 @@ def new_linkeditem(request, object_id):
         link=LinkedItem(parent=obj, child=item, quantity=1)
         link.save()  
     except Item.MultipleObjectsReturned: 
-        print "caught multiple objects error"
         error_list['item']=['There are more than one %ss with the name %s. Try using a bar code.' % ('item', request.POST['item'])]
     except Item.DoesNotExist: 
-        print "caught no objects error"
         error_list['item']=["Unable to find '%s' in the list of items." % (request.POST['item'], )]        
     if not error_list: 
         info_list=['The linked item has been added successfully.',]
@@ -1529,12 +1519,8 @@ def login(request, template_name='registration/login.html',
                 request.session.delete_test_cookie()
             profile=user.get_profile()
 #            profile.tabs.all().delete()
-            print "here"
-            print "Tab.objects.all() = " + str(Tab.objects.all())
             for t in Tab.objects.all():
-                print "checking %s" % t.name
                 if user.has_perm(t.perm):
-                    print "adding %s" % t.name
                     profile.tabs.add(t)
                 elif t in profile.tabs.all(): # Here we assume that he doesnt have rights
                     profile.tabs.remove(t)

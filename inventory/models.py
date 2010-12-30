@@ -39,7 +39,8 @@ def dt(date):
 def create_barcode(number, folder=''):
     from jade.inventory.code128 import Code128
     bar = Code128()
-    bar.getImage(number,50,"png", folder=Setting.BARCODES_FOLDER)
+#    print "folder = " + str(folder)
+    bar.getImage(number,50,"png", folder=settings.BARCODES_FOLDER)
 def in_months(date, months):
     return date+timedelta(months*365/12)
 
@@ -125,14 +126,13 @@ ITEM_TYPES=(
 
 class ItemManager(models.Manager):
     def __init__(self, tipo=None):
-        super(ItemManager, self).__init__()
-        self.tipo=tipo
+        self.tipo=tipo or 'Item'
+        super(ItemManager, self).__init__()        
+    def get_query_set(self):
+        return super(ItemManager, self).get_query_set().filter(tipo=self.tipo)
     def next_bar_code(self):
         last=Setting.objects.get(name='Last automatic barcode')
         number = increment_string_number(last.value)
-#        try: number=super(ItemManager, self).get_query_set().filter(auto_bar_code=True).order_by('-bar_code')[0].bar_code
-#        except IndexError: number='1001'
-#        number=increment_string_number(number)
         while Item.objects.filter(bar_code=number).count()>0:
             number=increment_string_number(number)
             last.value=number
@@ -150,8 +150,8 @@ class ItemManager(models.Manager):
         return query.get(Q(name=q) | Q(bar_code=q))
     def low_stock(self):
         return list(Item.objects.raw("select id from (select inventory_item.*, sum(quantity) total from inventory_item left join inventory_entry on inventory_item.id=inventory_entry.item_id where (inventory_entry.delivered=True and account_id=%i) or (inventory_entry.id is null) group by inventory_item.id) asd where (total<minimum) or (total is null and minimum>0);" % Setting.get('Inventory account').pk))
-        
-class Item(models.Model):
+
+class ItemBase(models.Model):
     """
     """
     name = models.CharField(_('name'), max_length=200, unique=True)
@@ -165,16 +165,27 @@ class Item(models.Model):
     unit = models.ForeignKey(Unit, default=None, blank=True)
     auto_bar_code = models.BooleanField(_('automatic bar code'), default=False)
     tipo = models.CharField(_('type'), max_length=16, choices=ITEM_TYPES, default='Product')
-    objects = ItemManager()
+    objects = models.Manager()
     class Meta:
+        db_table = 'inventory_item'
         ordering = ('name',)
         permissions = (
             ("view_cost", "Can view costs"),
             ("view_item", "Can view items"),
         )
     def save(self, *args, **kwargs):
-        if not self.unit: self.unit=Setting.get('Default unit')
-        super(Item, self).save(*args, **kwargs)        
+        try: 
+            if not self.unit: 
+                self.unit=Setting.get('Default unit')
+        except Unit.DoesNotExist: self.unit=Setting.get('Default unit')
+        super(ItemBase, self).save(*args, **kwargs)        
+        if self.bar_code != '':
+#            print "BLAH"
+            try: 
+                if subprocess.call('ls %s%s' % (Setting.BARCODES_FOLDER,kwargs['instance'].bar_code), shell=True)!=0:
+#                    print "creating"
+                    create_barcode(kwargs['instance'].bar_code, Setting.BARCODES_FOLDER)
+            except:pass
     def __unicode__(self):
         return self.name
     def template(self):
@@ -241,7 +252,13 @@ class Item(models.Model):
         # returns the quantity recommended to purchase based on min/max
         return self.maximum-self.stock
     recommended=property(_get_recommended)
-    
+class Item(ItemBase):
+    objects=ItemManager('Item')
+    class Meta:
+        proxy = True
+    def save(self, *args, **kwargs):
+        self.tipo='Item'
+        super(Item, self).save(*args, **kwargs)        
 class Service(Item):
     objects=ItemManager('Service')
     class Meta:
@@ -254,11 +271,6 @@ class Service(Item):
         super(Service, self).save(*args, **kwargs)
 
 def create_prices_for_item(sender, **kwargs):
-    if kwargs['instance'].bar_code != '':
-        try: 
-            if subprocess.call('ls %s%s' % (Setting.BARCODES_FOLDER,kwargs['instance'].bar_code), shell=True)!=0:
-                create_barcode(kwargs['instance'].bar_code, Setting.BARCODES_FOLDER)
-        except:pass
     if kwargs['created']:
         for group in PriceGroup.objects.all():
             Price.objects.create(item=kwargs['instance'], group=group, site=Site.objects.get_current())
@@ -445,7 +457,10 @@ class Account(models.Model):
     def _get_receipt(self):
         try: return self.contact.receipt
         except Contact.DoesNotExist: return None
-    receipt=property(_get_receipt)   
+    def _set_receipt(self, value):
+        try: self.contact.receipt=value
+        except Contact.DoesNotExist: pass
+    receipt=property(_get_receipt, _set_receipt)   
 
     def _get_account_group(self):
         try: return self.contact.account_group
@@ -581,6 +596,7 @@ class Account(models.Model):
             
 def add_contact(sender, **kwargs):
     if kwargs['created'] and kwargs['instance'].tipo in ('Client', 'Vendor'):
+#        print "adding contact"
         l=kwargs['instance']
         if not l._price_group: l._price_group=Setting.get('Default price group')
         if not l._account_group: l._account_group=Setting.get('Default account group')
@@ -631,7 +647,7 @@ class AccountGroup(models.Model):
         try:
             if not self.site: self.site=Site.objects.get_current()
         except:
-            print "unable to set site on AccountGroup"
+#            print "unable to set site on AccountGroup"
             pass
     name = models.CharField(max_length=32)
     revenue_account = models.ForeignKey(Account, related_name = 'revenue_account')
@@ -687,21 +703,23 @@ class VendorManager(models.Manager):
 def make_default_account(data, model=Account):
     try: return model.objects.get(name=data[0])
     except model.DoesNotExist: 
-        print "couldnt find "+data[0]
+#        print "couldnt find "+data[0]
         try:
-            return model.objects.create(name=data[0], number=data[1], multiplier=data[2], site_id=Setting.SITE_ID)
+            return model.objects.create(name=data[0], number=data[1], multiplier=data[2], site_id=settings.SITE_ID)
         except Site.DoesNotExist:
-            print "Unable to create account because a site with id=%i does not exist" % Setting.SITE_ID
+            print "Unable to create account because a site with id=%i does not exist" % settings.SITE_ID
     except model.MultipleObjectsReturned:
         print "We have %i %ss" % (model.objects.filter(name=data[0]).count(), data[0])
         return model.objects.filter(name=data[0])[0]
-    except DatabaseError: print "pass"
+    except DatabaseError: 
+        pass
+#        print "pass"
 
-try:
-    try: Site.objects.filter(pk=Setting.SITE_ID)
-    except: Site.objects.create(name='Default', id=Setting.SITE_ID)
-except:
-    print "Unable to create a site to match the current site_id"
+#try:
+try: Site.objects.filter(pk=settings.SITE_ID)
+except: Site.objects.create(name='Default', id=settings.SITE_ID)
+#except:
+#    print "Unable to create a site to match the current site_id"
 
 class Contact(models.Model):
     def save(self, *args, **kwargs):
@@ -746,8 +764,8 @@ class Client(Account):
         permissions = (
             ("view_client", "Can view clients"),
         )
-post_save.connect(add_contact, sender=Client, dispatch_uid="jade.inventory.models")
-#post_save.connect(add_contact, sender=Account, dispatch_uid="jade.inventory.models")
+post_save.connect(add_contact, sender=Client, dispatch_uid="jade.invenatory.models")
+post_save.connect(add_contact, sender=Account, dispatch_uid="jade.inventory.models")
 
 class Vendor(Account):
     def save(self, *args, **kwargs):
@@ -761,10 +779,10 @@ class Vendor(Account):
         permissions = (
             ("view_vendor", "Can view vendors"),
         )
-post_save.connect(add_contact, sender=Vendor, dispatch_uid="jade.inventory.models")
+post_save.connect(add_contact, sender=Vendor, dispatch_uid="jade.inveantory.models")
 class GaranteeOffer(models.Model):
     def save(self, *args, **kwargs):
-        print "Site.objects.get_current() = " + str(Site.objects.get_current())
+#        print "Site.objects.get_current() = " + str(Site.objects.get_current())
         try:self.site
         except Site.DoesNotExist: self.site=Site.objects.get_current()
         super(GaranteeOffer, self).save(*args, **kwargs)
@@ -882,8 +900,8 @@ class Transaction(models.Model):
         try: 
             if not site: site = Site.objects.get_current()
         except DatabaseError:
-            print "pass"
-        print "quantity = " + str(quantity)
+            pass
+#        print "quantity = " + str(quantity)
         e=self.entry_set.create(
             date=self.date,
             account=account,
@@ -1369,9 +1387,9 @@ class Purchase(Transaction):
     value=property(_get_value, _set_value)
        
 def add_purchase_extra_values(sender, **kwargs):
-    print "running funcc = "
+#    print "running funcc = "
     if kwargs['created']: 
-        print "createing extra value = "
+#        print "createing extra value = "
         ExtraValue.objects.create(transaction = kwargs['instance'], name = 'CalculatedCost', value = kwargs['instance']._value)
 post_save.connect(add_general_entries, sender=Purchase, dispatch_uid="jade.inventory.models")
 post_save.connect(add_purchase_extra_values, sender=Purchase, dispatch_uid="jade.insventory.models")
@@ -1548,8 +1566,8 @@ class CashClosing(Transaction):
     def _get_paid_sales(self):
         if not self._paid_sales:
             self._paid_sales, self._unpaid_sales = self.separate_by_paid_on_spot(self.documents)
-        print "self._paid_sales = " + str(self._paid_sales)
-        print "self._unpaid_sales = " + str(self._unpaid_sales)
+#        print "self._paid_sales = " + str(self._paid_sales)
+#        print "self._unpaid_sales = " + str(self._unpaid_sales)
         return self._paid_sales
     paid_sales=property(_get_paid_sales)
     def _get_unpaid_sales(self):
@@ -1605,7 +1623,7 @@ class CashClosing(Transaction):
         if not self._payments_by_timing:
             self._payments_by_timing={'Early':[], 'OnTime':[],'Late':[],'Down':[],'Over':[]}
             for payment in self.payments: self.update_dict_list(self._payments_by_timing, {payment.timing:payment})
-        print "self._payments_by_timing = " + str(self._payments_by_timing)
+#        print "self._payments_by_timing = " + str(self._payments_by_timing)
         return self._payments_by_timing
     payments_by_timing=property(_get_payments_by_timing)    
 post_save.connect(add_general_entries, sender=CashClosing, dispatch_uid="jade.inventory.models")
@@ -1673,7 +1691,7 @@ class VendorPayment(Payment):
             'account_tipo':'Debit',
             'credit':Setting.get('Payments made account'),
         })
-        print "VendorPaymentkwargs = " + str(kwargs)
+#        print "VendorPaymentkwargs = " + str(kwargs)
         super(VendorPayment, self).__init__(*args, **kwargs)
         self.template='inventory/vendor_payment.html'
         self.tipo='VendorPayment'

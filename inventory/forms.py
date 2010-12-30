@@ -33,11 +33,7 @@ def clean_lookup(form, name, model, by_pk=False, title=None):
         if by_pk:
             data = model.objects.filter(pk=int(data)).get()
         else:
-            print "data = " + str(data)
-            print "model = " + str(model)
-            print "model.objects.filter(name=data) = " + str(model.objects.filter(name=data))
             data = model.objects.filter(name=data).get()
-            print "data = " + str(data)
     except model.MultipleObjectsReturned: 
             raise forms.ValidationError('There are more than one %ss with the name %s. Resolve this issue and try again.' % (title, data))
     except model.DoesNotExist: 
@@ -47,7 +43,6 @@ def clean_number(form, name, default=0):
     try:
         data=form.cleaned_data[name]
         if data=='undefined' or data=='': 
-            print "%s was blank returning %i" % (name, default)
             return default
         return Decimal(data)
     except:
@@ -546,6 +541,7 @@ class ContactForm(forms.ModelForm):
         model.fax =        self.cleaned_data['fax']
         model.tax_number =        self.cleaned_data['tax_number']
         model.account_group =        self.cleaned_data['account_group']
+        blah=self.cleaned_data['receipt']
         model.receipt =        self.cleaned_data['receipt']
         model.price_group =        self.cleaned_data['price_group']
         model.description =        self.cleaned_data['description']
