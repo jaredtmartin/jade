@@ -126,10 +126,10 @@ ITEM_TYPES=(
 
 class ItemManager(models.Manager):
     def __init__(self, tipo=None):
-        self.tipo=tipo or 'Item'
+        self.tipo=tipo
         super(ItemManager, self).__init__()        
-    def get_query_set(self):
-        return super(ItemManager, self).get_query_set().filter(tipo=self.tipo)
+#    def get_query_set(self):
+#        return super(ItemManager, self).get_query_set().filter(tipo=self.tipo)
     def next_bar_code(self):
         last=Setting.objects.get(name='Last automatic barcode')
         number = increment_string_number(last.value)
@@ -165,7 +165,7 @@ class Item(models.Model):
     unit = models.ForeignKey(Unit, default=None, blank=True)
     auto_bar_code = models.BooleanField(_('automatic bar code'), default=False)
     tipo = models.CharField(_('type'), max_length=16, choices=ITEM_TYPES, default='Product')
-    objects = models.Manager()
+    objects=ItemManager()
     class Meta:
         db_table = 'inventory_item'
         ordering = ('name',)
