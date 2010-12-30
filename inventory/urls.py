@@ -141,7 +141,6 @@ urlpatterns = patterns('',
     (r'^account/(?P<object_id>\d+)/statement.pdf$', 'jade.inventory.views.account_statement'),
 
     #Prices
-    (r'^prices/$', 'jade.inventory.views.price_list'),
     (r'^price/(?P<object_id>\d+)/$', 'jade.inventory.views.price_edit'),
 
     #Garantees

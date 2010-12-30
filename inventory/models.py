@@ -151,7 +151,7 @@ class ItemManager(models.Manager):
     def low_stock(self):
         return list(Item.objects.raw("select id from (select inventory_item.*, sum(quantity) total from inventory_item left join inventory_entry on inventory_item.id=inventory_entry.item_id where (inventory_entry.delivered=True and account_id=%i) or (inventory_entry.id is null) group by inventory_item.id) asd where (total<minimum) or (total is null and minimum>0);" % Setting.get('Inventory account').pk))
 
-class ItemBase(models.Model):
+class Item(models.Model):
     """
     """
     name = models.CharField(_('name'), max_length=200, unique=True)
@@ -178,7 +178,7 @@ class ItemBase(models.Model):
             if not self.unit: 
                 self.unit=Setting.get('Default unit')
         except Unit.DoesNotExist: self.unit=Setting.get('Default unit')
-        super(ItemBase, self).save(*args, **kwargs)        
+        super(Item, self).save(*args, **kwargs)        
         if self.bar_code != '':
 #            print "BLAH"
             try: 
@@ -252,13 +252,13 @@ class ItemBase(models.Model):
         # returns the quantity recommended to purchase based on min/max
         return self.maximum-self.stock
     recommended=property(_get_recommended)
-class Item(ItemBase):
-    objects=ItemManager('Item')
-    class Meta:
-        proxy = True
-    def save(self, *args, **kwargs):
-        self.tipo='Item'
-        super(Item, self).save(*args, **kwargs)        
+#class Item(ItemBase):
+#    objects=ItemManager('Item')
+#    class Meta:
+#        proxy = True
+#    def save(self, *args, **kwargs):
+#        self.tipo='Item'
+#        super(Item, self).save(*args, **kwargs)        
 class Service(Item):
     objects=ItemManager('Service')
     class Meta:
@@ -2000,7 +2000,7 @@ class Count(Transaction):
         self.errors={}
         return True
 def add_count_details(sender, **kwargs):
-    print "running"
+#    print "running"
     if kwargs['created']:
         l=kwargs['instance']
         ExtraValue.objects.create(transaction = kwargs['instance'], name = 'Count', value = kwargs['instance']._count)

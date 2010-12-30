@@ -764,25 +764,8 @@ def list_services(request, errors=[]):
     items=Service.objects.find(q)
     if items.count()==1: return item_show(request, items[0].pk)
     return _r2r(request,'inventory/service_list.html', {'page':_paginate(request, items),'q':q, 'error_list':errors, 'boxform':BoxForm(),'tipo':'Service'})
-
-######################################################################################
-# Price Views
-######################################################################################
 @login_required
 @permission_required('inventory.change_price', login_url="/blocked/")
-def price_list(request): # GET ONLY
-    try: q=request.GET['q']
-    except KeyError: q=''
-    page=_paginate(request, Price.objects.filter(item__name__icontains=q))
-    forms = [PriceForm(instance=price, prefix="form-"+str(price.pk)) for price in page.object_list]
-    return _r2r(request,'inventory/price_list.html', {
-        'page':page,
-        'price_forms':forms,
-        'q':q,
-    })
-
-@login_required
-@permission_required('inventory.change_garanteeoffer', login_url="/blocked/")
 def price_edit(request, object_id):
     return edit_object(request, object_id, Price, PriceForm, "price")
 ######################################################################################

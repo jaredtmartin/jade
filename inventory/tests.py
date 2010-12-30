@@ -412,7 +412,7 @@ class TestItems(TestCase):
     def setUp(self):
         self.testclient = TestClient()
         response = self.testclient.post('/login/', {'username': 'tester', 'password': 'tester'})
-        ItemBase.objects.all().delete()
+        Item.objects.all().delete()
         i=Item.objects.create(name='spring', minimum=3)
         i=Item.objects.create(name='sprocket', minimum=-3)
     def testItemList(self):
@@ -513,6 +513,17 @@ class TestItems(TestCase):
         response = self.testclient.get('/inventory/items/')
         self.failUnlessEqual(response.status_code, 200)
         self.failUnlessEqual(len(response.context['page'].object_list), 3)
+    def testPriceEdit(self):
+        i=Item.objects.get(name='Sprocket')
+        response = self.testclient.post('/inventory/price/%i/'%i.pk, {
+            "relative":"1",
+            "fixed":"2",
+        })
+        self.failUnlessEqual(response.status_code, 200)
+        self.failUnlessEqual(response.context['error_list'], {})
+        p=response.context['objects'][0]
+        self.failUnlessEqual(p.fixed, 2)
+        self.failUnlessEqual(p.relative, 1)
     
     
     
