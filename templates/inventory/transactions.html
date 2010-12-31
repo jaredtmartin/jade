@@ -62,6 +62,11 @@
         function update_tax_amount(){
             var total=parseFloat($('#doc_total_for_tax').val());
             var rate=parseFloat($('#id_tax_rate').val());
+            if ($("#id_tax_rate option:selected").attr('included')=='True'){
+                $('#tax_in_price').attr('checked', true);
+            } else {
+                $('#tax_in_price').attr('checked', false);
+            }
             if ($('#tax_in_price').attr('checked')){
                 $('#tax_amount').val((total/(rate+1)*rate).toFixed(2));
             } 
