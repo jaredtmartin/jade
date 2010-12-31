@@ -349,11 +349,11 @@ class Price(models.Model):
     site = models.ForeignKey(Site)#, default=Site.objects.get_current().pk
     fixed_discount = models.DecimalField(_('fixed discount'), max_digits=8, decimal_places=2, default=0)
     relative_discount = models.DecimalField(_('relative discount'), max_digits=8, decimal_places=2, default=0)
-    fixed = models.DecimalField(_('fixed'), max_digits=8, decimal_places=2, default=None)
-    relative = models.DecimalField(_('relative'), max_digits=8, decimal_places=2, default=None)
+    fixed = models.DecimalField(_('fixed'), max_digits=8, decimal_places=2, default=0)
+    relative = models.DecimalField(_('relative'), max_digits=8, decimal_places=2, default=1)
     def save(self, *args, **kwargs):
-        if not self.fixed: self.fixed=Setting.get('Default fixed price')
-        if not self.relative: self.relative=Setting.get('Default relative price')
+#        if not self.fixed: self.fixed=Setting.get('Default fixed price')
+#        if not self.relative: self.relative=Setting.get('Default relative price')
         super(Price, self).save(*args, **kwargs) 
     objects = CurrentSiteManager()
     def get_tipo_display(self):
