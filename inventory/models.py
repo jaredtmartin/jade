@@ -918,7 +918,8 @@ class Transaction(models.Model):
         try:
             if self._subclass: return self._subclass
         except: pass
-        if not self.pk: return None        
+        if not self.pk: return None       
+        t=self.tipo
         self._subclass=eval(TransactionTipo.objects.get(name=self.tipo).obj).objects.get(pk=self.id)
         return self._subclass
     subclass=property(_get_subclass)

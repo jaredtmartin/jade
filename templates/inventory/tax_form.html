@@ -9,6 +9,5 @@
         </select>    
         <input type="hidden" id="doc_total_for_tax" value="{{total|floatformat:2}}">
 	    {% trans 'Amount' %}: <input id="tax_amount" value="{{amount|floatformat:2}}" type="text"><br>
-	    {% trans 'Subtract from price' %}: <input id="tax_in_price" {% if default.price_includes_tax %}checked="checked" {% endif %}value="1" type="checkbox"><br>
     </form>
 </div>

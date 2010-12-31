@@ -370,11 +370,7 @@ class ItemForm(forms.ModelForm):
     default_cost = forms.CharField(required=False, initial='0')
     def save(self, commit=True, tipo=None):
         model = super(ItemForm, self).save(commit=False)
-        if tipo: model.tipo=tipo
-#        print "self.cleaned_data['minimum'] = " + str(self.cleaned_data['minimum'])
-#        model.minimum =  self.cleaned_data['minimum'] or 0
-#        model.maximum =  self.cleaned_data['maximum'] or 0
-#        model.default_cost =  self.cleaned_data['default_cost'] or 0
+        model.tipo='Item'
         if commit: model.save()
         return model
     def __init__(self, *args, **kwargs):
@@ -415,7 +411,7 @@ class ServiceForm(ItemForm):
         exclude = ('tipo',)
     def save(self, commit=True, tipo=None):        
         model = super(ServiceForm, self).save(commit=False)
-        if tipo: model.tipo=tipo
+        model.tipo='Service'
         if commit: model.save()
         return model
     

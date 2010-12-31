@@ -198,7 +198,6 @@ class TestPDFViews(TestCase):
 #        self.failUnlessEqual(response.context['doc'].value, 156)
     def testCountSheet(self):
         c1=Count.objects.create(doc_number='counta', item=Item.objects.all()[0])
-        print "c1 = " + str(c1)
         c2=Count.objects.create(doc_number='counta', item=Item.objects.all()[0])
         response = self.testclient.get("/inventory/count/counta/sheet.pdf")
         self.failUnlessEqual(response.status_code, 200)

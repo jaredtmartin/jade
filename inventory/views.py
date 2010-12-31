@@ -940,7 +940,7 @@ def add_tax(request, object_id):
         tax=SaleTax(doc_number=obj.doc_number, date=obj.date, debit=obj.client, credit=rate.sales_account, value=amount)
     elif obj.tipo=='Purchase':
         tax=PurchaseTax(doc_number=obj.doc_number, date=obj.date, credit=obj.vendor, debit=rate.purchases_account, value=amount)
-    if request.POST['tax_in_price']=='true':
+    if rate.price_includes_tax=='true':
         doc=Transaction.objects.filter(doc_number=obj.doc_number).exclude(tipo__endswith='Payment').exclude(tipo__endswith='Refund')
         for t in doc:
             t=t.subclass
@@ -970,10 +970,19 @@ def get_tax_form(request, object_id):
     rates=TaxRate.objects.all()
     total=Entry.objects.filter(transaction__doc_number=obj.doc_number, active=True, account=obj.subclass.account).exclude(transaction__tipo='SaleTax').exclude(transaction__tipo='SaleTax.').aggregate(total=models.Sum('value'))['total'] or Decimal('0.00')
     total=total* obj.account.multiplier
+    print "total = " + str(total)
+    print "default.price_includes_tax = " + str(default.price_includes_tax)
+    print "default.value = " + str(default.value)
+    print "total/(default.value+1) = " + str(total/(default.value+1))
+    print "total/(default.value+1)*default.value = " + str(total/(default.value+1)*default.value)
+    
+    print "total*default.value = " + str(total*default.value)
     if default.price_includes_tax:
         amount=total/(default.value+1)*default.value
+        print "first route"
     else:
         amount=total*default.value
+        print "second route"
     return _r2r(request,'inventory/tax_form.html', {'rates':rates,'default':default,'total':total,'amount':amount})
    
 ################################################################################################

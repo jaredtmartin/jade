@@ -15,9 +15,9 @@
     <div class="actiontab" ><a href="/inventory/transactions/movements.pdf?{% if q %}q={{q}}&{% endif %}{% if start %}start={{start}}&{% endif %}{% if end %}end={{end}}{% endif %}" class="action">{% trans 'Inventory' %}</a></div>
     <div style="display: none;" id="discount-form" title="{% trans 'Add a discount' %}">
 	    <form>
-		    {% trans 'Discount' %}: <input id="discount_value" value="" type="text"><a href="#" onclick="$(this).prev().val('');$(this).prev().select();return false;"><img id="clear_value" src="{{MEDIA_URL}}/img/clear.png"/></a><br>
+		    {% trans 'Discount' %}:<br><input id="discount_value" value="" type="text"><a href="#" onclick="$(this).prev().val('');$(this).prev().select();return false;"><img id="clear_value" src="{{MEDIA_URL}}/img/clear.png"/></a><br>
 		    {% trans 'or' %}<br>
-		    {% trans 'Total' %}: <input id="discount_total" value="" type="text"><a href="#" onclick="$(this).prev().val('');$(this).prev().select();return false;"><img id="clear_value" src="{{MEDIA_URL}}/img/clear.png"/></a><br>
+		    {% trans 'Total' %}:<br><input id="discount_total" value="" type="text"><a href="#" onclick="$(this).prev().val('');$(this).prev().select();return false;"><img id="clear_value" src="{{MEDIA_URL}}/img/clear.png"/></a><br>
 	    </form>
     </div>
     <script>
