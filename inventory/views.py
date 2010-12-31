@@ -783,12 +783,17 @@ def edit_clientgarantee(request, object_id):
 @permission_required('inventory.change_clientgarantee', login_url="/blocked/")
 def new_clientgarantee(request, object_id):
     sale = get_object_or_404(Sale, pk=object_id)
-    try: months=sale.item.garanteeoffer_set.filter(price=0)[0].months
-    except: months=0
-    garantee=ClientGarantee(doc_number=sale.doc_number, date=sale.date, client=sale.client, credit=sale.client.account_group.revenue_account, item=sale.item, quantity=months, serial=sale.serial)
-    garantee.save()
-    garantee.edit_mode=True
-    return _r2r(request,'inventory/results.html', {'edit_mode':True, 'objects':[garantee],'prefix':'garantee','line_template':"inventory/transaction.html",'error_list':{}, 'info_list':{}})
+    error_list={}
+    try:
+        try: months=sale.item.garanteeoffer_set.filter(price=0)[0].months
+        except: months=0
+        garantee=ClientGarantee(doc_number=sale.doc_number, date=sale.date, client=sale.client, credit=sale.client.account_group.revenue_account, item=sale.item, quantity=months, serial=sale.serial)
+        garantee.save()
+        garantee.edit_mode=True
+    except Item.DoesNotExist: 
+        error_list['item']=[u'La venta debe tener un producto para garantizar.']
+        garantee=None
+    return _r2r(request,'inventory/results.html', {'edit_mode':True, 'objects':[garantee],'prefix':'garantee','line_template':"inventory/transaction.html",'error_list':error_list, 'info_list':{}})
 
 ######################################################################################
 # Vendor Garantees

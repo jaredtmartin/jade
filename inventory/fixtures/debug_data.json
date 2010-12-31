@@ -119,6 +119,7 @@
 {"pk": 56, "model": "inventory.setting", "fields": {"_value": "7", "name": "Price report", "tipo": "jade.inventory.models.Report"}},
 {"pk": 57, "model": "inventory.setting", "fields": {"_value": "12", "name": "Low stock report", "tipo": "jade.inventory.models.Report"}},
 {"pk": 58, "model": "inventory.setting", "fields": {"_value": "8", "name": "Inventory report", "tipo": "jade.inventory.models.Report"}},
+{"pk": 59, "model": "inventory.setting", "fields": {"_value": "2", "name": "Payments received account", "tipo": "jade.inventory.models.Account"}},
 
 
 

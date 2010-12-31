@@ -520,7 +520,7 @@ class ContactForm(forms.ModelForm):
     def clean_price_group(self):
         return clean_lookup(self, 'price_group', PriceGroup)
     def clean_user(self):
-        print "self.cleaned_data['user'] = " + str(self.cleaned_data['user'])
+#        print "self.cleaned_data['user'] = " + str(self.cleaned_data['user'])
         data = self.cleaned_data['user']
         if (not data) and (not self.fields['user'].required): return None
         try: data = User.objects.filter(username=data).get()
