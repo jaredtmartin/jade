@@ -19,6 +19,7 @@ from django.db import models
 from decimal import *
 from django.db.utils import DatabaseError
 from datetime import datetime, timedelta
+import time
 from django.contrib.auth.models import User
 from django.db.models import Q
 from django.db.models.signals import pre_save, post_save, pre_delete
@@ -34,6 +35,9 @@ from jade.inventory.managers import *
 
 DEBIT=1
 CREDIT=-1
+
+def datefromstr(s, format="%m/%d/%Y"):
+    return datetime.fromtimestamp(time.mktime(time.strptime(s,format)))
 def dt(date):
     return datetime.fromordinal(date.toordinal())
 def create_barcode(number, folder=''):
@@ -850,10 +854,10 @@ class Transaction(models.Model):
         self.tipo = kwargs.pop('tipo', 'Transaction')
         self._debit = kwargs.pop('debit', self._debit)
         self._credit = kwargs.pop('credit', self.credit)
-        self._account_tipo = kwargs.pop('account_tipo','Debit')
         self._debit_tipo = kwargs.pop('debit_tipo','Debit')
         self._credit_tipo = kwargs.pop('credit_tipo','Credit')
-        self._value_tipo = kwargs.pop('value_tipo', self._debit_tipo)
+        self._account_tipo = kwargs.pop('account_tipo',self._debit_tipo)
+        self._value_tipo = kwargs.pop('value_tipo', self._account_tipo)
         self._quantity = kwargs.pop('quantity', 0)
         self._item = kwargs.pop('item', None)
         self._serial = kwargs.pop('serial', '')
@@ -920,6 +924,7 @@ class Transaction(models.Model):
         except: pass
         if not self.pk: return None       
         t=self.tipo
+#        print "self.tipo = " + str(self.tipo)
         self._subclass=eval(TransactionTipo.objects.get(name=self.tipo).obj).objects.get(pk=self.id)
         return self._subclass
     subclass=property(_get_subclass)
@@ -995,9 +1000,10 @@ class Transaction(models.Model):
     delivered = property(_get_delivered, _set_delivered)
     
     def _get_value(self):
-        try: return self.entry(self._account_tipo).value
+        try: return self.entry(self._value_tipo).value
         except AttributeError: return self._value
     def _set_value(self, value):
+        if not self._value_tipo == self._debit_tipo: value=value*-1
         try:
             self.entry(self._debit_tipo).update('value',value)
             self.entry(self._credit_tipo).update('value', -value)
@@ -1135,7 +1141,6 @@ class Sale(Transaction):
             ("view_sale", "Can view sales"),
             ("view_receipt", "Can view sales"),
         )
-    
     objects = BaseManager('Sale')
     def print_url(self):
         return '/inventory/sale/%s/receipt.pdf'% self.doc_number
@@ -1655,22 +1660,27 @@ class ClientPayment(Payment):
     objects = BaseManager('ClientPayment')
     
     def __init__(self, *args, **kwargs):
-        kwargs.update({
+        newkwargs={
             'account_tipo':'Credit',
+            'value_tipo':'Debit',
             'debit':Setting.get('Payments received account'),
-        })
-        super(ClientPayment, self).__init__(*args, **kwargs)
+        }
+        newkwargs.update(kwargs)
+        super(ClientPayment, self).__init__(*args, **newkwargs)
         self.template='inventory/client_payment.html'
         self.tipo='ClientPayment'
-    def _get_value(self):
-        try: return self.entry(self._debit_tipo).value
-        except AttributeError: return self._value
-    def _set_value(self, value):
-        try:
-            self.entry(self._debit_tipo).update('value',value)
-            self.entry(self._credit_tipo).update('value', -value)
-        except: self._value = value
-    value=property(_get_value, _set_value)
+#    def _get_value(self):
+#        try: return self.entry(self._debit_tipo).value
+#        except AttributeError: return self._value
+#    def _set_value(self, value):
+#        try:
+#            self.entry(self._debit_tipo).update('value',value)
+#            self.entry(self._credit_tipo).update('value', -value)
+#        except: self._value = value
+#    value=property(_get_value, _set_value)
+    def _get_client(self): return self.credit
+    def _set_client(self, value): self.credit=value
+    client=property(_get_client, _set_client)
 post_save.connect(add_general_entries, sender=ClientPayment, dispatch_uid="jade.inventory.models")
 
 class ClientRefund(ClientPayment):
@@ -1678,6 +1688,9 @@ class ClientRefund(ClientPayment):
         proxy = True
     objects = BaseManager('ClientRefund')
     def __init__(self, *args, **kwargs):
+#        kwargs.update({
+#            'value_tipo':'Credit',
+#        })
         super(ClientRefund, self).__init__(*args, **kwargs)
         self.tipo='ClientRefund'
 post_save.connect(add_general_entries, sender=ClientRefund, dispatch_uid="jade.inventory.models")
@@ -1689,13 +1702,15 @@ class VendorPayment(Payment):
     
     def __init__(self, *args, **kwargs):
         kwargs.update({
-            'account_tipo':'Debit',
             'credit':Setting.get('Payments made account'),
         })
 #        print "VendorPaymentkwargs = " + str(kwargs)
         super(VendorPayment, self).__init__(*args, **kwargs)
         self.template='inventory/vendor_payment.html'
         self.tipo='VendorPayment'
+    def _get_vendor(self): return self.debit
+    def _set_vendor(self, value): self.debit=value
+    vendor=property(_get_vendor, _set_vendor)
 
 post_save.connect(add_general_entries, sender=VendorPayment, dispatch_uid="jade.inventory.models")
 
@@ -1704,6 +1719,9 @@ class VendorRefund(VendorPayment):
         proxy = True
     objects = BaseManager('VendorRefund')
     def __init__(self, *args, **kwargs):
+#        kwargs.update({
+#            'value_tipo':'Credit',
+#        })
         super(VendorRefund, self).__init__(*args, **kwargs)
         self.tipo='VendorRefund'
 post_save.connect(add_general_entries, sender=VendorRefund, dispatch_uid="jade.inventory.models")
@@ -1738,6 +1756,7 @@ class PurchaseTax(Transaction):
             'account_tipo':'Vendor',
             'credit_tipo':'Vendor',
             'debit_tipo':'Tax',
+            'value_tipo':'Tax',
         })
         super(PurchaseTax, self).__init__(*args, **kwargs)
         self.template='inventory/tax.html'
@@ -1799,7 +1818,7 @@ class PurchaseDiscount(Discount):
         super(PurchaseDiscount, self).__init__(*args, **kwargs)
         self.tipo='PurchaseDiscount'
     def _get_value(self):
-        try: return -self.entry(self._account_tipo).value
+        try: return self.entry(self._credit_tipo).value
         except AttributeError: return -self._value
     def _set_value(self, value):
         try:
@@ -1862,6 +1881,7 @@ class VendorGarantee(Garantee):
         self._vendor = kwargs.pop('vendor', None)
         kwargs.update({
             'account_tipo':'Vendor',
+            'value_tipo':'Garantee',
             'debit_tipo':'Garantee',
             'credit_tipo':'Vendor',
             'credit':self._vendor,

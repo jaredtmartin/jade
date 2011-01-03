@@ -987,12 +987,14 @@ def add_discount(request, object_id):
     try:
         amount=Decimal(request.POST['discount'])
     except InvalidOperation:
-        try:
+#        try:
             total=Entry.objects.filter(transaction__doc_number=obj.doc_number, active=True, account=obj.subclass.account).aggregate(total=models.Sum('value'))['total'] or Decimal('0.00')
             total=total*obj.subclass.account.multiplier
-            amount=total-Decimal(request.POST['total'])
-        except:
-            errors[_('Amount')]=_("You must enter either the amount of the discount or the discounted total of the transaction.")
+            amount = total-Decimal(request.POST['total'])
+#            goal=Decimal(request.POST['total'])*obj.subclass.account.multiplier
+#            amount=total-goal
+#        except:
+#            errors[_('Amount')]=[_("You must enter either the amount of the discount or the discounted total of the transaction.")]
     if obj.tipo=='Sale':
         discount=SaleDiscount(doc_number=obj.doc_number, date=obj.date, debit=obj.client.account_group.discounts_account, credit=obj.client, value=amount)
     elif obj.tipo=='Purchase':
@@ -1006,53 +1008,7 @@ def edit_salediscount(request, object_id):
     
 def edit_purchasediscount(request, object_id):
     return edit_object(request, object_id, PurchaseDiscount, PurchaseDiscountForm, "purchasediscount")
-#######################################################################################
-##                                         Equity Views
-#######################################################################################
-@login_required
-@permission_required('inventory.view_equity', login_url="/blocked/")
-def list_equity(request):
-    try: q=request.GET['q']
-    except KeyError: q=''
-    if q=='': page=_paginate(request, Equity.objects.all().order_by('-_date'))
-    else: page=_paginate(request, Equity.objects.filter(doc_number=q).order_by('-_date'))
-    
-    return _r2r(request,'inventory/equity_list.html', {'page':page,'prefix':'transaction','q':q})
-@login_required
-@permission_required('inventory.change_equity', login_url="/blocked/")
-def edit_equity(request, object_id):
-    return edit_object(request, object_id, Equity, EquityForm, "equity")
-@login_required
-@permission_required('inventory.change_equity', login_url="/blocked/")
-def new_equity(request):
-    error_list={}
-    # get the doc number
-    try: doc_number=request.POST['doc_number']
-    except: doc_number='' 
-    if doc_number=='': doc_number=Equity.objects.next_doc_number()
-    # get the date
-    try: 
-        sample=Equity.objects.filter(doc_number=doc_number)[0]
-        date=sample.date
-    except:
-        date=datetime.now()
-    try:
-        value=Decimal(request.POST['value'])
-    except InvalidOperation:
-        error_list={_('Value'):[_('This value should be a number')]}
-    if len(error_list)==0:
-        equity=Equity(
-            doc_number=doc_number, 
-            date=date,
-            value=value,
-            )
-        equity.save()
-        equity.edit_mode=True
-        objects=[equity]
-    else:
-        objects=[]
-    return _r2r(request,'inventory/results.html', {'edit_mode':True, 'objects':objects,'prefix':'equity','line_template':"inventory/equity.html",'error_list':error_list, 'info_list':{}})
-    
+
 
 #@login_required
 #@permission_required('inventory.change_accounting', login_url="/blocked/")
@@ -1242,27 +1198,6 @@ def new_vendorpayment(request):
     vendorpayment.edit_mode=True
     return _r2r(request,'inventory/results.html', {'edit_mode':True, 'objects':[vendorpayment],'prefix':'vendorpayment','line_template':"inventory/transaction.html",'error_list':{}, 'info_list':{}})
     
-    
-@login_required
-@permission_required('inventory.add_tax', login_url="/blocked/")
-def new_tax(request):
-    doc_number=request.POST['doc_number']
-    try: 
-        sample = Sale.objects.filter(doc_number=doc_number)[0]
-        date = sample.date
-        client = sample.client
-    except:
-        date = datetime.now()
-        client = Client.objects.default()
-    try: 
-        if request.POST['client']:
-            client = Client.objects.get(name=request.POST['client'])
-    except:pass
-    clientpayment=ClientPayment(doc_number=doc_number, date=date, source=client, dest=PAYMENTS_RECEIVED_ACCOUNT)
-    clientpayment.save()
-    clientpayment.edit_mode=True
-    return _r2r(request,'inventory/results.html', {'edit_mode':True, 'objects':[clientpayment],'prefix':'clientpayment','line_template':"inventory/transaction.html",'error_list':{}, 'info_list':{}})
-
 ######################################################################################
 # Transaction Views
 ######################################################################################
@@ -1306,14 +1241,16 @@ def deactivate_transaction(request, object_id):
     return mark_transaction(request, object_id, 'active', False)
 @login_required
 @permission_required('inventory.view_item', login_url="/blocked/")
-def movements_report(request):       
-    transactions = Transaction.objects.all().order_by('-_date')
-    try:transactions=transactions.filter(doc_number__icontains=request.GET['q'])
-    except: pass
-    try:transactions=transactions.filter(_date__gte=request.GET['start'])
-    except: pass
-    try:transactions=transactions.filter(_date__lt=request.GET['end'])
-    except: pass
+def movements_report(request):
+    entries={}
+    for i in Item.objects.all() :
+        entries[i]=i.entry_set.filter(account=Setting.get('Inventory account')).order_by('-_date')
+        try:transactions=transactions.filter(doc_number__icontains=request.GET['q'])
+        except: pass
+        try:transactions=transactions.filter(_date__gte=request.GET['start'])
+        except: pass
+        try:transactions=transactions.filter(_date__lt=request.GET['end'])
+        except: pass
     try:report=Setting.get('Movements report')
     except Report.DoesNotExist: 
         request.GET=request.GET.copy()

@@ -1,12 +1,20 @@
 {% extends "inventory/transaction_base.html" %}
 {% load i18n %}
 {% block other_fields_edit %}
-    <td><input id="id_transaction-{{ object.pk }}-account" title="{% if object.tipo == 'SaleTax' %}{% trans 'Name of Client' %}{% else %}{% trans 'Name of Vendor' %}{% endif %}" class="field account lookup" value="{{object.subclass.debit|default:''}}" type="text"></td>
+    {% if object.tipo == 'SaleTax' %}
+    <td><input id="id_transaction-{{ object.pk }}-account" title="{% trans 'Name of Client' %}" class="field account lookup" value="{{object.subclass.client|default:''}}" type="text"></td>
+    {% else %}
+        <td><input id="id_transaction-{{ object.pk }}-account" title="{% trans 'Name of Vendor' %}" class="field account lookup" value="{{object.subclass.vendor|default:''}}" type="text"></td>
+    {% endif %}
     <td/><td/><td/>
     <td><input id="id_transaction-{{ object.pk }}-value" title="{% trans 'Amount' %}" class="field money" value="{{object.subclass.value|floatformat:2}}" type="text"></td>
 {% endblock %}
 {% block other_fields_show %}
-    <td><a id="id_transaction-{{ object.pk }}-account" title="{% if object.tipo == 'SaleTax' %}{% trans 'Name of Client' %}{% else %}{% trans 'Name of Vendor' %}{% endif %}"      value="{{object.subclass.debit|default:''}}" class="field account lookup" href="{{object.subclass.debit.url}}">{{object.subclass.debit|default:''}}</a></td>
+    {% if object.tipo == 'SaleTax' %}
+        <td><a id="id_transaction-{{ object.pk }}-account" title="{% trans 'Name of Client' %}"      value="{{object.subclass.client|default:''}}" class="field account lookup" href="{{object.subclass.client.url}}">{{object.subclass.client|default:''}}</a></td>
+    {% else %}
+        <td><a id="id_transaction-{{ object.pk }}-account" title="{% trans 'Name of Vendor' %}"      value="{{object.subclass.vendor|default:''}}" class="field account lookup" href="{{object.subclass.vendor.url}}">{{object.subclass.vendor|default:''}}</a></td>
+    {% endif %}
     <td/><td/><td/>
     <td id="id_transaction-{{object.pk}}-value" title="{% trans 'Amount paid' %}" value="{{object.subclass.value|floatformat:2}}"                  class="field money">    ${{object.subclass.value|floatformat:2}}</td>
 {% endblock %}

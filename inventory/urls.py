@@ -68,12 +68,7 @@ urlpatterns = patterns('',
     (r'^transfers/$', 'jade.inventory.views.list_transfers'),
     (r'^transfer/(?P<object_id>\d+)/$', 'jade.inventory.views.edit_transfer'),
     (r'^transfer/new/$', 'jade.inventory.views.new_transfer'),
-    
-    # Equity
-    (r'^equity_list/$', 'jade.inventory.views.list_equity'),
-    (r'^equity/(?P<object_id>\d+)/$', 'jade.inventory.views.edit_equity'),
-    (r'^equity/new/$', 'jade.inventory.views.new_equity'),
-    
+      
     #Purchase Returns
     (r'^purchasereturn/(?P<object_id>\d+)/$', 'jade.inventory.views.edit_purchasereturn'),
     (r'^purchasereturn/(?P<object_id>\d+)/new/$', 'jade.inventory.views.new_purchasereturn'),

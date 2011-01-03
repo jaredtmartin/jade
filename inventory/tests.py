@@ -594,7 +594,7 @@ class TestGarantees(TestCase):
         self.failUnlessEqual(p.doc_number, 'blah')
         self.failUnlessEqual(p.item.name, 'Frog')
         self.failUnlessEqual(p.serial, 'zoomie')
-        self.failUnlessEqual(p.value, Decimal('-12.34'))
+        self.failUnlessEqual(p.value, Decimal('12.34'))
         self.failUnlessEqual(p.quantity, Decimal('777.00'))    
     def testGaranteeOfferNewEditDelete(self):
         response = self.testclient.post('/inventory/garanteeoffer/new/', {
@@ -686,5 +686,444 @@ class TestSales(TestCase):
         payment=response.context['objects'][0]
         self.failUnlessEqual(payment.credit, self.a.client)
         self.failUnlessEqual(payment.value, Decimal('45.46'))
+
+class TestDiscounts(TestCase):
+    fixtures = ['debug_data.json']  
+    def setUp(self):
+        self.testclient = TestClient()
+        response = self.testclient.post('/login/', {'username': 'tester', 'password': 'tester'})
+        Transaction.objects.all().delete()
+        self.i=Item.objects.all()[0]
+        self.a=Sale.objects.create(item=self.i, doc_number='3334', serial='1234', value=Decimal('123.34'))
+        self.b=Purchase.objects.create(item=self.i, doc_number='3337', serial='1234', value=Decimal('123.12'))
+    def testClientDiscounts(self):
+        response = self.testclient.post('/inventory/transaction/%i/add_discount/' % self.a.pk, {
+            'discount':'12',
+            'total':''
+            })
+        self.failUnlessEqual(response.status_code, 200)
+        self.failUnlessEqual(response.context['error_list'], {})
+        discount=response.context['objects'][0]
+        self.failUnlessEqual(discount.account, self.a.client)
+        self.failUnlessEqual(discount.value, Decimal('-12.00'))
+        response = self.testclient.post('/inventory/transaction/%i/add_discount/' % self.a.pk, {
+            'discount':'',
+            'total':'100'
+            })
+        self.failUnlessEqual(response.status_code, 200)
+        self.failUnlessEqual(response.context['error_list'], {})
+        discount=response.context['objects'][0]
+        self.failUnlessEqual(discount.value, Decimal('-11.34'))
+        response = self.testclient.post('/inventory/salediscount/%i/' % discount.pk, {
+            'account':'Anonimo',
+            'date':'12/31/2010',
+            'doc_number':'1222',
+            'value':'-7.00',
+            })
+        self.failUnlessEqual(response.status_code, 200)
+        self.failUnlessEqual(response.context['error_list'], {})
+        self.failUnlessEqual(response.context['objects'][0], discount)
+        discount=response.context['objects'][0]
+        self.failUnlessEqual(discount.client.name, 'Anonimo')
+        self.failUnlessEqual(discount.doc_number, '1222')
+        self.failUnlessEqual(discount.value, Decimal('-7.00'))
+        response = self.testclient.get('/inventory/transactions/?q=1222')
+        self.failUnlessEqual(response.status_code, 200)
+        self.failUnlessEqual(len(response.context['page'].object_list), 1)
+        pk=discount.pk
+        response = self.testclient.post('/inventory/transaction/%i/delete/' % discount.pk, {})
+        self.failUnlessEqual(response.status_code, 200)
+        response = self.testclient.get('/inventory/transactions/?q=1222')
+        self.failUnlessEqual(response.status_code, 200)
+        self.failUnlessEqual(len(response.context['page'].object_list), 0)
+    def testVendorDiscounts(self):
+        response = self.testclient.post('/inventory/transaction/%i/add_discount/' % self.b.pk, {
+            'discount':'12',
+            'total':''
+            })
+        self.failUnlessEqual(response.status_code, 200)
+        self.failUnlessEqual(response.context['error_list'], {})
+        discount=response.context['objects'][0]
+        self.failUnlessEqual(discount.account, self.b.vendor)
+        self.failUnlessEqual(discount.value, Decimal('-12.00'))
+        response = self.testclient.post('/inventory/transaction/%i/add_discount/' % self.b.pk, {
+            'discount':'',
+            'total':'100'
+            })
+        self.failUnlessEqual(response.status_code, 200)
+        self.failUnlessEqual(response.context['error_list'], {})
+        discount=response.context['objects'][0]
+        self.failUnlessEqual(discount.value, Decimal('-11.12'))
+        response = self.testclient.post('/inventory/purchasediscount/%i/' % discount.pk, {
+            'account':'No Especificado',
+            'date':'12/31/2010',
+            'doc_number':'1222',
+            'value':'-7.00',
+            })
+        self.failUnlessEqual(response.status_code, 200)
+        self.failUnlessEqual(response.context['error_list'], {})
+        self.failUnlessEqual(response.context['objects'][0], discount)
+        discount=response.context['objects'][0]
+        self.failUnlessEqual(discount.vendor.name, 'No Especificado')
+        self.failUnlessEqual(discount.doc_number, '1222')
+        self.failUnlessEqual(discount.value, Decimal('-7.00'))
+        response = self.testclient.get('/inventory/transactions/?q=1222')
+        self.failUnlessEqual(response.status_code, 200)
+        self.failUnlessEqual(len(response.context['page'].object_list), 1)
+        pk=discount.pk
+        response = self.testclient.post('/inventory/transaction/%i/delete/' % discount.pk, {})
+        self.failUnlessEqual(response.status_code, 200)
+        response = self.testclient.get('/inventory/transactions/?q=1222')
+        self.failUnlessEqual(response.status_code, 200)
+        self.failUnlessEqual(len(response.context['page'].object_list), 0)
+class TestReturns(TestCase):
+    fixtures = ['debug_data.json']  
+    def setUp(self):
+        self.testclient = TestClient()
+        response = self.testclient.post('/login/', {'username': 'tester', 'password': 'tester'})
+        Transaction.objects.all().delete()
+        self.frog=Item.objects.get(name='Frog')
+        self.pig=Item.objects.get(name='Pig')
+        self.a=Sale.objects.create(doc_number='3334', item=self.frog, quantity=7, serial='1234', value=Decimal('533.85'))
+        self.b=Purchase.objects.create(item=self.frog, doc_number='3337',quantity=77,  serial='1234', value=Decimal('214.12'))
+    def testSaleReturns(self):
+        response = self.testclient.post('/inventory/salereturn/%i/new/' % self.a.pk, {})
+        self.failUnlessEqual(response.status_code, 200)
+        self.failUnlessEqual(response.context['error_list'], {})
+        transaction=response.context['objects'][0]
+        self.failUnlessEqual(transaction.client, self.a.client)
+        self.failUnlessEqual(transaction.item.name, 'Frog')
+        self.failUnlessEqual(transaction.doc_number, '3334')
+        self.failUnlessEqual(transaction.quantity, -7)
+        self.failUnlessEqual(transaction.serial, '1234')
+        self.failUnlessEqual(transaction.value, Decimal('-533.85'))
+        response = self.testclient.post('/inventory/salereturn/%i/' % transaction.pk, {
+            'account':'Anonimo',
+            'date':'12/31/2010',
+            'doc_number':'1222',
+            'item':'pig',
+            'quantity':'-3',
+            'serial':'123ggg',            
+            'unit_value':'4',
+            })
+        self.failUnlessEqual(response.status_code, 200)
+        self.failUnlessEqual(response.context['error_list'], {})
+        self.failUnlessEqual(response.context['objects'][0], transaction)
+        transaction=response.context['objects'][0]
+        self.failUnlessEqual(transaction.client.name, 'Anonimo')
+        self.failUnlessEqual(transaction.doc_number, '1222')
+        self.failUnlessEqual(transaction.item.name, 'Pig')
+        self.failUnlessEqual(transaction.quantity, -3)
+        self.failUnlessEqual(transaction.serial, '123ggg')
+        self.failUnlessEqual(transaction.value, Decimal('-12.00'))
+        response = self.testclient.get('/inventory/transactions/?q=1222')
+        self.failUnlessEqual(response.status_code, 200)
+        self.failUnlessEqual(len(response.context['page'].object_list), 1)
+    def testPurchaseReturns(self):
+        response = self.testclient.post('/inventory/purchasereturn/%i/new/' % self.b.pk, {})
+        self.failUnlessEqual(response.status_code, 200)
+        self.failUnlessEqual(response.context['error_list'], {})
+        transaction=response.context['objects'][0]
+        self.failUnlessEqual(transaction.vendor, self.b.vendor)
+        self.failUnlessEqual(transaction.item.name, 'Frog')
+        self.failUnlessEqual(transaction.doc_number, '3337')
+        self.failUnlessEqual(transaction.quantity, -77)
+        self.failUnlessEqual(transaction.serial, '1234')
+        self.failUnlessEqual(transaction.value, Decimal('-214.12'))
+        response = self.testclient.post('/inventory/purchasereturn/%i/' % transaction.pk, {
+            'account':'No Especificado',
+            'date':'12/31/2010',
+            'doc_number':'1222',
+            'item':'pig',
+            'quantity':'-3',
+            'serial':'123ggg',
+            'value':'-4',
+            })
+        self.failUnlessEqual(response.status_code, 200)
+        self.failUnlessEqual(response.context['error_list'], {})
+        self.failUnlessEqual(response.context['objects'][0], transaction)
+        transaction=response.context['objects'][0]
+        self.failUnlessEqual(transaction.vendor.name, 'No Especificado')
+        self.failUnlessEqual(transaction.doc_number, '1222')
+        self.failUnlessEqual(transaction.item.name, 'Pig')
+        self.failUnlessEqual(transaction.quantity, -3)
+        self.failUnlessEqual(transaction.serial, '123ggg')
+        self.failUnlessEqual(transaction.value, Decimal('-4.00'))
+        response = self.testclient.get('/inventory/transactions/?q=1222')
+        self.failUnlessEqual(response.status_code, 200)
+        self.failUnlessEqual(len(response.context['page'].object_list), 1)
+class TestRefunds(TestCase):
+    fixtures = ['debug_data.json']  
+    def setUp(self):
+        self.testclient = TestClient()
+        response = self.testclient.post('/login/', {'username': 'tester', 'password': 'tester'})
+        Transaction.objects.all().delete()
+        self.clientpayment=ClientPayment.objects.create(doc_number='7263', credit=Setting.get('Default client'), value=Decimal('87.23'))
+        self.vendorpayment=VendorPayment.objects.create(doc_number='3845', debit=Setting.get('Default vendor'), value=Decimal('12.23'))
+    def testClientRefunds(self):
+        response = self.testclient.post('/inventory/clientrefund/%i/new/' % self.clientpayment.pk, {})
+        self.failUnlessEqual(response.status_code, 200)
+        self.failUnlessEqual(response.context['error_list'], {})
+        transaction=response.context['objects'][0]
+        self.failUnlessEqual(transaction.client, self.clientpayment.client)
+        self.failUnlessEqual(transaction.doc_number, '7263')
+        self.failUnlessEqual(transaction.value, Decimal('-87.23'))
+        response = self.testclient.post('/inventory/clientrefund/%i/' % transaction.pk, {
+            'account':'Anonimo',
+            'date':'12/31/2010',
+            'doc_number':'1222',    
+            'value':'-4',
+            })
+        self.failUnlessEqual(response.status_code, 200)
+        self.failUnlessEqual(response.context['error_list'], {})
+        self.failUnlessEqual(response.context['objects'][0], transaction)
+        transaction=response.context['objects'][0]
+        self.failUnlessEqual(transaction.client.name, 'Anonimo')
+        self.failUnlessEqual(transaction.doc_number, '1222')
+        self.failUnlessEqual(transaction.value, Decimal('-4.00'))
+        response = self.testclient.get('/inventory/transactions/?q=1222')
+        self.failUnlessEqual(response.status_code, 200)
+        self.failUnlessEqual(len(response.context['page'].object_list), 1)
+    def testVendorRefunds(self):
+        response = self.testclient.post('/inventory/vendorrefund/%i/new/' % self.vendorpayment.pk, {})
+        self.failUnlessEqual(response.status_code, 200)
+        self.failUnlessEqual(response.context['error_list'], {})
+        transaction=response.context['objects'][0]
+        self.failUnlessEqual(transaction.vendor, self.vendorpayment.vendor)
+        self.failUnlessEqual(transaction.doc_number, '3845')
+        self.failUnlessEqual(transaction.value, Decimal('-12.23'))
+        response = self.testclient.post('/inventory/vendorrefund/%i/' % transaction.pk, {
+            'account':'No Especificado',
+            'date':'12/31/2010',
+            'doc_number':'1222',    
+            'value':'-4',
+            })
+        self.failUnlessEqual(response.status_code, 200)
+        self.failUnlessEqual(response.context['error_list'], {})
+        self.failUnlessEqual(response.context['objects'][0], transaction)
+        transaction=response.context['objects'][0]
+        self.failUnlessEqual(transaction.vendor.name, 'No Especificado')
+        self.failUnlessEqual(transaction.doc_number, '1222')
+        self.failUnlessEqual(transaction.value, Decimal('-4.00'))
+        response = self.testclient.get('/inventory/transactions/?q=1222')
+        self.failUnlessEqual(response.status_code, 200)
+        self.failUnlessEqual(len(response.context['page'].object_list), 1)
+class TestPayments(TestCase):
+    fixtures = ['debug_data.json']  
+    def setUp(self):
+        self.testclient = TestClient()
+        response = self.testclient.post('/login/', {'username': 'tester', 'password': 'tester'})
+    def testClientPayments(self):
+        self.sale=Sale.objects.create(doc_number='3334', value=Decimal('533.85'))
+        response = self.testclient.post('/inventory/sale/%i/pay/' % self.sale.pk, {})
+        self.failUnlessEqual(response.status_code, 200)
+        self.failUnlessEqual(response.context['error_list'], {})
+        transaction=response.context['objects'][0]
+        self.failUnlessEqual(transaction.client, self.sale.client)
+        self.failUnlessEqual(transaction.doc_number, '3334')
+        self.failUnlessEqual(transaction.value, Decimal('533.85'))
+        response = self.testclient.post('/inventory/clientpayment/%i/' % transaction.pk, {
+            'account':'Anonimo',
+            'date':'12/31/2010',
+            'doc_number':'1222',    
+            'value':'4',
+            })
+        self.failUnlessEqual(response.status_code, 200)
+        self.failUnlessEqual(response.context['error_list'], {})
+        self.failUnlessEqual(response.context['objects'][0], transaction)
+        transaction=response.context['objects'][0]
+        self.failUnlessEqual(transaction.client.name, 'Anonimo')
+        self.failUnlessEqual(transaction.doc_number, '1222')
+        self.failUnlessEqual(transaction.value, Decimal('4.00'))
+    def testVendorPayments(self):
+        self.purchase=Purchase.objects.create(doc_number='3337', value=Decimal('214.12'))
+        response = self.testclient.post('/inventory/purchase/%i/pay/' % self.purchase.pk, {})
+        self.failUnlessEqual(response.status_code, 200)
+        self.failUnlessEqual(response.context['error_list'], {})
+        transaction=response.context['objects'][0]
+        self.failUnlessEqual(transaction.vendor, self.purchase.vendor)
+        self.failUnlessEqual(transaction.doc_number, '3337')
+        self.failUnlessEqual(transaction.value, Decimal('214.12'))
+        response = self.testclient.post('/inventory/vendorpayment/%i/' % transaction.pk, {
+            'account':'No Especificado',
+            'date':'12/31/2010',
+            'doc_number':'1222',    
+            'value':'4',
+            })
+        self.failUnlessEqual(response.status_code, 200)
+        self.failUnlessEqual(response.context['error_list'], {})
+        self.failUnlessEqual(response.context['objects'][0], transaction)
+        transaction=response.context['objects'][0]
+        self.failUnlessEqual(transaction.vendor.name, 'No Especificado')
+        self.failUnlessEqual(transaction.doc_number, '1222')
+        self.failUnlessEqual(transaction.value, Decimal('4.00'))
+class TestTaxes(TestCase):
+    fixtures = ['debug_data.json']  
+    def setUp(self):
+        self.testclient = TestClient()
+        response = self.testclient.post('/login/', {'username': 'tester', 'password': 'tester'})
+    def testSaleTax(self):
+        self.sale=Sale.objects.create(doc_number='3334', value=Decimal('533.85'))
+        response = self.testclient.post('/inventory/transaction/%i/addtax/' % self.sale.pk, {
+            'amount':'2',
+            'rate':'Consumidor Final',
+            'tax_in_price':'false'      ,  
+        })
+        self.failUnlessEqual(response.status_code, 200)
+        self.failUnlessEqual(response.context['error_list'], {})
+        transaction=response.context['objects'][0]
+        self.failUnlessEqual(transaction.client, self.sale.client)
+        self.failUnlessEqual(transaction.doc_number, '3334')
+        self.failUnlessEqual(transaction.value, Decimal('2.00'))
+        self.failUnlessEqual(Sale.objects.get(pk=self.sale.pk).value,Decimal('533.85'))
+        response = self.testclient.post('/inventory/saletax/%i/' % transaction.pk, {
+            'account':'Anonimo',
+            'date':'12/31/2010',
+            'doc_number':'1222',
+            'value':'4',
+            })
+        self.failUnlessEqual(response.status_code, 200)
+        self.failUnlessEqual(response.context['error_list'], {})
+        self.failUnlessEqual(response.context['objects'][0], transaction)
+        transaction=response.context['objects'][0]
+        self.failUnlessEqual(transaction.client.name, 'Anonimo')
+        self.failUnlessEqual(transaction.doc_number, '1222')
+        self.failUnlessEqual(transaction.value, Decimal('4.00'))
+        response = self.testclient.post('/inventory/transaction/%i/delete/' % transaction.pk, {})
+        self.failUnlessEqual(response.status_code, 200)
+        response = self.testclient.post('/inventory/transaction/%i/addtax/' % self.sale.pk, {
+            'amount':'2',
+            'rate':'Consumidor Final',
+            'tax_in_price':'true',  
+        })
+        self.failUnlessEqual(response.status_code, 200)
+        self.failUnlessEqual(response.context['error_list'], {})
+        for obj in response.context['objects']: 
+            if obj.tipo=='SaleTax': transaction=obj
+        self.failUnlessEqual(transaction.client, self.sale.client)
+        self.failUnlessEqual(transaction.doc_number, '3334')
+        self.failUnlessEqual(transaction.value, Decimal('2.00'))
+        self.failUnlessEqual(Sale.objects.get(pk=self.sale.pk).value,Decimal('531.85'))
         
-        
+    def testPurchaseTax(self):
+        self.purchase=Purchase.objects.create(doc_number='3334', value=Decimal('533.85'))
+        response = self.testclient.post('/inventory/transaction/%i/addtax/' % self.purchase.pk, {
+            'amount':'2',
+            'rate':'Consumidor Final',
+            'tax_in_price':'false'      ,  
+        })
+        self.failUnlessEqual(response.status_code, 200)
+        self.failUnlessEqual(response.context['error_list'], {})
+        transaction=response.context['objects'][0]
+        self.failUnlessEqual(transaction.vendor, self.purchase.vendor)
+        self.failUnlessEqual(transaction.doc_number, '3334')
+        self.failUnlessEqual(transaction.value, Decimal('2.00'))
+        self.failUnlessEqual(Purchase.objects.get(pk=self.purchase.pk).value,Decimal('533.85'))
+        response = self.testclient.post('/inventory/purchasetax/%i/' % transaction.pk, {
+            'account':'No Especificado',
+            'date':'12/31/2010',
+            'doc_number':'1222',
+            'value':'4',
+            })
+        self.failUnlessEqual(response.status_code, 200)
+        self.failUnlessEqual(response.context['error_list'], {})
+        self.failUnlessEqual(response.context['objects'][0], transaction)
+        transaction=response.context['objects'][0]
+        self.failUnlessEqual(transaction.vendor.name, 'No Especificado')
+        self.failUnlessEqual(transaction.doc_number, '1222')
+        self.failUnlessEqual(transaction.value, Decimal('4.00'))
+        response = self.testclient.post('/inventory/transaction/%i/delete/' % transaction.pk, {})
+        self.failUnlessEqual(response.status_code, 200)
+        response = self.testclient.post('/inventory/transaction/%i/addtax/' % self.purchase.pk, {
+            'amount':'2',
+            'rate':'Consumidor Final',
+            'tax_in_price':'true',  
+        })
+        self.failUnlessEqual(response.status_code, 200)
+        self.failUnlessEqual(response.context['error_list'], {})
+        for obj in response.context['objects']: 
+            if obj.tipo=='PurchaseTax': transaction=obj
+        self.failUnlessEqual(transaction.vendor, self.purchase.vendor)
+        self.failUnlessEqual(transaction.doc_number, '3334')
+        self.failUnlessEqual(transaction.value, Decimal('2.00'))
+        self.failUnlessEqual(Purchase.objects.get(pk=self.purchase.pk).value,Decimal('531.85'))
+    def testTaxForm(self):
+        self.sale=Sale.objects.create(doc_number='3334', value=Decimal('595.85'))
+        self.sale=Sale.objects.create(doc_number='3334', value=Decimal('4.15'))
+        response = self.testclient.get('/inventory/transaction/%i/get_tax_form/' % self.sale.pk)
+        self.failUnlessEqual(response.status_code, 200)
+        self.failUnlessEqual(response.context['total'], Decimal('600.00'))
+        self.failUnlessEqual(response.context['amount'], Decimal('69.02654867256637168141592920'))
+        self.failUnlessEqual(len(response.context['rates']), 4)
+        self.failUnlessEqual(response.context['default'].name, 'Consumidor Final')
+class TestTransactionViews(TestCase):
+    fixtures = ['debug_data.json']  
+    def setUp(self):
+        self.testclient = TestClient()
+        response = self.testclient.post('/login/', {'username': 'tester', 'password': 'tester'})
+    def testListTransactions(self):
+        from datetime import datetime
+        Transaction.objects.all().delete()
+        dformat="%d/%m/%Y"
+        import time
+        yesterday=datefromstr("1/10/2000")
+        today=datefromstr("1/11/2000")
+        tomorrow=datefromstr("1/12/2000")
+        early=Sale.objects.create(doc_number='3333', value=Decimal('1'), date=yesterday) # diff doc early
+        early=Sale.objects.create(doc_number='3334', value=Decimal('2'), date=yesterday) # same doc early
+        sale=Sale.objects.create(doc_number='3334', value=Decimal('3'), date=today) # the doc
+        second=Sale.objects.create(doc_number='3334', value=Decimal('4'), date=today) # same doc same day
+        second=Sale.objects.create(doc_number='3335', value=Decimal('5'), date=today) # diff doc same day
+        purchase=Purchase.objects.create(doc_number='3334', value=Decimal('6'), date=today) # purchase same day same doc
+        purchase=Purchase.objects.create(doc_number='P3334', value=Decimal('7'), date=today) # purchase same day diff doc
+        second=Sale.objects.create(doc_number='3334', value=Decimal('8'), date=tomorrow) # same doc next day
+        second=Sale.objects.create(doc_number='3335', value=Decimal('9'), date=tomorrow) # diff doc next day
+        second=Sale.objects.create(doc_number='3335', value=Decimal('9'), date=datefromstr("1/13/2000")) # diff doc next day
+        response = self.testclient.get('/inventory/transactions/')
+        self.failUnlessEqual(response.status_code, 200)
+        self.failUnlessEqual(len(response.context['page'].object_list), 10)
+        response = self.testclient.get('/inventory/transactions/?q=3334')
+        self.failUnlessEqual(response.status_code, 200)
+        self.failUnlessEqual(len(response.context['page'].object_list), 5)
+        response = self.testclient.get('/inventory/transactions/?end=1/10/2000')
+        self.failUnlessEqual(response.status_code, 200)
+        self.failUnlessEqual(len(response.context['page'].object_list), 2)
+        response = self.testclient.get('/inventory/transactions/?start=1/12/2000')
+        self.failUnlessEqual(response.status_code, 200)
+        self.failUnlessEqual(len(response.context['page'].object_list), 3)
+        response = self.testclient.get('/inventory/transactions/?start=1/11/2000&end=1/12/2000')
+        self.failUnlessEqual(response.status_code, 200)
+        self.failUnlessEqual(len(response.context['page'].object_list), 7)
+        response = self.testclient.get('/inventory/transactions/?q=3334&start=1/11/2000&end=1/11/2000')
+        self.failUnlessEqual(response.status_code, 200)
+        self.failUnlessEqual(len(response.context['page'].object_list), 3)
+        for x in range(25): Sale.objects.create(doc_number='3333', value=Decimal('1'), date=yesterday)
+        response = self.testclient.get('/inventory/transactions/')
+        self.failUnlessEqual(response.status_code, 200)
+        self.failUnlessEqual(len(response.context['page'].object_list), 25)
+    def testListTransactions(self):
+        Transaction.objects.all().delete()
+        sale=Sale.objects.create(doc_number='3333', value=Decimal('1'))        
+        response = self.testclient.post('/inventory/transaction/%i/delete/' % sale.pk, {})
+        self.failUnlessEqual(response.status_code, 200)
+        self.failUnlessEqual(Transaction.objects.all().count(), 0)
+    def testMarkTransactions(self):
+        Transaction.objects.all().delete()
+        sale=Sale.objects.create(doc_number='3333', value=Decimal('1'))
+        self.failUnlessEqual(sale.active, True)
+        response = self.testclient.post('/inventory/transaction/%i/deactivate/' % sale.pk, {})
+        self.failUnlessEqual(response.status_code, 200)
+        self.failUnlessEqual(sale.active, False)
+        response = self.testclient.post('/inventory/transaction/%i/activate/' % sale.pk, {})
+        self.failUnlessEqual(response.status_code, 200)
+        self.failUnlessEqual(sale.active, True)
+        self.failUnlessEqual(sale.delivered, True)
+        response = self.testclient.post('/inventory/transaction/%i/undeliver/' % sale.pk, {})
+        self.failUnlessEqual(response.status_code, 200)
+        self.failUnlessEqual(sale.delivered, False)
+        response = self.testclient.post('/inventory/transaction/%i/deliver/' % sale.pk, {})
+        self.failUnlessEqual(response.status_code, 200)
+        self.failUnlessEqual(sale.delivered, True)
+    # TODO Movements report view not working
+    # TODO Need to add cashclosing
+    
