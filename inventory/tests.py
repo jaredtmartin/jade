@@ -1126,4 +1126,5 @@ class TestTransactionViews(TestCase):
         self.failUnlessEqual(sale.delivered, True)
     # TODO Movements report view not working
     # TODO Need to add cashclosing
-    
+    # TODO Need to do linked items
+    # TODO Need to do transfers

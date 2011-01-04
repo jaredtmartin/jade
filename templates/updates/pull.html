@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% load i18n %}
+{% block content %}
+    <p>
+        {% if error %}
+            {% trans 'An error was encountered while fetching updates.' %}
+        {% else %}    
+            {% trans 'Updates have been fetched successfully.' %}
+        {% endif %}
+    </p>
+    {% trans 'Here are the results:' %}
+    <div style="width:500px;border:1px solid #DDDDDD;">{{msg}}</div>
+    {% if updates_applied %}
+        {% trans 'The following updates have been applied to the database:' %}
+        <ul>
+        {% for update in updates_applied %}
+            <li>{{update}}</li>
+        {% endfor %}
+        </ul>
+    {% endif %}
+{% endblock %}
