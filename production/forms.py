@@ -35,26 +35,26 @@ class NewProcessForm(NewTransactionForm):
 class ProcessForm(forms.ModelForm):
     class Meta:
         model = Process
-        fields=('doc_number','item','quantity','serial','cost')
+        fields=('doc_number','item','quantity','serial','value')
     def save(self, commit=True):
         model = super(ProcessForm, self).save(commit=False)
         model.item =        self.cleaned_data['item']
         model.quantity =    self.cleaned_data['quantity']
         model.serial =      self.cleaned_data['serial']
-        model.cost =        (self.cleaned_data['cost'] or 1)
+        model.value =        (self.cleaned_data['value'] or 1)
         if commit: model.save()
         return model        
     doc_number =        forms.CharField()
     item =              forms.CharField(required=False)
     quantity =          forms.DecimalField()
-    cost =              forms.CharField(required=False)
+    value =              forms.CharField(required=False)
     serial =            forms.CharField(required=False)
     def clean_item(self):
         x=clean_bar_code(self, 'item', Item)
         return x
-    def clean_cost(self):
+    def clean_value(self):
         try:
-            data=self.cleaned_data['cost']
+            data=self.cleaned_data['value']
             if data=='undefined': return 0
             return Decimal(data)
         except:
@@ -63,26 +63,26 @@ class ProcessForm(forms.ModelForm):
 class JobForm(forms.ModelForm):
     class Meta:
         model = Job
-        fields=('doc_number', 'item', 'quantity', 'serial', 'cost')
+        fields=('doc_number', 'item', 'quantity', 'serial', 'value')
     def save(self, commit=True):
         model = super(JobForm, self).save(commit=False)
         model.item =        self.cleaned_data['item']
         model.quantity =    self.cleaned_data['quantity']
         model.serial =      self.cleaned_data['serial']
-        model.cost =        (self.cleaned_data['cost'] or 1)
+        model.value =        (self.cleaned_data['value'] or 1)
         if commit: model.save()
         return model        
     doc_number =        forms.CharField()
     item =              forms.CharField(required=False)
     quantity =          forms.DecimalField()
-    cost =              forms.CharField(required=False)
+    value =              forms.CharField(required=False)
     serial =            forms.CharField(required=False)
     def clean_item(self):
         x=clean_bar_code(self, 'item', Item)
         return x
-    def clean_cost(self):
+    def clean_value(self):
         try:
-            data=self.cleaned_data['cost']
+            data=self.cleaned_data['value']
             if data=='undefined': return 0
             return Decimal(data)
         except:

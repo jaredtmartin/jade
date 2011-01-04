@@ -119,8 +119,8 @@ def job_new(request):
 #        print "id:%i, item:%s, qty:%i, val:%i, acct:%s, tipo:%s" % (x.pk, x.item, x.quantity, x.value, x.account.name, x.tipo)
         item_cost=process.item.cost
         total_cost += item_cost * process.quantity
-        try: jobs.append(process.transaction.subclass.plan(new_number, times, cost=item_cost*process.quantity*-1))
-        except AttributeError: pass
+        jobs.append(process.transaction.subclass.plan(new_number, times, cost=item_cost*process.quantity*-1))
+#        except AttributeError: pass
 #        print "item_cost = " + str(item_cost)
 #        print "total_cost = " + str(total_cost)
     # Now do productions

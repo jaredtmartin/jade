@@ -14,7 +14,7 @@
 #    You should have received a copy of the GNU General Public License
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 from django.db import models
-from jade.inventory.models import Transaction, Account, Entry, make_default_account
+from jade.inventory.models import Transaction, Account, Entry, make_default_account, Setting
 from django.db.models.signals import post_save #pre_save, , pre_delete
 from django.db.models import Q
 from datetime import datetime
@@ -62,17 +62,19 @@ class Production(Transaction):
     delivered = property(_get_delivered, _set_delivered)
     def _get_value(self):
         return self.cost
-    value=property(_get_value)
+    def _set_value(self, value):
+        self.cost=value
+    value=property(_get_value, _set_value)
     def _get_cost(self):
         try: return self.entry('Inventory').value
-        except AttributeError: return self._cost
+        except AttributeError: return self._value
     def _set_cost(self, value):
         dif=value-self.cost
         try:
             self.entry('Production').update('value', -value)
             self.entry('Inventory').update('value', value)
         except AttributeError:
-            self._cost=value
+            self._value=value
     cost=property(_get_cost, _set_cost)
     
     def _get_item(self):
@@ -94,15 +96,16 @@ class Production(Transaction):
     def template(self):
         return 'production/production.html'
         
-    def __init__(self, *args, **kwargs):
-        self._cost = kwargs.pop('cost', 0)
-        self._date = kwargs.pop('date', datetime.now())
-        self._delivered = kwargs.pop('delivered', False)
-        self._active = kwargs.pop('active', False)
-        self._item = kwargs.pop('item', None)
-        self._quantity = kwargs.pop('quantity', 0)
-        self._serial = kwargs.pop('serial', None)
-        super(Production, self).__init__(*args, **kwargs)
+#    def __init__(self, *args, **kwargs):
+#        print "kwargs = " + str(kwargs)
+#        self._value = kwargs.pop('cost', 0)
+#        self._date = kwargs.pop('date', datetime.now())
+#        self._delivered = kwargs.pop('delivered', False)
+#        self._active = kwargs.pop('active', False)
+#        self._item = kwargs.pop('item', None)
+#        self._quantity = kwargs.pop('quantity', 0)
+#        self._serial = kwargs.pop('serial', None)
+#        super(Production, self).__init__(*args, **kwargs)
     
 class ProcessManager(models.Manager):
     def get_query_set(self):
@@ -126,6 +129,10 @@ class Process(Production):
             ("view_process", "Can view processes"),
         )
     def plan(self, doc_number, times, cost):
+        print "self.item = " + str(self.item)
+        print "self.quantity*times = " + str(self.quantity*times)
+        print "cost*times = " + str(cost*times)
+        print "doc_number = " + str(doc_number)
         return Job.objects.create(
             item=self.item,
             quantity=self.quantity*times,
@@ -150,9 +157,9 @@ def add_process_entries(sender, **kwargs):
     if kwargs['created']:
         l.sites.add(Site.objects.get_current())
         l.create_related_entry(
-        account = Setting.objects.get('Production expense account'),
+        account = Setting.get('Production expense account'),
         tipo = 'Production',
-        value = l._cost,
+        value = l._value,
         item = l._item,
         quantity=l._quantity,
         serial=l._serial,
@@ -160,9 +167,9 @@ def add_process_entries(sender, **kwargs):
         active=False
         )
         l.create_related_entry(
-        account = Setting.objects.get('Inventory account'),
+        account = Setting.get('Inventory account'),
         tipo = 'Inventory',
-        value = - l._cost,
+        value = - l._value,
         item = l._item,
         quantity=-l._quantity,
         serial=l._serial,
@@ -224,12 +231,13 @@ class Job(Production):
         proxy = True
 def add_job_entries(sender, **kwargs):
     l=kwargs['instance']
+    print "l._item = " + str(l._item)
     if kwargs['created']:
         l.sites.add(Site.objects.get_current())
         l.create_related_entry(
-        account = Setting.objects.get('Inventory account'),
+        account = Setting.get('Inventory account'),
         tipo = 'Inventory',
-        value = l._cost,
+        value = l._value,
         item = l._item,
         quantity=l._quantity,
         serial=l._serial,
@@ -237,9 +245,9 @@ def add_job_entries(sender, **kwargs):
         active=False,
         )
         l.create_related_entry(
-        account = Setting.objects.get('Production expense account'),
+        account = Setting.get('Production expense account'),
         tipo = 'Production',
-        value = - l._cost,
+        value = - l._value,
         item = l._item,
         quantity=-l._quantity,
         serial=l._serial,
