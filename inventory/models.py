@@ -345,6 +345,9 @@ class Setting(models.Model):
         return self.name
 
 class Price(models.Model):
+    class Meta:
+        ordering = ('group',)
+    
     def save(self, *args, **kwargs):
         if not self.site: self.site=Site.objects.get_current()
         super(Price, self).save(*args, **kwargs)
