@@ -555,7 +555,12 @@ def delete_account(request, object_id):
 def client_list(request):
     try: q=request.GET['q']
     except KeyError: q=''
-    return _r2r(request,'inventory/client_list.html', {'page':_paginate(request, Client.objects.filter(name__icontains=q)),'q':q})
+    
+    query=Client.objects.all()
+    words=q.split()
+    for word in words:
+        query=query.filter(name__icontains=word)
+    return _r2r(request,'inventory/client_list.html', {'page':_paginate(request, query),'q':q})
 @login_required
 @permission_required('inventory.view_account', login_url="/blocked/")
 def account_list(request):
