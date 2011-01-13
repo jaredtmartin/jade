@@ -19,6 +19,8 @@ from decimal import *
 from django.utils.translation import ugettext_lazy as _
 from django.db.models import Q
 register = template.Library()
+from django.template import Library, Node, TemplateSyntaxError
+
 
 @register.simple_tag
 def show(x, y):
@@ -38,11 +40,54 @@ def price(item, user):
     return "%.2f" % item.price(user)
 
 @register.filter(name='tax')
-def tax(doc, tax_name):
+def tax(doc, tax_name, context_name=''):
     "returns the tax with the account name given"
+    if context_name: context[context_name]=doc.tax[tax_name]
+    
     return doc.tax[tax_name]
 tax.is_safe = True
 
+
+
+
+class DefineNode(Node):
+    def __init__(self, var, name):
+        self.var = var
+        self.name = name
+
+    def __repr__(self):
+        return "<DefineNode>"
+
+    def render(self, context):
+        context[self.name] = self.var
+        return ''
+
+@register.tag
+def define(parser, token):
+    """
+    Adds a name to the context for referencing an arbitrarily defined string.
+
+    For example:
+
+        {% define "my_string" as my_string %}
+
+    Now anywhere in the template:
+
+        {{ my_string }}
+    """
+    bits = list(token.split_contents())
+    if (len(bits) != 4 or bits[2] != "as") or \
+        not (bits[1][0] in ('"', "'") and bits[1][-1] == bits[1][0]):
+        raise TemplateSyntaxError("%r expected format is '\"string\" as name'" % bits[0])
+    else:
+        value = bits[1][1:-1]
+    name = bits[3]
+    return DefineNode(value, name)
+
+@register.simple_tag
+def get_tax(doc, name, c_name):
+    DefineNode(doc.tax[name], c_name)
+    
 @register.filter(name='neg')
 def neg(value):
     "Negates the value"

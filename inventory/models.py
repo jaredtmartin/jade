@@ -104,7 +104,7 @@ class Report(models.Model):
     def __unicode__(self):
         return self.name
     def _get_watermark_url(self):
-        if self.image: return Setting.APP_LOCATION+self.image.url
+        if self.image: return settings.APP_LOCATION+self.image.url
         else: return None
     watermark_url=property(_get_watermark_url)
 

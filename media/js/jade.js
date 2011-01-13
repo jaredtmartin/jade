@@ -26,7 +26,7 @@ function editTransaction(object_id) {
     $('#id_transaction-'+object_id+'-account2.accounting').autocomplete('/inventory/account_list/', {matchSubset:0, autoFill:1,});
     $('#id_transaction-'+object_id+'-account.accounting').autocomplete('/inventory/account_list/', {matchSubset:0, autoFill:1,});
     $('#id_transaction-'+object_id+'-garantee_months').attr('onblur', 'getGaranteePrice('+object_id+')');
-    $('.transaction:first').children().children('.field:visible').keydown(function(e){
+    $('#transaction-'+object_id).children().children('.field:visible').keydown(function(e){
         if (e.keyCode == 13) {
             $(this).parents('.transaction').children().children('.save').trigger('click');
             $('#item').select();
@@ -36,8 +36,10 @@ function editTransaction(object_id) {
     });    
     $('#transaction-'+object_id+' .show').hide();
     $('#transaction-'+object_id+' .edit').show();
+    $('#transaction-'+object_id).children().children('.quantity:first').select();
 }
 function getTransaction(object_id, url){
+    jQuery("#last_id").val(object_id);
     if ($('#transaction-'+object_id).attr('tipo') == 'sale'){$('#last_sale').val(object_id);}
     $.ajax({
         url: url ,
@@ -92,15 +94,20 @@ function updateTransaction(data){
     });    
 }
 function updateAndSelectQuantity(data){
+    object_id=jQuery("#last_id").val();
     updateTransaction(data)
     
     jQuery('.ui-dialog-content:visible').children().children('#doc_number').val(jQuery('.doc_number:first').val());
 //    jQuery('#doc_number').val(jQuery('.doc_number:first').val());
-    $('.quantity:first').select();
+    if (object_id=="None") { 
+            $('.quantity:first').select();
+    }else {
+        $('#transaction-'+object_id).children().children('.quantity:first').select();
+    }
 }
 function updateAndSelectItemField(data){
     updateTransaction(data)
-//    $('#item.ac_input').select();
+    $('#item.ac_input').select();
 }
 function cancelTransaction(object_id) {
     $('#transaction-'+object_id+' .field').each(function(i){
@@ -113,6 +120,7 @@ function cancelTransaction(object_id) {
     $('#transaction-'+object_id+' .edit').hide();
 }
 function newTransaction(url) {
+    jQuery("#last_id").val("None");
     $.ajax({
         url: url,
         type:'POST',
