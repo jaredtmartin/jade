@@ -122,7 +122,9 @@
 {"pk": 59, "model": "inventory.setting", "fields": {"_value": "2", "name": "Payments received account", "tipo": "jade.inventory.models.Account"}},
 {"pk": 60, "model": "inventory.setting", "fields": {"_value": "True", "name": "Allow sales without inventory", "tipo": "__builtin__.bool"}},
 {"pk": 61, "model": "inventory.setting", "fields": {"_value": "4", "name": "Labels per line", "tipo": "__builtin__.int"}},
-{"pk": 62, "model": "inventory.setting", "fields": {"_value": "44", "name": "Labels per page", "tipo": "__builtin__.int"}},
+{"pk": 62, "model": "inventory.setting", "fields": {"_value": "11", "name": "Lines per page", "tipo": "__builtin__.int"}},
+
+{"pk": 63, "model": "inventory.setting", "fields": {"_value": "limit", "name": "Sales without inventory", "tipo": "__builtin__.str"}},
 {"pk": 34, "model": "inventory.account", "fields": {"site": 1, "multiplier": -1, "name": "Big Daddy", "tipo": "Vendor", "number": "020102"}}, 
 {"pk": 2, "model": "inventory.item", "fields": {"name": "Frog", "tipo": "Item", "bar_code": "1002", "image": "uploaded_images/frog_19.jpeg", "maximum": "5.00", "default_cost": "21.00", "minimum": "3.00", "auto_bar_code": false, "location": "", "unit": 1, "description": ""}}, 
 {"pk": 1, "model": "inventory.item", "fields": {"name": "Pig", "tipo": "Item", "bar_code": "1006", "image": "", "maximum": "0.00", "default_cost": "0.00", "minimum": "0.00", "auto_bar_code": false, "location": "", "unit": 1, "description": ""}}, 

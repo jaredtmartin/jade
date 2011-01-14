@@ -866,6 +866,7 @@ def list_sales(request, errors={}): # GET ONLY
 @permission_required('inventory.change_sale', login_url="/blocked/")
 def new_sale(request):
     error_list={}
+    block=False
     try: doc_number=request.POST['doc_number']
     except: doc_number='' 
     if doc_number=='': doc_number=Sale.objects.next_doc_number()
@@ -880,25 +881,38 @@ def new_sale(request):
     item=None
     value=0
     cost=0
+    active=True
     quantity=1
+    delivered=Setting.get('Deliver by default')
     try:
         item = Item.objects.fetch(request.POST['item'])
-        cost = item.individual_cost
-        value = item.price(client)
         if item.stock<1:
-            error_list['item']=[_('There is insufficient stock for this sale')]
-            if not Setting.get('Allow sales without inventory'): quantity=0
-        
+            s=Setting.get('Sales without inventory')
+            if s=='warn':
+                error_list['item']=[_('There is insufficient stock for this sale')]
+            elif s=='limit': 
+                delivered=False
+                active=False
+                error_list['item']=[_('There is insufficient stock for this sale, it has been marked as not delivered')]
+            elif s=='block': 
+                error_list['item']=[_('This item is not available in inventory')]
+                block=True                
+        else:
+            cost = item.individual_cost
+            value = item.price(client)
     except Item.MultipleObjectsReturned: 
         error_list['item']=['There are more than one %ss with the name %s. Try using a bar code.' % ('item', request.POST['item'])]
     except Item.DoesNotExist: 
         if request.POST['item']!='': error_list['item']=["Unable to find '%s' in the list of items." % (request.POST['item'], )]
     if not client: error_list['client']=[unicode(_('Unable to find a client with the name specified.'))]
     # create the sale
-    sale=Sale(doc_number=doc_number, date=date, client=client, item=item, cost=cost, value=value, quantity=quantity)
-    sale.save()
-    sale.edit_mode=True
-    objects=[sale]
+    if not block:
+        sale=Sale(doc_number=doc_number, date=date, client=client, item=item, cost=cost, value=value, quantity=quantity, delivered=delivered, active=active)
+        sale.save()
+        sale.edit_mode=True
+        objects=[sale]  
+    else:
+        objects=[]
     # add any linked items
     if item:
         for link in item.links:
@@ -1226,6 +1240,8 @@ def delete_transaction(request, object_id):
     return delete_object(request, object_id, Transaction, 'transaction')
 @login_required
 def mark_transaction(request, object_id, attr, value):
+    block=False
+    errors={}
     obj = get_object_or_404(Transaction, pk=object_id).subclass
     if not request.user.has_perm('inventory.change_sale') and obj.tipo=='Sale': return http.HttpResponseRedirect("/blocked/")
     if not request.user.has_perm('inventory.change_purchase') and obj.tipo=='Purchase': return http.HttpResponseRedirect("/blocked/")
@@ -1240,9 +1256,16 @@ def mark_transaction(request, object_id, attr, value):
             return _r2r(request,'inventory/results.html', {'objects':[obj],'error_list':{'Process':[_('You do not have sufficient rights to start production'),]}, 'info_list':[]})
         if attr in ['delivered','active' ] and obj.quantity > 0 and not request.user.has_perm('production.finish_production'):
             return _r2r(request,'inventory/results.html', {'objects':[obj],'error_list':{'Process':[_('You do not have sufficient rights to finish production'),]}, 'info_list':[]})
-    setattr(obj, attr, value)
-    obj.save()
-    return _r2r(request,'inventory/results.html', {'objects':[obj],'error_list':{}, 'info_list':[]})
+    if attr=='delivered' and value==1 and obj.tipo=='Sale' and obj.quantity>obj.item.stock:
+        s=Setting.get('Sales without inventory')
+        if s=='limit' or s=='block': block=True
+        msg=_('There is not sufficient inventory to deliver this sale')
+        try: errors[_('quantity')].append(msg)
+        except KeyError: errors[_('quantity')]=[msg]
+    if not block:
+        setattr(obj, attr, value)
+        obj.save()
+    return _r2r(request,'inventory/results.html', {'objects':[obj],'error_list':errors, 'info_list':[]})
 def deliver_transaction(request, object_id):
     return mark_transaction(request, object_id, 'delivered', True)
 def undeliver_transaction(request, object_id):

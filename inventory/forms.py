@@ -75,12 +75,13 @@ class SaleForm(WarningForm):
     
     def save(self, commit=True):
         model = super(SaleForm, self).save(commit=False)
+        if 'delivered' in self.cleaned_data: model.delivered=self.cleaned_data['delivered']
         model.client =      self.cleaned_data['account']
         model.date =        self.cleaned_data['date']
         model.quantity =    self.cleaned_data['quantity']
         model.item =        self.cleaned_data['item']
         model.serial =      self.cleaned_data['serial']
-        model.value =       self.cleaned_data['unit_value'] 
+        model.value =       self.cleaned_data['unit_value']
         if self.cleaned_data['quantity']!=0: 
             model.value=            model.value          * self.cleaned_data['quantity']
         if commit: model.save()
@@ -101,20 +102,21 @@ class SaleForm(WarningForm):
         cleaned_data = self.cleaned_data
         quantity = cleaned_data.get("quantity")
         item = cleaned_data.get("item")
-        if quantity>item.stock+self.instance.quantity: 
-            try:
-                if not self.warnings: self.warnings={}
-            except AttributeError: self.warnings={}
+        if quantity>item.stock+self.instance.quantity and self.instance.delivered: 
             try:
                 if not self.warnings['quantity']: self.warnings['quantity']=[]
             except KeyError:self.warnings['quantity']=[]
-            if Setting.get('Allow sales without inventory'):
-                self.warnings['quantity'].append(_(u'There is insufficient stock for this sale'))
-            else:
-                cleaned_data['quantity']=min(quantity, item.stock+self.instance.quantity)
-                self.warnings['quantity'].append(_(u'There is insufficient stock for this sale, the quantity has been set to the total amount in stock.'))
+            s=Setting.get('Sales without inventory')
+            if s=='warn':
+                msg=_(u'There is insufficient stock for this sale')
+            elif s=='limit': 
+                cleaned_data['delivered']=False
+                msg=_(u'There is insufficient stock for this sale, it has been marked as not delivered.')
+            elif s=='block':
+                raise forms.ValidationError(_("Insufficient inventory."))
+            try:self.warnings['quantity'].append(msg)
+            except KeyError:self.warnings['quantity']=[msg]
         return cleaned_data
-            
 #class AccountingForm(WarningForm):
 #    class Meta:
 #        model = Accounting
