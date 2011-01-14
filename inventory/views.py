@@ -71,7 +71,7 @@ def edit_object(request, object_id, model, form, prefix, tipo=None, extra_contex
         updated_form=form(instance=obj, prefix=prefix+'-'+str(obj.pk))
         if type(tipo)!=unicode: tipo=unicode(tipo)
         info_list=['The '+tipo+' has been saved successfully.',]
-        error_list={}
+        error_list=f.warnings or {}
     else:
         info_list=[]
         error_list=f.errors
@@ -882,17 +882,22 @@ def new_sale(request):
     item=None
     value=0
     cost=0
+    quantity=1
     try:
         item = Item.objects.fetch(request.POST['item'])
         cost = item.individual_cost
         value = item.price(client)
+        if item.stock<1:
+            error_list['item']=[_('There is insufficient stock for this sale')]
+            if not Setting.get('Allow sales without inventory'): quantity=0
+        
     except Item.MultipleObjectsReturned: 
         error_list['item']=['There are more than one %ss with the name %s. Try using a bar code.' % ('item', request.POST['item'])]
     except Item.DoesNotExist: 
         if request.POST['item']!='': error_list['item']=["Unable to find '%s' in the list of items." % (request.POST['item'], )]
-    if not client: error_list['client']=[unicode('Unable to find a client with the name specified.')]
+    if not client: error_list['client']=[unicode(_('Unable to find a client with the name specified.'))]
     # create the sale
-    sale=Sale(doc_number=doc_number, date=date, client=client, item=item, cost=cost, value=value, quantity=1)
+    sale=Sale(doc_number=doc_number, date=date, client=client, item=item, cost=cost, value=value, quantity=quantity)
     sale.save()
     sale.edit_mode=True
     objects=[sale]

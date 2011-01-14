@@ -318,7 +318,7 @@ class SettingsManager(models.Manager):
 class Setting(models.Model):
     name = models.CharField('name', max_length=32)
     tipo = models.CharField('tipo', max_length=64)
-    _value = models.CharField('_value', max_length=64)
+    _value = models.CharField('_value', max_length=64, blank=True, default="")
     get=SettingsManager()
     objects=models.Manager()
     def _get_value(self):

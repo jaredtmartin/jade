@@ -104,6 +104,7 @@
 {"pk": 57, "model": "inventory.setting", "fields": {"_value": "12", "name": "Low stock report", "tipo": "jade.inventory.models.Report"}},
 {"pk": 58, "model": "inventory.setting", "fields": {"_value": "8", "name": "Inventory report", "tipo": "jade.inventory.models.Report"}},
 {"pk": 59, "model": "inventory.setting", "fields": {"_value": "2", "name": "Payments received account", "tipo": "jade.inventory.models.Account"}},
+{"pk": 60, "model": "inventory.setting", "fields": {"_value": "True", "name": "Allow sales without inventory", "tipo": "__builtin__.bool"}},
 {"pk": 1, "model": "inventory.setting", "fields": {"_value": "1", "name": "Default price group", "tipo": "jade.inventory.models.PriceGroup"}},
 {"pk": 1, "model": "inventory.taxrate", "fields": {"sales_account": 11, "purchases_account": 13, "name": "Consumidor Final", "value": "0.13", "price_includes_tax": true}},
 {"pk": 2, "model": "inventory.taxrate", "fields": {"sales_account": 25, "purchases_account": 26, "name": "Credito Fiscal", "value": "0.13", "price_includes_tax": true}},

@@ -93,6 +93,23 @@ class SaleForm(forms.ModelForm):
     def clean_item(self):
         x=clean_bar_code(self, 'item', Item)
         return x
+    def clean(self):
+        cleaned_data = self.cleaned_data
+        quantity = cleaned_data.get("quantity")
+        item = cleaned_data.get("item")
+        if quantity>item.stock+self.instance.quantity: 
+            try:
+                if not self.warnings: self.warnings={}
+            except AttributeError: self.warnings={}
+            try:
+                if not self.warnings['quantity']: self.warnings['quantity']=[]
+            except KeyError:self.warnings['quantity']=[]
+            if Setting.get('Allow sales without inventory'):
+                self.warnings['quantity'].append(_(u'There is insufficient stock for this sale'))
+            else:
+                cleaned_data['quantity']=min(quantity, item.stock+self.instance.quantity)
+                self.warnings['quantity'].append(_(u'There is insufficient stock for this sale, the quantity has been set to the total amount in stock.'))
+        return cleaned_data
             
 #class AccountingForm(forms.ModelForm):
 #    class Meta:
