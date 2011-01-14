@@ -64,11 +64,15 @@ def clean_bar_code(form, name, model):
         raise forms.ValidationError('There are more than one %ss with the bar code %s. Try using the name and later resolve the issue.' % (name, data))
     return data
 
-
-class SaleForm(forms.ModelForm):
+class WarningForm(forms.ModelForm):
+    def __init__(self, *args, **kwargs):
+        super(WarningForm, self).__init__(*args, **kwargs)
+        self.warnings={}
+class SaleForm(WarningForm):
     class Meta:
         model = Sale
         fields=('doc_number','date','account','item','quantity','serial','unit_value')
+    
     def save(self, commit=True):
         model = super(SaleForm, self).save(commit=False)
         model.client =      self.cleaned_data['account']
@@ -111,7 +115,7 @@ class SaleForm(forms.ModelForm):
                 self.warnings['quantity'].append(_(u'There is insufficient stock for this sale, the quantity has been set to the total amount in stock.'))
         return cleaned_data
             
-#class AccountingForm(forms.ModelForm):
+#class AccountingForm(WarningForm):
 #    class Meta:
 #        model = Accounting
 #        fields=('doc_number','date','account','account2','value')
@@ -136,7 +140,7 @@ class SaleForm(forms.ModelForm):
 #        a=self.cleaned_data
 #        return clean_lookup(self, 'account2', Account, title='account')
 
-class ClientGaranteeForm(forms.ModelForm):
+class ClientGaranteeForm(WarningForm):
     class Meta:
         model = ClientGarantee
         fields=('doc_number','date','account','item','quantity','serial','value')
@@ -164,7 +168,7 @@ class ClientGaranteeForm(forms.ModelForm):
         return x
         
 
-class VendorGaranteeForm(forms.ModelForm):
+class VendorGaranteeForm(WarningForm):
     class Meta:
         model = VendorGarantee
         fields=('doc_number','date','account','item','quantity','serial','value')
@@ -191,7 +195,7 @@ class VendorGaranteeForm(forms.ModelForm):
         x=clean_bar_code(self, 'item', Item)
         return x
 
-class ClientPaymentForm(forms.ModelForm):
+class ClientPaymentForm(WarningForm):
     class Meta:
         model = ClientPayment
         fields=('doc_number','date','account','value')
@@ -209,7 +213,7 @@ class ClientPaymentForm(forms.ModelForm):
     def clean_account(self):
         return clean_lookup(self, 'account', Client)
 
-class VendorPaymentForm(forms.ModelForm):
+class VendorPaymentForm(WarningForm):
     class Meta:
         model = VendorPayment
         fields=('doc_number','date','account','value')
@@ -226,7 +230,7 @@ class VendorPaymentForm(forms.ModelForm):
     date =              forms.DateField(initial=datetime.now()) #, input_formats=['%Y-%m-%d', '%d/%m/%Y',]) # Uncomment this for spanish dates
     def clean_account(self):
         return clean_lookup(self, 'account', Vendor)
-class TaxForm(forms.ModelForm):
+class TaxForm(WarningForm):
     class Meta:
         model = SaleTax
         fields=('doc_number','date','account','value')
@@ -280,7 +284,7 @@ class PurchaseDiscountForm(TaxForm):
     def clean_account(self):
         return clean_lookup(self, 'account', Vendor)
 
-class PurchaseForm(forms.ModelForm):
+class PurchaseForm(WarningForm):
     class Meta:
         model = Purchase
         fields=('doc_number','date','account','item','quantity','serial','value')
@@ -307,7 +311,7 @@ class PurchaseForm(forms.ModelForm):
         x=clean_bar_code(self, 'item', Item)
         return x
 
-class TransferForm(forms.ModelForm):
+class TransferForm(WarningForm):
     class Meta:
         model = Transfer
         fields=('doc_number','date','account','item','quantity','serial','cost')
@@ -334,7 +338,7 @@ class TransferForm(forms.ModelForm):
         x=clean_bar_code(self, 'item', Item)
         return x
 
-class CountForm(forms.ModelForm):
+class CountForm(WarningForm):
     class Meta:
         model = Purchase
         fields=('doc_number','date','item','quantity','serial','value')
@@ -370,13 +374,13 @@ class BoxForm(forms.Form):
     box = forms.ModelChoiceField(queryset=Item.objects.all(), empty_label="---")
 
 
-class ItemImageForm(forms.ModelForm):
+class ItemImageForm(WarningForm):
     class Meta:
         model = Item
         fields = ('image',)
 
 
-class ItemForm(forms.ModelForm):
+class ItemForm(WarningForm):
     class Meta:
         model = Item
         exclude = ('tipo',)
@@ -432,25 +436,25 @@ class ServiceForm(ItemForm):
         if commit: model.save()
         return model
     
-class PriceForm(forms.ModelForm):
+class PriceForm(WarningForm):
     class Meta:
         model = Price
         fields=('relative','fixed')
 PriceFormSet = modelformset_factory(Price, form=PriceForm, extra=0)
 
-class GaranteeOfferForm(forms.ModelForm):
+class GaranteeOfferForm(WarningForm):
     months=forms.IntegerField(initial=0)
     price=forms.DecimalField(initial=Decimal('0.00'))
     class Meta:
         model = GaranteeOffer
         fields=('item', 'months','price')
         
-class LinkedItemForm(forms.ModelForm):
+class LinkedItemForm(WarningForm):
     class Meta:
         model = LinkedItem
         fields=('quantity',)
  
-class AccountForm(forms.ModelForm):
+class AccountForm(WarningForm):
     class Meta:
         model = Account
         exclude=('tax_group', 'price_group', 'tipo','site')
@@ -464,7 +468,7 @@ class AccountForm(forms.ModelForm):
         if commit: model.save()
         return model
 
-class ContactForm(forms.ModelForm):
+class ContactForm(WarningForm):
     class Meta:
         model = Account
         fields=('name', 'number', 'multiplier', 'account_group', 'receipt','price_group', 'address','state_name','country', 
