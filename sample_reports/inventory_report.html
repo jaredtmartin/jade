@@ -1,18 +1,4 @@
-<!--# Jade Inventory Control System-->
-<!--#Copyright (C) 2010  Jared T. Martin-->
-
-<!--#    This program is free software: you can redistribute it and/or modify-->
-<!--#    it under the terms of the GNU General Public License as published by-->
-<!--#    the Free Software Foundation, either version 3 of the License, or-->
-<!--#    (at your option) any later version.-->
-
-<!--#    This program is distributed in the hope that it will be useful,-->
-<!--#    but WITHOUT ANY WARRANTY; without even the implied account of-->
-<!--#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the-->
-<!--#    GNU General Public License for more details.-->
-
-<!--#    You should have received a copy of the GNU General Public License-->
-<!--#    along with this program.  If not, see <http://www.gnu.org/licenses/>.-->
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
 <html>
     <head>
         <title></title>
@@ -34,10 +20,6 @@
                 padding-top:34px;
                 text-align:center;
                 text-shadow:0 1px 0 #E4F2FD;
-            }
-            .company_name {
-                height: 20px;
-                font-size:20px;
             }
             th{text-align:left;}
             .row1{  
@@ -64,39 +46,21 @@
                 top: 1cm;
                 left: 1cm;
                 right: 1.7cm;
-                @frame pagenum {
-                  -pdf-frame-content: pagenum;
-                  bottom: 2cm;
-                  right: 1cm;
-                  height: .5cm;
-                }
-                @frame printdate {
-                  -pdf-frame-content: printdate;
-                  bottom: 2cm;
-                  left:1cm;
-                  height: .5cm;
-                }
             }
         </style>
     </head>
     <body>
-        
-        <h1>
-            <span class="company_name">{{company_name}}</span><br>
-            Lista de Inventario
-        </h1>
+        <h1>Lista de Inventario</h1>
         <table id="tableContent">
             <thead>
-                <tr><th>Nombre</th><th>Locacion</th><th>Cantidad</th><th>Unidad</th><th>Costo</th><th>Total</th></tr>
+                <tr><th>Codigo</th><th>Nombre</th><th>Locacion</th><th>Cantidad</th><th>Unidad</th><th>Costo</th><th>Total</th></tr>
             </thead>
             <tbody>
                 {% for object in items %}
-                     <tr class="{% cycle "row1" "row2" %}"><td>{{object.name}}</td><td>{{object.location}}</td><td>{{object.stock}}</td><td>{{object.unit}}</td><td>${{object.cost|default:0|floatformat:2}}</td><td>${{object.total_cost|default:0|floatformat:2}}</td></tr>                    
+                     <tr class="{% cycle "row1" "row2" %}"><td>{{object.bar_code}}</td><td>{{object.name}}</td><td>{{object.location}}</td><td>{{object.stock}}</td><td>{{object.unit}}</td><td>${{object.cost|default:0|floatformat:2}}</td><td>${{object.total_cost|default:0|floatformat:2}}</td></tr>                    
                 {%endfor%}
-<tr class="{% cycle "row1" "row2" %}"><th>Total</th><th></th><th>{{total_stock}}</th><th></th><th>${{total_cost|default:0|floatformat:2}}</th><th>${{total_total_cost|default:0|floatformat:2}}</th></tr>           
+<tr class="{% cycle "row1" "row2" %}"><th></th><th>{{count}} Productos</th><th/><th/><th/><th/> <th>${{object.total_cost|default:0|floatformat:2}}</th></tr>             
             </tbody>            
         </table>
-    <div id="printdate" style="text-align:left;">{{date_printed|date:"d/m/Y"}}</div>
-    <div id="pagenum" style="text-align:right;"> <pdf:pagenumber> </div>
     </body>
 </html>

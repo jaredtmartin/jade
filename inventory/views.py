@@ -698,18 +698,16 @@ def inventory_report(request):
     items=Item.objects.find(q)
     count=items.count()
     total_cost=0
-    total_total_cost=0
     total_stock=0
     for item in items:
-        total_cost+=item.cost
-        total_total_cost+=item.total_cost
+        total_cost+=item.total_cost
         total_stock+=item.stock
     try:report=Setting.get('Inventory report')
     except Report.DoesNotExist: 
         request.GET=request.GET.copy()
         errors={'Report':[unicode(_('Unable to find a report template with the name "%s"') % (Setting.get('Inventory report').name,))]}
         return item_list(request, errors=errors)
-    return render_string_to_pdf(request, Template(report.body), {'items':items, 'user':request.user, 'total_cost':total_cost, 'total_total_cost':total_total_cost, 'total_stock':total_stock,'count':count})  
+    return render_string_to_pdf(request, Template(report.body), {'items':items, 'user':request.user, 'total_cost':total_cost, 'total_total_cost':total_cost, 'total_stock':total_stock,'count':count})  
     
     
 @login_required
@@ -1311,6 +1309,34 @@ def cash_closing_report(request, object_id):
         request.GET=request.GET.copy()
         errors={'Report':[unicode(_('Unable to find a report template with the name "%s"') % (Setting.get('Cash closing report').name,))]}
         return item_list(request, errors=errors)
+    print "request.GET.get('test',False) = " + str(request.GET.get('test',False))
+    if request.GET.get('test',False):
+        print "going"
+        return _r2r(request, 'bare.html', {
+            'start':cash_closing.start,
+            'end':cash_closing.end,
+            'groups':cash_closing.account_groups,
+            'sales':cash_closing.sale_entries,
+            'payments':cash_closing.payments,
+            'paid_sales':cash_closing.paid_sales,
+            'unpaid_sales':cash_closing.unpaid_sales,
+            'groups_by_series':cash_closing.groups_by_series,
+            'grouped_payments':cash_closing.payments_by_timing,
+            'user':request.user,
+            'settings.COMPANY_NAME':Setting.get('Company name'),
+            'company_name':Setting.get('Company name'),
+            'revenue':cash_closing.revenue,        
+            'discount':cash_closing.discount,        
+            'totalrevenue':cash_closing.revenue-cash_closing.discount,
+            'earnings':cash_closing.earnings,
+            'expense':cash_closing.expense,
+            'tax':cash_closing.tax,
+            'final_cash':cash_closing.ending_cash,
+            'initial_cash':cash_closing.starting_cash,
+            'revenue_check':cash_closing.revenue_check,
+            'cash_check':cash_closing.cash_check,
+            'paymentstotal':cash_closing.paymentstotal,
+        })      
     return render_string_to_pdf(request, Template(report.body), {
         'start':cash_closing.start,
         'end':cash_closing.end,
