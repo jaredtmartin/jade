@@ -6,9 +6,10 @@ from django.contrib.auth.decorators import permission_required, login_required
 def pull(request):
     import commands
     updates_applied=[]
-    try: command='git pull %s' % Setting.get('Git repo')
+    try: command='cd %s;git pull %s' % (settings.APP_LOCATION, Setting.get('Git repo'))
     except: command='git pull origin master'
     results = commands.getstatusoutput(command) 
+    d=commands.getstatusoutput('') 
     updates_applied=run_updates()
     if not results[0]: # No errors fetching
         updates_applied=run_updates()
