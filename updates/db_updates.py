@@ -18,3 +18,9 @@ class AllowSalesWithoutInventory(Update):
     def __call__(self):
         from jade.inventory.models import Setting
         Setting.objects.create(name='Allow sales without inventory', tipo="__builtin__.bool", value="True")
+class AddSettingsForLabels(Update):
+    """Adds this setting to the database"""
+    def __call__(self):
+        from jade.inventory.models import Setting
+        Setting.objects.create(name='Labels per line', tipo="__builtin__.int", value="4")
+        Setting.objects.create(name='Labels per page', tipo="__builtin__.int", value="44")

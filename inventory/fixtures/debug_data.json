@@ -121,6 +121,8 @@
 {"pk": 58, "model": "inventory.setting", "fields": {"_value": "8", "name": "Inventory report", "tipo": "jade.inventory.models.Report"}},
 {"pk": 59, "model": "inventory.setting", "fields": {"_value": "2", "name": "Payments received account", "tipo": "jade.inventory.models.Account"}},
 {"pk": 60, "model": "inventory.setting", "fields": {"_value": "True", "name": "Allow sales without inventory", "tipo": "__builtin__.bool"}},
+{"pk": 61, "model": "inventory.setting", "fields": {"_value": "4", "name": "Labels per line", "tipo": "__builtin__.int"}},
+{"pk": 62, "model": "inventory.setting", "fields": {"_value": "44", "name": "Labels per page", "tipo": "__builtin__.int"}},
 
 
 
