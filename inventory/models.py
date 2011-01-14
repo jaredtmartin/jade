@@ -32,6 +32,7 @@ import subprocess
 from django.contrib.sites.models import Site
 from django.contrib.sites.managers import CurrentSiteManager
 from jade.inventory.managers import *
+import decimal
 
 DEBIT=1
 CREDIT=-1

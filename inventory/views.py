@@ -876,7 +876,7 @@ def new_sale(request):
         date=sample.date
         client=sample.client
     except:
-        date=datetime.now()
+        date=datetime.date(datetime.now())
         client=Client.objects.default()
     client=Client.objects.get_or_create_by_name(name=request.POST['client'])
     item=None

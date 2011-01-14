@@ -13,7 +13,8 @@ class ListItems(Update):
         from jade.inventory.models import Item
         for i in Item.objects.all():
             print i
-class AddSettingForBlockingSalesWithoutInventory(Update):
+class AllowSalesWithoutInventory(Update):
+    """Adds this setting to the database"""
     def __call__(self):
         from jade.inventory.models import Setting
         Setting.objects.create(name='Allow sales without inventory', tipo="__builtin__.bool", value="True")
