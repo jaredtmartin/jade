@@ -51,3 +51,19 @@ class DeliverbyDefaultSetting(Update):
     def __call__(self):
         from jade.inventory.models import Setting
         Setting.objects.create(name='Deliver by default', value=True)
+        
+class AddAccounting(Update):
+    """Adds this setting to the database"""
+    def __call__(self):
+        from jade.inventory.models import *
+        a=Account.objects.create(name='Empleados', number='0203', multiplier=-1)
+        TransactionTipo.objects.create(name='Expense', obj='jade.inventory.models.Expense')
+        TransactionTipo.objects.create(name='EmployeePay', obj='jade.inventory.models.EmployeePay')
+        Setting.objects.create(name='Employees account', value=a)
+        
+class AddWork(Update):
+    """Adds this setting to the database"""
+    def __call__(self):
+        from jade.inventory.models import TransactionTipo
+        TransactionTipo.objects.create(name='Work', obj='jade.inventory.models.Work')
+        

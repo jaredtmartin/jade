@@ -23,6 +23,7 @@ function editTransaction(object_id) {
     $('#id_transaction-'+object_id+'-item').autocomplete('/inventory/item_list/', {matchSubset:0, autoFill:1,});
     $('#id_transaction-'+object_id+'-account.client').autocomplete('/inventory/client_list/', {matchSubset:0, autoFill:1,});
     $('#id_transaction-'+object_id+'-account.vendor').autocomplete('/inventory/vendor_list/', {matchSubset:0, autoFill:1,});
+    $('#id_transaction-'+object_id+'-account.employee').autocomplete('/inventory/employee_list/', {matchSubset:0, autoFill:1,});
     $('#id_transaction-'+object_id+'-account2.accounting').autocomplete('/inventory/account_list/', {matchSubset:0, autoFill:1,});
     $('#id_transaction-'+object_id+'-account.accounting').autocomplete('/inventory/account_list/', {matchSubset:0, autoFill:1,});
     $('#id_transaction-'+object_id+'-garantee_months').attr('onblur', 'getGaranteePrice('+object_id+')');
@@ -233,12 +234,14 @@ function update(prefix, data){
             $('#id_transaction-'+object_id+'-item').autocomplete('/inventory/item_list/', {matchSubset:0, autoFill:1,});
             $('#id_transaction-'+object_id+'-account.client').autocomplete('/inventory/client_list/', {matchSubset:0, autoFill:1,});
             $('#id_transaction-'+object_id+'-account.vendor').autocomplete('/inventory/vendor_list/', {matchSubset:0, autoFill:1,});
+            $('#id_transaction-'+object_id+'-account.employee').autocomplete('/inventory/employee_list/', {matchSubset:0, autoFill:1,});
         } else {
             $('#'+prefix+'s').prepend(this);
             $('.date:first').datepicker();
             $('.item:first').autocomplete('/inventory/item_list/', {matchSubset:0, autoFill:1,});
             $('.account:first.client').autocomplete('/inventory/client_list/', {matchSubset:0, autoFill:1,});
             $('.account:first.vendor').autocomplete('/inventory/vendor_list/', {matchSubset:0, autoFill:1,});
+            $('.account:first.employee').autocomplete('/inventory/employee_list/', {matchSubset:0, autoFill:1,});
             if ($('.transaction:first').attr('tipo') == 'sale'){$('#last_sale').val($('.transaction:first').attr('transaction_id'));}
         }
     });

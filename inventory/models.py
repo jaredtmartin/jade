@@ -708,6 +708,16 @@ class VendorManager(models.Manager):
                     return super(VendorManager, self).create(name=name,price_group=price_group,account_group=account_group, receipt=receipt, number=number)
             else:
                 return Setting.get('Default vendor')
+class EmployeeManager(models.Manager):
+    def default(self):
+        return Setting.get('Default employee')
+    def next_number(self):
+        try: number=super(EmployeeManager, self).get_query_set().filter(tipo="Employee").order_by('-number')[0].number
+        except: number='0203001'
+        return increment_string_number(number)
+    def get_query_set(self):
+        return super(EmployeeManager, self).get_query_set().filter(tipo="Employee")
+
 def make_default_account(data, model=Account):
     try: return model.objects.get(name=data[0])
     except model.DoesNotExist: 
@@ -788,6 +798,21 @@ class Vendor(Account):
             ("view_vendor", "Can view vendors"),
         )
 post_save.connect(add_contact, sender=Vendor, dispatch_uid="jade.inveantory.models")
+
+class Employee(Account):
+    def save(self, *args, **kwargs):
+        self.tipo="Employee"
+        self.multiplier=CREDIT
+        super(Employee, self).save(*args, **kwargs)
+    objects = EmployeeManager()
+    class Meta:
+        ordering = ('name',)
+        proxy = True
+        permissions = (
+            ("view_employee", "Can view employees"),
+        )
+post_save.connect(add_contact, sender=Employee, dispatch_uid="jade.invenatory.models")
+
 class GaranteeOffer(models.Model):
     def save(self, *args, **kwargs):
 #        print "Site.objects.get_current() = " + str(Site.objects.get_current())
@@ -1537,13 +1562,9 @@ class CashClosing(Transaction):
         self.earnings=self.revenue+self.tax-self.discount-self.expense
         self.paymentstotal=(Entry.objects.filter(date__gte=self.start, date__lt=self.end, tipo='Debit').aggregate(total=models.Sum('value'))['total'] or Decimal('0.00'))
         self.revenue_check=self.starting_cash+self.revenue+self.tax-self.discount-self.expense-self.earnings
-        print "self.starting_cash = " + str(self.starting_cash)
-        print "self.revenue = " + str(self.revenue)
-        print "self.tax = " + str(self.tax)
-        print "-self.discount = " + str(-self.discount)
-        print "-self.expense = " + str(-self.expense)
-        print "-self.earnings = " + str(-self.earnings)
-        self.cash_check=self.starting_cash-self.ending_cash+self.paymentstotal-self.paymentstotal
+        self.employeepay=(Entry.objects.filter(date__gte=self.start, date__lt=self.end, tipo='Employee').aggregate(total=models.Sum('value'))['total'] or Decimal('0.00'))*-1
+        self.incidentals=(Entry.objects.filter(date__gte=self.start, date__lt=self.end, tipo='Incidental').aggregate(total=models.Sum('value'))['total'] or Decimal('0.00'))
+        self.cash_check=self.starting_cash+self.paymentstotal-self.employeepay-self.incidentals-self.value-self.ending_cash
         self._account_groups=None
         self._paid_sales=None
         self._unpaid_sales=None
@@ -1928,6 +1949,60 @@ class Equity(Transaction):
         self.template='inventory/equity.html'
         self.tipo='Equity'
 post_save.connect(add_general_entries, sender=Equity, dispatch_uid="jade.inventory.models")
+class Expense(Transaction):
+    class Meta:
+        proxy = True
+    objects=BaseManager('Expense','X')
+    def __init__(self, *args, **kwargs):
+        kwargs.update({
+            'account_tipo':'Incidental',
+            'debit_tipo':'Incidental',
+            'credit_tipo':'Cash',
+            'debit':Setting.get('Expense account'),
+            'credit':Setting.get('Cash account'),
+        })
+        super(Expense, self).__init__(*args, **kwargs)
+        self.template='inventory/expense.html'
+        self.tipo='Expense'
+post_save.connect(add_general_entries, sender=Expense, dispatch_uid="jade.inventory.models")
+class EmployeePay(Transaction):
+    class Meta:
+        proxy = True
+    objects=BaseManager('EmployeePay','E')
+    def __init__(self, *args, **kwargs):
+        kwargs.update({
+            'account_tipo':'Employee',
+            'debit_tipo':'Employee',
+            'credit_tipo':'Cash',
+            'credit':Setting.get('Cash account'),
+            'debit':Setting.get('Employees account'),
+        })
+        super(EmployeePay, self).__init__(*args, **kwargs)
+        self.template='inventory/employeepay.html'
+        self.tipo='EmployeePay'
+post_save.connect(add_general_entries, sender=EmployeePay, dispatch_uid="jade.inventory.models")
+
+class Work(Transaction):
+    class Meta:
+        proxy = True
+    objects=BaseManager('Work','W')
+    def __init__(self, *args, **kwargs):
+        kwargs.update({
+            'account_tipo':'Employee',
+            'debit_tipo':'Expense',
+            'value_tipo':'Expense',
+            'credit_tipo':'Employee',
+            'credit':Setting.get('Employees account'),
+            'debit':Setting.get('Expense account'),
+        })
+        super(Work, self).__init__(*args, **kwargs)
+        self.template='inventory/work.html'
+        self.tipo='Work'
+        
+post_save.connect(add_general_entries, sender=Work, dispatch_uid="jade.inventory.models")
+
+
+
 ################################################################################################
 #                                          Counts
 ################################################################################################

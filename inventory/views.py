@@ -278,6 +278,16 @@ def ajax_client_list(request):
     return _r2r(request,'inventory/ajax_list.html', {'object_list':query,'q':q})
 
 @login_required
+@permission_required('inventory.view_employee', login_url="/blocked/")
+def ajax_employee_list(request):
+    try: q=request.GET['q']
+    except KeyError: q=''
+    query=Employee.objects.all()
+    words=q.split()
+    for word in words:
+        query=query.filter(name__icontains=word)
+    return _r2r(request,'inventory/ajax_list.html', {'object_list':query,'q':q})
+@login_required
 @permission_required('inventory.view_site', login_url="/blocked/")
 def ajax_site_list(request):
     try: q=request.GET['q']
@@ -563,6 +573,17 @@ def client_list(request):
         query=query.filter(name__icontains=word)
     return _r2r(request,'inventory/client_list.html', {'page':_paginate(request, query),'q':q})
 @login_required
+@permission_required('inventory.view_employee', login_url="/blocked/")
+def employee_list(request):
+    try: q=request.GET['q']
+    except KeyError: q=''
+    query=Employee.objects.all()
+    words=q.split()
+    for word in words:
+        query=query.filter(name__icontains=word)
+    return _r2r(request,'inventory/employee_list.html', {'page':_paginate(request, query),'q':q})
+
+@login_required
 @permission_required('inventory.view_account', login_url="/blocked/")
 def account_list(request):
     try: 
@@ -642,8 +663,11 @@ def new_client(request):
 @login_required
 @permission_required('inventory.change_vendor', login_url="/blocked/")
 def new_vendor(request):
-    
     return new_object(request, VendorForm, "account", 'inventory/account_show.html', tipo='Vendor', extra_context={'tipo':'vendor'})
+@login_required
+@permission_required('inventory.change_vendor', login_url="/blocked/")
+def new_employee(request):
+    return new_object(request, EmployeeForm, "account", 'inventory/account_show.html', tipo='Employee', extra_context={'tipo':'employee'})
 @login_required
 @permission_required('inventory.change_account', login_url="/blocked/")
 def new_account(request):
@@ -1360,6 +1384,8 @@ def cash_closing_report(request, object_id):
             'revenue_check':cash_closing.revenue_check,
             'cash_check':cash_closing.cash_check,
             'paymentstotal':cash_closing.paymentstotal,
+            'employeepay':cash_closing.employeepay,
+            'incidentals':cash_closing.incidentals,
         })      
     return render_string_to_pdf(request, Template(report.body), {
         'start':cash_closing.start,
@@ -1385,16 +1411,62 @@ def cash_closing_report(request, object_id):
         'revenue_check':cash_closing.revenue_check,
         'cash_check':cash_closing.cash_check,
         'paymentstotal':cash_closing.paymentstotal,
+        'employeepay':cash_closing.employeepay,
+        'incidentals':cash_closing.incidentals,
+        'closingvalue':cash_closing.value,
     })  
+
+@login_required
+@permission_required('inventory.add_expense', login_url="/blocked/")
+def new_expense(request):
+    doc_number=Expense.objects.next_doc_number()
+    date=datetime.date(datetime.now())
+    obj=Expense.objects.create(doc_number=doc_number, date=date)
+    obj.edit_mode=True
+    return _r2r(request,'inventory/results.html', {'objects':[obj],'prefix':'expense','line_template':"inventory/expense.html",'error_list':{}, 'info_list':{}})
+    
+@login_required
+@permission_required('inventory.change_cash_closing', login_url="/blocked/")
+def edit_expense(request, object_id):    
+    return edit_object(request, object_id, Expense, ExpenseForm, "expense")
+
+@login_required
+@permission_required('inventory.add_employeepay', login_url="/blocked/")
+def new_employeepay(request):
+    doc_number=EmployeePay.objects.next_doc_number()
+    date=datetime.date(datetime.now())
+    obj=EmployeePay.objects.create(doc_number=doc_number, date=date)
+    obj.edit_mode=True    
+    return _r2r(request,'inventory/results.html', {'objects':[obj],'prefix':'employeepay','line_template':"inventory/employeepay.html",'error_list':{}, 'info_list':{}})
+    
+@login_required
+@permission_required('inventory.change_employeepay', login_url="/blocked/")
+def edit_employeepay(request, object_id):    
+    return edit_object(request, object_id, EmployeePay, EmployeePayForm, "employeepay")
+
+@login_required
+@permission_required('inventory.add_work', login_url="/blocked/")
+def new_work(request):
+    doc_number=Work.objects.next_doc_number()
+    obj=Work.objects.create(doc_number=doc_number)
+    obj.edit_mode=True    
+    return _r2r(request,'inventory/results.html', {'objects':[obj],'prefix':'work','line_template':"inventory/work.html",'error_list':{}, 'info_list':{}})
+    
+@login_required
+@permission_required('inventory.change_work', login_url="/blocked/")
+def edit_work(request, object_id):    
+    return edit_object(request, object_id, Work, WorkForm, "work")
+
+
 @login_required
 @permission_required('inventory.view_cashclosing', login_url="/blocked/")
-def list_cashclosing(request):
+def list_accounting(request):
     try: q=request.GET['q']
     except KeyError: q=''
-    if q=='': page=_paginate(request, CashClosing.objects.all().order_by('-_date'))
+    if q=='': page=_paginate(request, Transaction.objects.filter(Q(tipo='CashClosing')|Q(tipo='Expense')|Q(tipo='EmployeePay')|Q(tipo='Work')).order_by('-_date'))
     else: page=_paginate(request, CashClosing.objects.filter(doc_number=q).order_by('-_date'))
     
-    return _r2r(request,'inventory/cashclosing_list.html', {'page':page,'prefix':'transaction','q':q})
+    return _r2r(request,'inventory/accounting.html', {'page':page,'prefix':'transaction','q':q})
 ######################################################################################
 # Transfer Views
 ######################################################################################

@@ -23,6 +23,7 @@ urlpatterns = patterns('',
     # ajax lists    
     (r'^client_list/$', 'jade.inventory.views.ajax_client_list'),
     (r'^vendor_list/$', 'jade.inventory.views.ajax_vendor_list'),
+    (r'^employee_list/$', 'jade.inventory.views.ajax_employee_list'),
     (r'^account_list/$', 'jade.inventory.views.ajax_account_list'),
     (r'^item_list/$', 'jade.inventory.views.ajax_item_list'),
     (r'^account_group_list/$', 'jade.inventory.views.ajax_account_group_list'),
@@ -121,17 +122,21 @@ urlpatterns = patterns('',
     
     #Accounts    
     (r'^clients/$', 'jade.inventory.views.client_list'),
+    (r'^employees/$', 'jade.inventory.views.employee_list'),
     (r'^accounts/$', 'jade.inventory.views.account_list'),
     (r'^vendors/$', 'jade.inventory.views.vendor_list'),
     (r'^account/(?P<object_id>\d+)/$', 'jade.inventory.views.account_show'),
     (r'^client/(?P<object_id>\d+)/$', 'jade.inventory.views.account_show'),
+    (r'^employee/(?P<object_id>\d+)/$', 'jade.inventory.views.account_show'),
     (r'^vendor/(?P<object_id>\d+)/$', 'jade.inventory.views.account_show'),
     (r'^account/(?P<object_id>\d+)/delete/$', 'jade.inventory.views.delete_account'),
     (r'^client//$', 'jade.inventory.views.new_client'),
     (r'^vendor//$', 'jade.inventory.views.new_vendor'),
+    (r'^employee//$', 'jade.inventory.views.new_employee'),
     (r'^account//$', 'jade.inventory.views.new_account'),
     (r'^client/$', 'jade.inventory.views.new_client'),
     (r'^vendor/$', 'jade.inventory.views.new_vendor'),
+    (r'^employee/$', 'jade.inventory.views.new_employee'),
     (r'^account/$', 'jade.inventory.views.new_account'),
     (r'^account/(?P<object_id>\d+)/statement.pdf$', 'jade.inventory.views.account_statement'),
 
@@ -157,11 +162,18 @@ urlpatterns = patterns('',
     (r'^linkeditem/(?P<object_id>\d+)/$', 'jade.inventory.views.edit_linkeditem'),
     (r'^item/(?P<object_id>\d+)/addlinkeditem/$', 'jade.inventory.views.new_linkeditem'),
     
-    # CashClosing
+    # Accounting Transactions
+    (r'^accounting/$', 'jade.inventory.views.list_accounting'),
+    (r'^expense/new/$', 'jade.inventory.views.new_expense'),
+    (r'^expense/(?P<object_id>\d+)/$', 'jade.inventory.views.edit_expense'),
+    (r'^employeepay/new/$', 'jade.inventory.views.new_employeepay'),
+    (r'^employeepay/(?P<object_id>\d+)/$', 'jade.inventory.views.edit_employeepay'),
+    (r'^work/new/$', 'jade.inventory.views.new_work'),
+    (r'^work/(?P<object_id>\d+)/$', 'jade.inventory.views.edit_work'),
     (r'^transactions/close/$', 'jade.inventory.views.new_cash_closing'),
-    (r'^cashclosings/$', 'jade.inventory.views.list_cashclosing'),
     (r'^cashclosing/(?P<object_id>\d+)/$', 'jade.inventory.views.edit_cash_closing'),
     (r'^cashclosing/(?P<object_id>\d+)/report.pdf$', 'jade.inventory.views.cash_closing_report'),
+    
     
     # Transactions
     (r'^transactions/movements.pdf$', 'jade.inventory.views.movements_report'),

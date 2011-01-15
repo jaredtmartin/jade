@@ -10,4 +10,5 @@
     {% if perms.inventory.view_client %}
         <div class="actiontab" ><a href="/inventory/clients/" class="action">{% trans 'Clients' %}</a><br></div>
     {% endif %}
+    {% if perms.inventory.view_employees %}<div class="actiontab" ><a href="/inventory/employees/" class="action">{% trans 'Employees' %}</a><br></div>{% endif %}
 {% endblock%}

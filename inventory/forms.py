@@ -141,6 +141,59 @@ class SaleForm(WarningForm):
 #        print "asdadadadadadddddddddddd"
 #        a=self.cleaned_data
 #        return clean_lookup(self, 'account2', Account, title='account')
+class ExpenseForm(WarningForm):
+    class Meta:
+        model = Expense
+        fields=('doc_number','date','value', 'serial')
+    def save(self, commit=True):
+        model = super(ExpenseForm, self).save(commit=False)
+        model.date =        self.cleaned_data['date']
+        model.value =    self.cleaned_data['value']
+        model.comments =    self.cleaned_data['serial']
+        if commit: model.save()
+        return model
+    doc_number =     forms.CharField()
+    value =          forms.DecimalField()
+    date =           forms.DateField(initial=datetime.now())
+    serial =         forms.CharField(required=False)
+    
+class EmployeePayForm(WarningForm):
+    class Meta:
+        model = EmployeePay
+        fields=('doc_number','date','value', 'account')
+    def save(self, commit=True):
+        model = super(EmployeePayForm, self).save(commit=False)
+        model.date =        self.cleaned_data['date']
+        model.value =    self.cleaned_data['value']
+        model.debit =    self.cleaned_data['account']
+        if commit: model.save()
+        return model
+    doc_number =     forms.CharField()
+    value =          forms.DecimalField()
+    date =           forms.DateField(initial=datetime.now())
+    account =        forms.CharField()
+    def clean_account(self): return clean_lookup(self, 'account', Account)
+class WorkForm(WarningForm):
+    class Meta:
+        model = Work
+        fields=('doc_number','date','value', 'account','serial','quantity')
+    def save(self, commit=True):
+        model = super(WorkForm, self).save(commit=False)
+        model.comments =    self.cleaned_data['serial']
+        model.date =        self.cleaned_data['date']
+        model.value =    self.cleaned_data['value']
+        model.credit =    self.cleaned_data['account']
+        model.quantity =    self.cleaned_data['quantity']
+        if commit: model.save()
+        return model
+    doc_number =     forms.CharField()
+    value =          forms.DecimalField()
+    date =           forms.DateField(initial=datetime.now())
+    account =        forms.CharField()
+    quantity =       forms.CharField(required=False)
+    serial =         forms.CharField(required=False)
+    def clean_account(self): return clean_lookup(self, 'account', Account)
+    def clean_quantity(self): return clean_number(self, 'quantity')
 
 class ClientGaranteeForm(WarningForm):
     class Meta:
@@ -576,6 +629,13 @@ class ClientForm(ContactForm):
         if not kwargs.has_key('instance'):
             self.initial['number'] = Client.objects.next_number()
             self.initial['multiplier'] = 1
+class EmployeeForm(ContactForm):
+    def __init__(self, *args, **kwargs):
+        super(EmployeeForm, self).__init__(*args, **kwargs)
+        if not kwargs.has_key('instance'):
+            self.initial['number'] = Employee.objects.next_number()
+            self.initial['multiplier'] = -1
+
 class VendorForm(ContactForm):
     def __init__(self, *args, **kwargs):
         super(VendorForm, self).__init__(*args, **kwargs)
