@@ -67,3 +67,10 @@ class AddWork(Update):
         from jade.inventory.models import TransactionTipo
         TransactionTipo.objects.create(name='Work', obj='jade.inventory.models.Work')
         
+class AddTransferAccountSetting(Update):
+    """Adds this setting to the database"""
+    def __call__(self):
+        from jade.inventory.models import Account, Setting
+        a=Account.objects.get(name='Gastos de Transferencias')
+        Setting.objects.create(name='Transfer account', value=a)
+        

@@ -369,7 +369,7 @@ class PurchaseForm(WarningForm):
 class TransferForm(WarningForm):
     class Meta:
         model = Transfer
-        fields=('doc_number','date','account','item','quantity','serial','cost')
+        fields=('doc_number','date','account','item','quantity','serial','value')
     def save(self, commit=True):
         model = super(TransferForm, self).save(commit=False)
         model.account =      self.cleaned_data['account']
@@ -377,14 +377,14 @@ class TransferForm(WarningForm):
         model.date =        self.cleaned_data['date']
         model.quantity =    self.cleaned_data['quantity']
         model.serial =      self.cleaned_data['serial']
-        model.cost =        (self.cleaned_data['cost'] or 0)
+        model.value =        (self.cleaned_data['value'] or 0)
         if commit: model.save()
         return model
     doc_number =        forms.CharField()
     account =           forms.CharField()
     item =              forms.CharField(required=False)
     quantity =          forms.DecimalField()
-    cost =              forms.DecimalField()
+    value =              forms.DecimalField()
     date =              forms.DateField(initial=datetime.now()) #, input_formats=['%Y-%m-%d', '%d/%m/%Y',]) # Uncomment this for spanish dates
     serial =            forms.CharField(required=False)
     def clean_account(self):
