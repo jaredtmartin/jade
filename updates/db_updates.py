@@ -46,3 +46,8 @@ class SettingSalesWoInventory(Update):
         Setting.objects.create(name='Sales without inventory', value="limit")
         Setting.objects.create(name='Labels per line', value=4)
         Setting.objects.create(name='Lines per page', value=11)
+class DeliverbyDefaultSetting(Update):
+    """Adds this setting to the database"""
+    def __call__(self):
+        from jade.inventory.models import Setting
+        Setting.objects.create(name='Deliver by default', value=True)
