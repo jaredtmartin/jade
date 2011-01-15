@@ -1564,6 +1564,8 @@ msgid ""
 "This is the name of the Receipt Group the client or Vendor belongs to. This "
 "value determines which receipt the client gets when sales are made."
 msgstr ""
+"Este es el nombre del Grupo de Facturas al que pertenece el cliente o proveedor. Este valor"
+"determina cual factura se usa cuando se hacen ventas."
 
 #: templates/manual/accounts.html:65
 msgid ""
@@ -1571,6 +1573,9 @@ msgid ""
 "Sales section. If the number of days specified by Credit Days has passed "
 "since the Sale was made the Transaction will appear in the Overdue section"
 msgstr ""
+"Cuando se hace una venta sin un pago, la venta aparecerá en la seccion de Ventas no Canceladas.  "
+"Si el número de dias especificado por Dias de Crédito se acaban, desde la fecha de la venta, "
+"la transacción aparecerá en la sección En Mora."
 
 #: templates/manual/accounts.html:68
 msgid ""
@@ -1579,18 +1584,21 @@ msgid ""
 "values of all of the transactions with account numbers starting whith this "
 "persons account number"
 msgstr ""
+"La cantidad total que nos debe el cliente, o, en el caso de un proveedor, la "
+"cantidad total que nosotros lo debemos a él.  Una nota además: esta es la suma de los valores de todas "
+"las transacciones con numero de cuentas que comienza igual al numero de cuenta de esta persona o empresa."
 
 #: templates/manual/accounts.html:71
 msgid ""
 "The name of the user responsible for dealing with this client or vendor."
 msgstr ""
-
+"El nombre del usuario responsable para tratar con este cliente o proveedor"
 #: templates/manual/accounts.html:74
 msgid ""
 "The other fields are not used by Jade and are optional. The information from "
 "these fields may be used on quotes and receipts. See <a href=\\"
 msgstr ""
-
+""
 #: templates/manual/accounts.html:77
 msgid ""
 "When a sale is made without a payment, the sale will appear in the Unpaid "

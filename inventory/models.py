@@ -468,7 +468,7 @@ class Account(models.Model):
     def _set_receipt(self, value):
         try: self.contact.receipt=value
         except Contact.DoesNotExist: pass
-    receipt=property(_get_receipt, _set_receipt)   
+    receipt=property(_get_receipt, _set_receipt)
 
     def _get_account_group(self):
         try: return self.contact.account_group
@@ -1532,11 +1532,17 @@ class CashClosing(Transaction):
         self.ending_cash=Entry.objects.filter(date__lt=self.end, account=Setting.get('Cash account')).exclude(tipo='Cash', date=self.end).aggregate(total=models.Sum('value'))['total'] or Decimal('0.00')
         self.revenue=(Entry.objects.filter(date__gte=self.start, date__lt=self.end, tipo='Revenue').aggregate(total=models.Sum('value'))['total'] or Decimal('0.00'))*-1
         self.discount=(Entry.objects.filter(date__gte=self.start, date__lt=self.end, tipo='Discount').aggregate(total=models.Sum('value'))['total'] or Decimal('0.00'))
-        self.expense=(Entry.objects.filter(date__gte=self.start, date__lt=self.end, tipo='Expense').aggregate(total=models.Sum('value'))['total'] or Decimal('0.00'))*-1
+        self.expense=(Entry.objects.filter(date__gte=self.start, date__lt=self.end, tipo='Expense').aggregate(total=models.Sum('value'))['total'] or Decimal('0.00'))
         self.tax=(Entry.objects.filter(date__gte=self.start, date__lt=self.end, tipo='Tax').aggregate(total=models.Sum('value'))['total'] or Decimal('0.00'))*-1
         self.earnings=self.revenue+self.tax-self.discount-self.expense
         self.paymentstotal=(Entry.objects.filter(date__gte=self.start, date__lt=self.end, tipo='Debit').aggregate(total=models.Sum('value'))['total'] or Decimal('0.00'))
-        self.revenue_check=self.starting_cash+self.revenue+self.tax-self.discount-self.expense-self.earnings-self.ending_cash
+        self.revenue_check=self.starting_cash+self.revenue+self.tax-self.discount-self.expense-self.earnings
+        print "self.starting_cash = " + str(self.starting_cash)
+        print "self.revenue = " + str(self.revenue)
+        print "self.tax = " + str(self.tax)
+        print "-self.discount = " + str(-self.discount)
+        print "-self.expense = " + str(-self.expense)
+        print "-self.earnings = " + str(-self.earnings)
         self.cash_check=self.starting_cash-self.ending_cash+self.paymentstotal-self.paymentstotal
         self._account_groups=None
         self._paid_sales=None
@@ -1554,7 +1560,8 @@ class CashClosing(Transaction):
     def create_documents_from_entries(self, entries):
         d=()
         for e in entries:
-            d+=(e.transaction.doc_number,)
+            dn=e.transaction.doc_number
+            if not dn in d: d+=(dn,)
         documents=[]
         for doc in d:
             documents.append(Document(doc))

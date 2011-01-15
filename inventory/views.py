@@ -13,6 +13,7 @@
 
 #    You should have received a copy of the GNU General Public License
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
 from jade.inventory.models import Count, Sale, Purchase, Tab
 from jade.inventory.forms import *
 #from django.template import loader, Context, RequestContext
@@ -20,7 +21,6 @@ from django.utils.translation import ugettext_lazy as _
 from django.forms.models import modelformset_factory
 from django.core.paginator import Paginator, InvalidPage, EmptyPage
 from django import http
-
 from django.contrib.sites.models import Site
 import os
 from django.db.models import Q
@@ -50,8 +50,9 @@ def _paginate(request, queryset):
     return page
 
 def _r2r(request, template, context={}): 
+    for k,v in context.items(): print "%s: %s" % (k,v)
     return render_to_response(template, context, context_instance=RequestContext(request))
-
+    
 def edit_object(request, object_id, model, form, prefix, tipo=None, extra_context={}):
     # Looks up an object, returning 404 if not found, and either updates the object with form, or returns a form to fill out
     # To: Test: 
