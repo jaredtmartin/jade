@@ -1,0 +1,20 @@
+{% extends "inventory/transaction_base.html" %}
+{% load i18n %}
+{% block other_fields_edit %}
+    <td><a id="id_transaction-{{ object.pk }}-account" href="{{object.debit.url}}">{{object.debit|default:''}}</a></td>
+    <td><input id="id_transaction-{{ object.pk }}-serial" class="field text" value="{{object.comments}}" type="text"></td>
+    <td/><td/>
+    <td><input id="id_transaction-{{ object.pk }}-value" class="field money" value="{{object.value|floatformat:2}}" type="text"></td>
+{% endblock %}
+{% block other_fields_show %}
+    <td><a id="id_transaction-{{ object.pk }}-account" href="{{object.debit.url}}">{{object.debit|default:''}}</a></td>
+    <td id="id_transaction-{{object.pk}}-serial" value="{{object.comments}}" class="field text">{{object.comments}}</td>
+    <td/><td/>
+    <td id="id_transaction-{{object.pk}}-value"             value="{{object.value|floatformat:2}}"                  class="field money">    {% trans '$' %}{{object.value|floatformat:2}}</td>
+{% endblock %}
+{% block other_actions_show %}
+<a class="show" id="id_transaction-{{object.pk}}-print" title="{% trans 'Print' %}" href="{{object.print_url}}"><img src="{{MEDIA_URL}}/img/print.png"/></a>
+{% endblock %}
+{% block other_actions_edit %}
+<a class="show" id="id_transaction-{{object.pk}}-print" title="{% trans 'Print' %}" href="{{object.print_url}}"><img src="{{MEDIA_URL}}/img/print.png"/></a>
+{% endblock %}

@@ -1,0 +1,18 @@
+{% extends "inventory/transaction_base.html" %}
+{% load i18n %}
+{% block other_fields_edit %}
+    <td><input id="id_transaction-{{ object.pk }}-account" title="{% trans 'Name of employee' %}"  class="field account lookup employee" value="{{object.debit|default:''}}" type="text"></td>
+    <td/><td/><td/>
+    <td><input id="id_transaction-{{ object.pk }}-value" class="field money" value="{{object.value|floatformat:2}}" type="text"></td>
+{% endblock %}
+{% block other_fields_show %}
+    <td id="id_transaction-{{ object.pk }}-account" title="{% trans 'Name of employee' %}"  value="{{object.debit|default:''}}" class="field account lookup employee"><a href="{{object.debit.url}}">{{object.debit|default:''}}</a></td>
+    <td/><td/><td/>
+    <td id="id_transaction-{{object.pk}}-value"             value="{{object.value|floatformat:2}}"                  class="field money">    {% trans '$' %}{{object.value|floatformat:2}}</td>
+{% endblock %}
+{% block other_actions_show %}
+<a class="show" id="id_transaction-{{object.pk}}-print" title="{% trans 'Print' %}" href="{{object.print_url}}"><img src="{{MEDIA_URL}}/img/print.png"/></a>
+{% endblock %}
+{% block other_actions_edit %}
+<a class="show" id="id_transaction-{{object.pk}}-print" title="{% trans 'Print' %}" href="{{object.print_url}}"><img src="{{MEDIA_URL}}/img/print.png"/></a>
+{% endblock %}

@@ -3,11 +3,6 @@
 {% block heading %}{% trans 'Sales' %} {% endblock%}
 {% block moreactions %}
     {% if perms.inventory.add_sale %}<div class="actiontab" ><a onclick="$('#sale-form').dialog('open');return false;" href="#" class="action">{% trans 'New' %}</a></div>{% endif %}  
-    {% if q %}
-    {% else %}
-        <div class="actiontab" ><a href="#" onclick="newTransaction('/inventory/transactions/close/');" class="action">{% trans 'Close' %}</a></div>
-        <div class="actiontab" ><a href="/inventory/transactions/closure.pdf?{% if q %}q={{q}}&{% endif %}{% if start %}start={{start}}&{% endif %}{% if end %}end={{end}}{% endif %}" class="action">{% trans 'Corte' %}</a></div>
-    {% endif %}    
     {% if perms.inventory.view_purchase %}<div class="actiontab" ><a href="/inventory/purchases/?{% if q %}q={{q}}&{% endif %}{% if start %}start={{start}}&{% endif %}{% if end %}end={{end}}{% endif %}" class="action">{% trans 'Purchases' %}</a></div>{% endif %}
     {% if perms.inventory.view_count %}<div class="actiontab" ><a href="/inventory/counts/?{% if q %}q={{q}}&{% endif %}{% if start %}start={{start}}&{% endif %}{% if end %}end={{end}}{% endif %}" class="action">{% trans 'Counts' %}</a></div>{% endif %}
     {% if perms.inventory.view_transfer %}<div class="actiontab" ><a href="/inventory/transfers/?{% if q %}q={{q}}&{% endif %}{% if start %}start={{start}}&{% endif %}{% if end %}end={{end}}{% endif %}" class="action">{% trans 'Transfers' %}</a></div>{% endif %}
