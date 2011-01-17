@@ -50,7 +50,7 @@ def _paginate(request, queryset):
     return page
 
 def _r2r(request, template, context={}): 
-    for k,v in context.items(): print "%s: %s" % (k,v)
+#    for k,v in context.items(): print "%s: %s" % (k,v)
     return render_to_response(template, context, context_instance=RequestContext(request))
     
 def edit_object(request, object_id, model, form, prefix, tipo=None, extra_context={}):
@@ -63,11 +63,13 @@ def edit_object(request, object_id, model, form, prefix, tipo=None, extra_contex
     # TODO
     # Should work without tipo
     # Should work in different languages
+    
     obj = get_object_or_404(model, pk=object_id)
     if not request.user.has_perm('inventory.change_'+obj.tipo.lower()): return http.HttpResponseRedirect("/blocked/")
     f = form(request.POST, instance=obj)
     if not tipo: tipo=obj.get_tipo_display()
     if f.is_valid():
+        
         obj=f.save()
         updated_form=form(instance=obj, prefix=prefix+'-'+str(obj.pk))
         if type(tipo)!=unicode: tipo=unicode(tipo)
@@ -465,8 +467,10 @@ def labels(request, doc_number):
     response = http.HttpResponse(mimetype='application/pdf')
     response['Content-Disposition'] = 'attachment; filename=%s.pdf' % doc_number
     p = canvas.Canvas(response)
+    
     for trans in doc:
         t=trans.subclass
+        print "t = " + str(t)
         if type(t)==Count: 
             if t.count: quantity=t.count
             else: quantity=t.item.stock

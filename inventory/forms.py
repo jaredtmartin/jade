@@ -447,6 +447,7 @@ class ItemForm(WarningForm):
     def save(self, commit=True, tipo=None):
         model = super(ItemForm, self).save(commit=False)
         model.tipo='Item'
+        
         if commit: model.save()
         return model
     def __init__(self, *args, **kwargs):

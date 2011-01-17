@@ -282,7 +282,6 @@ class Code128:
             draw.rectangle(((bit+position,0),(bit+position,height-10)),fill=0)
             
       # Save the result image
-      print "settings.APP_LOCATION+'/'+folder+value+"."+lower(extension) = " + str(settings.APP_LOCATION+'/'+folder+value+"."+lower(extension))
       im.save(settings.APP_LOCATION+'/'+folder+value+"."+lower(extension), upper(extension))
 
 

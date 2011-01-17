@@ -185,12 +185,12 @@ class Item(models.Model):
         except Unit.DoesNotExist: self.unit=Setting.get('Default unit')
         super(Item, self).save(*args, **kwargs)        
         if self.bar_code != '':
-#            print "BLAH"
-            try: 
-                if subprocess.call('ls %s%s' % (Setting.BARCODES_FOLDER,kwargs['instance'].bar_code), shell=True)!=0:
-#                    print "creating"
-                    create_barcode(kwargs['instance'].bar_code, Setting.BARCODES_FOLDER)
-            except:pass
+            print "BLAH"
+#            try: 
+            if subprocess.call('ls %s/%s%s' % (settings.APP_LOCATION, settings.BARCODES_FOLDER,self.bar_code), shell=True)!=0:
+                print "creating"
+                create_barcode(self.bar_code, settings.BARCODES_FOLDER)
+#            except:pass
     def __unicode__(self):
         return self.name
     def template(self):
@@ -198,7 +198,7 @@ class Item(models.Model):
     def url(self):
         return '/inventory/item/'+unicode(self.pk)
     def barcode_url(self):
-        return "/%s%s.png" % (Setting.BARCODES_FOLDER, self.bar_code)
+        return "/%s%s.png" % (settings.BARCODES_FOLDER, self.bar_code)
     def _get_total_cost(self):
         return Entry.objects.filter(item=self, account=Setting.get('Inventory account'), active=True).aggregate(total=models.Sum('value'))['total'] or Decimal('0.00')
     total_cost=property(_get_total_cost)
