@@ -80,6 +80,15 @@ class CashAccountSetting(Update):
         from jade.inventory.models import Account, Setting
         try: a=Account.objects.get(name='Starting cash account balance')
         except Account.DoesNotExist: Setting.objects.create(name='Starting cash account balance', value=25)
+
+class CorteReportSetting(Update):
+    """Adds this setting to the database if it does not already exist"""
+    def __call__(self):
+        from jade.inventory.models import Report, Setting
         
+        try: a=Setting.objects.get(name='Cash closing report')
+        except Setting.DoesNotExist: 
+            r=Report.objects.get(name='Corte de Caja')
+            Setting.objects.create(name='Cash closing report', value=r)
         
         
