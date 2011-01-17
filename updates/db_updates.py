@@ -74,3 +74,12 @@ class AddTransferAccountSetting(Update):
         a=Account.objects.get(name='Gastos de Transferencias')
         Setting.objects.create(name='Transfer account', value=a)
         
+class CashAccountSetting(Update):
+    """Adds this setting to the database if it does not already exist"""
+    def __call__(self):
+        from jade.inventory.models import Account, Setting
+        try: a=Account.objects.get(name='Starting cash account balance')
+        except Account.DoesNotExist: Setting.objects.create(name='Starting cash account balance', value=25)
+        
+        
+        
