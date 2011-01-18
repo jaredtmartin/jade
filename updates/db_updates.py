@@ -90,5 +90,99 @@ class CorteReportSetting(Update):
         except Setting.DoesNotExist: 
             r=Report.objects.get(name='Corte de Caja')
             Setting.objects.create(name='Cash closing report', value=r)
-        
-        
+
+class GaranteeReportSettings(Update):
+    """Adds this setting to the database if it does not already exist"""
+    def __call__(self):
+        from jade.inventory.models import Report, Setting
+        try: a=Report.objects.get(name='Reporte de Garantias')
+        except Report.DoesNotExist: a=Report.objects.create(name='Reporte de Garantias', body="""
+        <html>
+    <head>
+        <title></title>
+        <meta http-equiv="Content-Type" content="text/html;charset=ISO-8859-1" >
+        <meta http-equiv="Content-Script-Type" content="text/javascript" >
+        <meta http-equiv="Content-Style-Type" content="text/css" >
+        <style type="text/css">
+            h1 {
+                height: 60px;
+                min-width: 960px;
+                background: #e4f2fd;
+                border-bottom: 1px solid #c6d9e9;
+                font-family:Georgia,Times,"Times New Roman",serif;
+                font-weight:normal;
+                color:#555555;
+                font-size:36px;
+                line-height:1em;
+                min-width:500px;
+                padding-top:34px;
+                text-align:center;
+                text-shadow:0 1px 0 #E4F2FD;
+            }
+            th{text-align:left;}
+            .row1{  
+                -moz-background-clip:border;
+                -moz-background-inline-policy:continuous;
+                -moz-background-origin:padding;
+                background:#EDF3FE none repeat scroll 0 0;
+            }
+            .row2{
+                -moz-background-clip:border;
+                -moz-background-inline-policy:continuous;
+                -moz-background-origin:padding;
+                background:white none repeat scroll 0 0;
+            }
+            body{line-height:16px;}
+            td.numero {text-align:left;}
+            td.texto {text-align:left;}
+            table {border:solid;height:200px;}
+            @page {
+                size:letter;
+                {% if watermark_filename %}
+                    background-image: url({{watermark_filename}});
+                {% endif %}
+                top: 1cm;
+                left: 1cm;
+                right: 1.7cm;
+                @frame footer{
+                    bottom:2cm;
+                    height:5cm;
+                    left: 3cm;
+                    right: 3cm;
+                    -pdf-frame-content: footerContent;
+                }
+            }
+        </style>
+    </head>
+    <body>
+<h1>{{company_name}}          {{ doc.0.doc_number }}</h1>
+<p>Este Documento contiene la lista de numeros de serie de su compra.</p>
+        <table id="tableContent">
+            <thead>
+                <tr><th>Fecha</th><th>Producto</th><th>Numero de Serie</th><th>Vence</th></tr>
+            </thead>
+            <tbody>
+                {% for garantee in doc %}
+                    <tr class="{% cycle "row1" "row2" %}">
+                        <td class="texto" >{{garantee.date|date:"d/m/Y"}}</td>
+                        <td class="texto" >{{garantee.item.name}}</td>
+                        <td class="numero" >{{garantee.serial}}</td>
+                        <td class="numero" >{{garantee.expires|date:"d/m/Y"}}</td>
+                    </tr>
+                {%endfor%}
+            </tbody>            
+        </table>
+<div id="footerContent">
+<h3>Notas para hacer efectiva la Garantia</h3>
+<ul>
+<li>Este documento es necesario para hacer efectiva la garantia asi como los acesorios y las cajas</li>
+<li>Si el producto presenta dano físico como magulladura, rupturas, o corrosion la garantía podra no ser ortorgada.</li>
+<li>Si los numeros de serie presenta, tachadura, borrones, rayones, odesgaste, en el producto podria no otorgarse la garantia.</li>
+<li>El servicio de garantia a domocilio esta sujeto a cobros extra.</li>
+</ul>
+</div>
+    </body>
+</html> """)
+        try: s=Setting.objects.get(name='Reporte de Garantias')
+        except Setting.DoesNotExist: Setting.objects.create(name='Reporte de Garantias', value=a)
+
