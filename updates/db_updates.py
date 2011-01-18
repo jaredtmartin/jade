@@ -176,7 +176,7 @@ class GaranteeReportSettings(Update):
 <h3>Notas para hacer efectiva la Garantia</h3>
 <ul>
 <li>Este documento es necesario para hacer efectiva la garantia asi como los acesorios y las cajas</li>
-<li>Si el producto presenta dano físico como magulladura, rupturas, o corrosion la garantía podra no ser ortorgada.</li>
+<li>Si el producto presenta dano fisico como magulladura, rupturas, o corrosion la garantia podra no ser ortorgada.</li>
 <li>Si los numeros de serie presenta, tachadura, borrones, rayones, odesgaste, en el producto podria no otorgarse la garantia.</li>
 <li>El servicio de garantia a domocilio esta sujeto a cobros extra.</li>
 </ul>
