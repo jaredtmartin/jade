@@ -185,4 +185,10 @@ class GaranteeReportSettings(Update):
 </html> """)
         try: s=Setting.objects.get(name='Reporte de Garantias')
         except Setting.DoesNotExist: Setting.objects.create(name='Reporte de Garantias', value=a)
-
+class GaranteeReportSetting(Update):
+    """Adds this setting to the database if it does not already exist"""
+    def __call__(self):
+        from jade.inventory.models import Report, Setting
+        r=Report.objects.get(name='Reporte de Garantias')
+        try: s=Setting.objects.get(name='Garantee report')
+        except Setting.DoesNotExist: Setting.objects.create(name='Garantee report', value=r)
