@@ -1965,6 +1965,21 @@ class Expense(Transaction):
         self.template='inventory/expense.html'
         self.tipo='Expense'
 post_save.connect(add_general_entries, sender=Expense, dispatch_uid="jade.inventory.models")
+class Anullment(Transaction):
+    class Meta:
+        proxy = True
+    objects=BaseManager('Anullment','N')
+    def __init__(self, *args, **kwargs):
+#        kwargs.update({
+#            'account_tipo':'Anullment',
+#            'debit_tipo':'Anullment',
+#            'credit_tipo':'Anullment',
+#            'debit':Setting.get('Expense account'),
+#            'credit':Setting.get('Cash account'),
+#        })
+        super(Anullment, self).__init__(*args, **kwargs)
+        self.template='inventory/anullment.html'
+        self.tipo='Anullment'
 class EmployeePay(Transaction):
     class Meta:
         proxy = True
