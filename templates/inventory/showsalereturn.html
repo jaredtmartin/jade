@@ -1,0 +1,9 @@
+{% load i18n %}
+
+<tr id="salereturn-{{object.pk}}" class="salereturn">
+    {% include "inventory/inventory_show_base.html" %}
+    <td id="id_salereturn-{{object.pk}}-unit_value" class="field value" value="{{object.unit_value|floatformat:2}}">${{object.value|floatformat:2}}</td>
+    <td>
+        {% include "inventory/show_actions.html" %}
+    </td>
+</tr>

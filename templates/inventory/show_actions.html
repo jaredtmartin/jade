@@ -1,0 +1,13 @@
+{% load i18n %}
+<a class="showmode" id="id_{{object.tipo.lower}}-{{object.pk}}-edit" href="#" title="{% trans 'Edit' %}" onclick="editobject('{{object.tipo.lower}}',{{object.pk}}); return false;"><img src="{{MEDIA_URL}}/img/edit.png"/></a>
+{% block show_save_link %}
+    <a class="editmode save" style="display:none;" id="id_{{object.tipo.lower}}-{{object.pk}}-save" title="{% trans 'Save Changes' %}" href="#" onclick="saveTransaction('{{object.tipo.lower}}',{{object.pk}}, '/inventory/{{object.tipo|lower}}/{{object.pk}}/update/');$('#item.ac_input').select(); return false;"><img src="{{MEDIA_URL}}/img/save.png"/></a>
+{% endblock %}
+<a class="editmode" style="display:none;" id="id_{{object.tipo.lower}}-{{object.pk}}-cancel" title="{% trans 'Cancel Changes' %}" href="#" onclick="cancelTransaction('{{object.tipo.lower}}',{{object.pk}}); return false;"><img src="{{MEDIA_URL}}/img/cancel.png"/></a>
+{% if object.subclass.active %}
+    <a class="showmode" id="id_{{object.tipo.lower}}-{{object.pk}}-deactivate" title="{% trans 'Mark as Inactive' %}" href="#" onclick="markTransaction('{{object.tipo.lower}}',{{object.pk}},'deactivate'); return false;"><img src="{{MEDIA_URL}}/img/on.png"/></a>
+{% else %}
+    <a class="showmode" id="id_{{object.tipo.lower}}-{{object.pk}}-activate" title="{% trans 'Mark as Active' %}" href="#" onclick="markTransaction('{{object.tipo.lower}}',{{object.pk}},'activate'); return false;"><img src="{{MEDIA_URL}}/img/off.png"/></a>
+{% endif %}
+<a onclick="deleteTransaction('{{object.tipo.lower}}', {{ object.pk }}); return false;" href="#" title="{% trans 'Delete' %}" id="id_{{object.tipo.lower}}-{{ object.pk }}-delete" style=""><img src="{{MEDIA_URL}}/img/trash.png"/></a>
+

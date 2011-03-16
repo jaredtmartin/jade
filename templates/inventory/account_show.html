@@ -5,7 +5,21 @@
 {% block js %}
     <script type="text/javascript" src="{{MEDIA_URL}}/js/jade.js"></script> 
 {% endblock %}
-
+{% block top %}
+    <h1>
+        {% block heading %}
+            {% if object %}
+                {{object.tipo}}: {{object.name}} #{{object.pk}}
+            {% else %}
+                {% trans 'New' %} {{prefix}}
+            {% endif %}
+        {% endblock %}
+    </h1>
+    {% block search_label %}{% trans 'Name' %}{% endblock %}: <input id="search_field" type="text" value="{{q}}" >
+    <a onclick="$('#search_field').val('');$('#search_field').select();" href="#"> <img src="{{MEDIA_URL}}/img/clear.png"/></a>    
+    <a onclick="window.location = '{% block search_url %}/inventory/accounts/{% endblock %}?q='+$('#search_field').val()+'&start='+$('#start-search').val()+'&end='+$('#end-search').val(); return false;" href="#"> <img src="{{MEDIA_URL}}/img/find.png"/></a>
+    <a href="/manual/transactions/#searching"><img src="{{MEDIA_URL}}/img/help.png"/></a>
+{% endblock %}
 {% block actions %}
     {% if tipo == 'client' %}
         {% if perms.inventory.change_client %}
@@ -82,7 +96,7 @@
                 <thead><tr><th>{% trans 'Document' %}</th><th>{% trans 'Date' %}</th><th>{% trans 'Value Pending' %}</th></tr></thead>
                 <tbody>
                     {% for trans in object.due %}
-                        <tr><td><a href="{{trans.subclass.url}}">{{trans.doc_number}}<a> </td><td>{{trans.date|date:"d/m/Y"}}</td><td>${{trans.total|floatformat:2}}</td></tr>
+                        <tr><td><a href="{{trans.url}}">{{trans.doc_number}}<a> </td><td>{{trans.date|date:"d/m/Y"}}</td><td>${{trans.total|floatformat:2}}</td></tr>
                     {% endfor %}
                 </tbody>
             </table>
@@ -94,7 +108,7 @@
                 <thead><tr><th>{% trans 'Document' %}</th><th>{% trans 'Date' %}</th><th>{% trans 'Value Pending' %}</th></tr></thead>
                 <tbody>
                     {% for trans in object.overdue %}
-                        <tr><td><a href="{{trans.subclass.url}}">{{trans.doc_number}}<a> </td><td>{{trans.date|date:"d/m/Y"}}</td><td>${{trans.total|floatformat:2}}</td></tr>
+                        <tr><td><a href="{{trans.url}}">{{trans.doc_number}}<a> </td><td>{{trans.date|date:"d/m/Y"}}</td><td>${{trans.total|floatformat:2}}</td></tr>
                     {% endfor %}
                 </tbody>
             </table>

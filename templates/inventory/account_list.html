@@ -1,11 +1,28 @@
 {% extends "inventory/index.html" %}
 {% load i18n %}
 {% load tags %}
+{% block search_label %}{% trans 'Name' %}{% endblock %}
 {% block table_header %}
-<th>{% trans 'Number' %}</th><th>{% trans 'Name' %}</th><th>{% trans 'Type' %}</th><th>{% trans 'Price Group' %}</th><th>{% trans 'Account Group' %}</th><th>{% trans 'Receipt Group' %}</th><th>{% trans 'Balance' %}</th>
+<th>{% trans 'Number' %}</th><th>{% trans 'Name' %}</th><th>{% trans 'Type' %}</th><th>{% trans 'Price Group' %}</th><th>{% trans 'Account Group' %}</th><th>{% trans 'Receipt Group' %}</th><th>{% trans 'Balance' %}</th><th>{% trans 'Actions'%}</th>
+<script>
+    function deleteAccount(object_id) {
+        jQuery("#last_id").val(object_id);
+        $.ajax({
+            url: '/inventory/account/'+object_id+'/delete/' ,
+            type:'POST',
+            data:{blah:"blue"},
+            success: removeAccount
+        });
+    }
+    function removeAccount(data) {
+        object_id=jQuery("#last_id").val();
+        jQuery('#account-'+object_id).remove();
+    }
+</script>
+    <input type="hidden" id="last_id" value="">
 {% endblock%}
 {% block line %}    
-    <tr><td>{{object.number}}</td><td>{% link object %}</td><td>{{object.get_multiplier_display}}</td><td>{{object.price_group}}</td><td>{{object.account_group}}</td><td>{{object.receipt_group}}</td><td>${{ object.balance|floatformat:2 }}</td></tr>
+    <tr id="account-{{object.pk}}"><td>{{object.number}}</td><td>{% link object %}</td><td>{{object.get_multiplier_display}}</td><td>{{object.price_group}}</td><td>{{object.account_group}}</td><td>{{object.receipt_group}}</td><td>${{ object.balance|floatformat:2 }}</td><td><a onclick="deleteAccount({{ object.pk }}); return false;" href="#" title="{% trans 'Delete' %}" id="id_account-{{ object.pk }}-delete" style=""><img src="{{MEDIA_URL}}/img/trash.png"/></a></td></tr>
 {% endblock%}
 
 

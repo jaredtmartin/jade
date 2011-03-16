@@ -1,0 +1,8 @@
+{% load i18n %}
+<tr id="{{object.tipo.lower}}-{{object.pk}}" class="{{object.tipo.lower}}">
+    <td id="id_{{object.tipo.lower}}-{{object.pk}}-account2">{{object.subclass.tax_account.name}}</td>
+    <td id="id_{{object.tipo.lower}}-{{object.pk}}-value" value="{{object.value|floatformat:2}}" class="field value">${{object.value|floatformat:2}}</td>
+    <td>
+        {% include "inventory/show_actions.html" %}
+    </td>
+</tr>

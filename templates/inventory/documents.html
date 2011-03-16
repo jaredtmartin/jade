@@ -1,0 +1,31 @@
+{% extends "inventory/index.html" %}
+{% load i18n %}
+{% load tags %}
+{% block js %}
+    <script type="text/javascript" src="{{MEDIA_URL}}/js/jade.js"></script> 
+{% endblock %}
+{% block actions %}
+    {% block moreactions %}
+        {% if perms.inventory.view_sale %}<div class="actiontab" ><a href="/inventory/sales/?{% if q %}q={{q}}&{% endif %}{% if start %}start={{start}}&{% endif %}{% if end %}end={{end}}{% endif %}" class="action">{% trans 'Sales' %}</a></div>{% endif %}
+        {% if perms.inventory.view_purchase %}<div class="actiontab" ><a href="/inventory/purchases/?{% if q %}q={{q}}&{% endif %}{% if start %}start={{start}}&{% endif %}{% if end %}end={{end}}{% endif %}" class="action">{% trans 'Purchases' %}</a></div>{% endif %}
+        {% if perms.inventory.view_count %}<div class="actiontab" ><a href="/inventory/counts/?{% if q %}q={{q}}&{% endif %}{% if start %}start={{start}}&{% endif %}{% if end %}end={{end}}{% endif %}" class="action">{% trans 'Counts' %}</a></div>{% endif %}
+        {% if perms.inventory.view_transfer %}<div class="actiontab" ><a href="/inventory/transfers/?{% if q %}q={{q}}&{% endif %}{% if start %}start={{start}}&{% endif %}{% if end %}end={{end}}{% endif %}" class="action">{% trans 'Transfers' %}</a></div>{% endif %}
+        {% if perms.inventory.view_accounting %}<div class="actiontab" ><a href="/inventory/accounting/?{% if q %}q={{q}}&{% endif %}{% if start %}start={{start}}&{% endif %}{% if end %}end={{end}}{% endif %}" class="action">{% trans 'Accounting' %}</a></div>{% endif %}
+    {% endblock%}
+    <div class="slatetab" ><a href="/inventory/transactions/movements.pdf?{% if q %}q={{q}}&{% endif %}{% if start %}start={{start}}&{% endif %}{% if end %}end={{end}}{% endif %}" class="action">{% trans 'Inventory' %}</a></div>
+{% endblock%}
+
+{% block heading %}{% trans 'Documents' %} {% endblock%}
+{% block table_header %}
+    <th>{% trans 'Number' %}</th>
+    <th>{% trans 'Date' %}</th>
+    <th>{% trans 'Type' %}</th>
+    <th>{% trans 'Account' %}</th>
+    <th>{% trans 'Total' %}</th>
+{% endblock%}
+{% block line %}       
+    {% include "inventory/document.html" %}
+{% endblock%}
+
+
+

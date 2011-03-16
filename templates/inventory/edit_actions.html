@@ -1,0 +1,12 @@
+{% load i18n %}
+<td>
+    <a onclick="editobject('{{object.tipo.lower}}',{{object.pk}}); return false;" title="Cambiar Venta" href="#" id="id_{{object.tipo.lower}}-{{object.pk}}-edit" class="showmode" style="display: none;"><img src="/media//img/edit.png"></a>
+    <a onclick="saveTransaction('{{object.tipo.lower}}',{{object.pk}}, '/inventory/{{object.tipo.lower}}/{{object.pk}}/update');$('#item.ac_input').select(); return false;" href="#" title="Guardar Cambios" id="id_{{object.tipo.lower}}-{{object.pk}}-save" style="" class="editmode"><img src="/media//img/save.png"></a>
+    <a id="id_{{object.tipo.lower}}-{{object.pk}}-cancel" onclick="cancelTransaction('{{object.tipo.lower}}',{{object.pk}}); return false;" href="#" title="Cancelar Cambios"  style="" class="editmode"><img src="/media//img/cancel.png"></a>
+    {% if object.subclass.active %}
+        <a style="display: none;" class="showmode" id="id_{{object.tipo.lower}}-{{object.pk}}-deactivate" title="{% trans 'Mark as Inactive' %}" href="#" onclick="markTransaction('{{object.tipo.lower}}',{{object.pk}},'deactivate'); return false;"><img src="{{MEDIA_URL}}/img/on.png"/></a>
+    {% else %}
+        <a style="display: none;" class="showmode" id="id_{{object.tipo.lower}}-{{object.pk}}-activate" title="{% trans 'Mark as Active' %}" href="#" onclick="markTransaction('{{object.tipo.lower}}',{{object.pk}},'activate'); return false;"><img src="{{MEDIA_URL}}/img/off.png"/></a>
+    {% endif %}
+    <a style="" id="id_{{object.tipo.lower}}-{{object.pk}}-delete" title="Borrar Ventas" href="#" onclick="deleteTransaction('{{object.tipo.lower}}', {{object.pk}}); return false;"><img src="/media//img/trash.png"></a>
+</td>

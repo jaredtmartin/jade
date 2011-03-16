@@ -1,0 +1,8 @@
+{% load i18n %}
+<tr id="{{object.tipo.lower}}-{{object.pk}}" class="{{object.tipo.lower}}">
+    <td id="id_{{object.tipo.lower}}-{{object.pk}}-date" value="{{object.date|date:date_format}}" class="datelookup field">{{object.date|date:date_format}}</td>
+    <td id="id_{{object.tipo.lower}}-{{object.pk}}-value" value="{{object.value|floatformat:2}}" class="field value">${{object.value|floatformat:2}}</td>
+    <td>
+        {% include "inventory/show_actions.html" %}
+    </td>
+</tr>

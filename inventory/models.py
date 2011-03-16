@@ -591,8 +591,9 @@ class Account(models.Model):
                 first=Entry.objects.filter(transaction__doc_number=doc.doc_number, tipo='Client')[0]
                 if doc.date+timedelta(days=first.account.contact.credit_days) < datetime.now():
                     self._overdue.append(doc)
-                    self._due.remove(doc)
             except: pass
+        for trans in self._overdue:      
+            self._due.remove(trans)
     def _get_due(self):
         if not self._due: self._calculate_due_and_overdue()
         return self._due
@@ -934,7 +935,6 @@ class Transaction(models.Model):
             if not site: site = Site.objects.get_current()
         except DatabaseError:
             pass
-#        print "quantity = " + str(quantity)
         e=self.entry_set.create(
             date=self.date,
             account=account,

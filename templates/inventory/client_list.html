@@ -7,6 +7,7 @@
     {% if perms.inventory.change_sale %}
         <div class="actiontab" ><a href="/inventory/client/" class="action">{% trans 'New' %}</a><br></div>
     {% endif %}
+    <div class="actiontab" ><a href="/inventory/clients.pdf" class="action">{% trans 'Print' %}</a><br></div>
     {% if perms.inventory.view_vendor %}
         <div class="actiontab" ><a href="/inventory/vendors/" class="action">{% trans 'Vendors' %}</a><br></div>
     {% endif %}

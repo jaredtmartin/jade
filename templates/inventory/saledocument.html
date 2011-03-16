@@ -1,0 +1,14 @@
+{% extends "inventory/show_document.html" %}
+{% load i18n %}
+{% load tags %}
+{% block heading %}Sale #{{object.number}}{% endblock %}
+{% block line %}
+    {% include "inventory/showsale.html"%}
+{% endblock %}
+{% block moreactions %}
+    <div class="slatetab" ><a onclick="addObject({{ object.pk }},'salediscount','discount',updateAndSelect); return false;" href="#">{% trans 'Discount' %}</a></div>
+    <div class="slatetab" ><a onclick="getTaxForm({{ object.pk }}); return false;" href="#">{% trans 'Tax' %}</a></div>
+    <div class="slatetab" ><a onclick="addObject({{ object.pk }},'clientpayment','payment'); return false;" href="#">{% trans 'Payment' %}</a></div>
+    <div class="slatetab" ><a onclick="completeOrder({{object.pk}});return false;" href="#">{% trans 'Complete' %}</a></div>
+{% endblock %}
+    

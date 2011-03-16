@@ -16,6 +16,7 @@
 from django.conf.urls.defaults import *
 from jade.inventory.models import Sale, Purchase, Item, Account, Client, Vendor
 from django.views.generic import list_detail, create_update
+from jade.inventory.views import *
 
 item={'model' : Item, 'post_save_redirect':'/inventory/items', 'template_name':'inventory/item_show.html'}
 
@@ -125,6 +126,13 @@ urlpatterns = patterns('',
     (r'^employees/$', 'jade.inventory.views.employee_list'),
     (r'^accounts/$', 'jade.inventory.views.account_list'),
     (r'^vendors/$', 'jade.inventory.views.vendor_list'),
+#    url(r'^clients.pdf/$', client_list, {pdf:True}),
+#    url(r'^vendors.pdf/$', vendor_list, {pdf:True}),
+    (r'^clients.pdf$', 'jade.inventory.views.client_list',{'pdf':True}),
+    (r'^employees.pdf$', 'jade.inventory.views.employee_list',{'pdf':True}),
+    (r'^accounts.pdf$', 'jade.inventory.views.account_list',{'pdf':True}),
+    (r'^vendors.pdf$', 'jade.inventory.views.vendor_list',{'pdf':True}),
+    
     (r'^account/(?P<object_id>\d+)/$', 'jade.inventory.views.account_show'),
     (r'^client/(?P<object_id>\d+)/$', 'jade.inventory.views.account_show'),
     (r'^employee/(?P<object_id>\d+)/$', 'jade.inventory.views.account_show'),

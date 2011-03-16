@@ -1,0 +1,75 @@
+class SiteUniqueModel(models.Model):
+class Tab(models.Model):
+class SettingsManager(models.Manager):
+class Setting(models.Model):
+class Report(models.Model):
+class Unit(models.Model):
+class Category(models.Model):
+class ServiceManager(models.Manager):
+class ItemManager(ServiceManager):
+class Item(models.Model):
+#class Item(ItemBase):
+class Service(Item):
+class LinkedItem(models.Model):
+class PriceGroup(models.Model):
+class SettingsManager(models.Manager):
+class Setting(models.Model):
+class Price(models.Model):
+
+
+
+class Account(SiteUniqueModel):
+class TaxRate(models.Model):
+#class ReceiptGroup(models.Model):
+class AccountGroup(models.Model):
+class ContactTracker(models.Model.__metaclass__):
+class Contact(Account):
+class ClientManager(models.Manager):
+class EmployeeManager(models.Manager):
+class VendorManager(models.Manager):
+class Client(Contact):date
+class Vendor(Contact):date
+class Employee(Account):date
+class GaranteeOffer(models.Model):
+class UserProfile(models.Model):
+
+
+class DocumentManager(models.Manager):
+class Document(SiteUniqueModel):
+class TransactionTracker(models.Model.__metaclass__):
+class TransactionManager(models.Manager):
+class Transaction(SiteUniqueModel):
+class Cost(Transaction):
+class ExtraValue(models.Model):
+class Action():
+class Sale(Transaction):date
+class SaleReturn(Sale):
+class Purchase(Transaction):date
+class PurchaseReturn(Purchase):
+class TaxFilter():
+class OldDocument():
+class Series():
+class CashClosing(Transaction):date
+class Payment(Transaction):date
+class ClientPaymentBase(Payment):date
+class ClientPayment(ClientPaymentBase): pass
+class ClientRefund(ClientPaymentBase): pass
+class VendorPaymentBase(Payment):date
+class VendorPayment(VendorPaymentBase): pass
+class VendorRefund(VendorPaymentBase): pass
+class Tax(Transaction):date
+class SaleTax(Transaction):
+class PurchaseTax(Transaction):
+class Discount(Transaction):date abstract = True
+class SaleDiscount(Discount):
+class PurchaseDiscount(Discount):
+class Garantee(Transaction):date abstract = True
+class ClientGarantee(Garantee):           
+class VendorGarantee(Garantee):
+class Equity(Transaction):date
+class Expense(Transaction):date
+class EmployeePay(Transaction):date
+class Work(Transaction):date
+class CountManager(BaseManager):
+class Count(Transaction):date
+class Transfer(Transaction):date

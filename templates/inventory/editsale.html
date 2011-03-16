@@ -1,0 +1,6 @@
+<tr id="{{object.tipo.lower}}-{{object.pk}}" class="{{object.tipo.lower}}">
+    {% include "inventory/inventory_edit_base.html" %}
+    <td style=""><input id="id_{{object.tipo.lower}}-{{object.pk}}-unit_value" type="text" value="{{object.unit_value|floatformat:2}}" class="field value"></td><td value="{{object.subclass.unit_value|floatformat:2}}" class="field value" id="id_{{object.tipo.lower}}-{{object.pk}}-unit_value" style="display: none;">${{object.unit_value|floatformat:2}}</td>
+    {% include "inventory/edit_actions.html" %}
+</tr>
+

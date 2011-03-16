@@ -1,0 +1,8 @@
+{% load i18n %}
+<tr id="document-{{object.pk}}" class="document" document_id={{object.pk}}>
+    <td id="id_document-{{object.pk}}-number" class="number"><a href="{{object.url}}"> {{object.number}}</a></td>
+    <td id="id_document-{{object.pk}}-date" class="date">{{object.date|date:date_format}}</td>
+    <td id="id_document-{{object.pk}}-tipo">{% trans object.display_tipo %}</td>
+    <td id="id_document-{{object.pk}}-account" class="account"><a href="{{object.account.url}}">{{object.account|default:''}}</a></td>
+    <td id="id_document-{{object.pk}}-total" class="money">${{object.total|floatformat:2}}</td>
+</tr>

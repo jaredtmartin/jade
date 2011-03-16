@@ -15,9 +15,11 @@
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 from django.conf import settings
 from jade.inventory.models import Setting
+from datetime import datetime
 def company_name(request):
     return {
         'company_name': Setting.get('Company name'),
         'date_format': Setting.get('Date format'),
         'tabkw': 'base',
+        'now':datetime.now(),
     }

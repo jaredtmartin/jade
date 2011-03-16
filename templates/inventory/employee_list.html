@@ -6,6 +6,7 @@
     {% if perms.inventory.add_employee %}
         <div class="actiontab" ><a href="/inventory/employee/" class="action">{% trans 'New' %}</a><br></div>
     {% endif %}
-    {% if perms.inventory.view_client %}<div class="actiontab" ><a href="/inventory/client/" class="action">{% trans 'Clients' %}</a><br></div>{% endif %}
+    <div class="actiontab" ><a href="/inventory/employees.pdf" class="action">{% trans 'Print' %}</a><br></div>
+    {% if perms.inventory.view_client %}<div class="actiontab" ><a href="/inventory/clients/" class="action">{% trans 'Clients' %}</a><br></div>{% endif %}
     {% if perms.inventory.view_vendor %}<div class="actiontab" ><a href="/inventory/vendors/" class="action">{% trans 'Vendors' %}</a><br></div>{% endif %}
 {% endblock%}

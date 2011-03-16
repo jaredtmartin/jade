@@ -1,0 +1,15 @@
+{% extends "inventory/transaction_base.html" %}
+{% load i18n %}
+{% block other_fields_edit %}
+    <td><input id="id_transaction-{{ object.pk }}-account" title="{% trans 'Name of client' %}" class="field account lookup client" value="{{object.subclass.client|default:''}}" type="text"></td>
+    {% include "inventory/inventory_base.html" %}
+    <td><input id="id_transaction-{{ object.pk }}-value" title="{% trans 'value of garantee' %}" class="field money" value="{{object.value|floatformat:2}}" type="text"></td>
+{% endblock %}
+{% block other_fields_show %}
+    <td id="id_transaction-{{ object.pk }}-account" title="{% trans 'Name of client' %}" value="{{object.subclass.client|default:''}}" class="field account lookup client" ><a href="{{object.subclass.client.url}}">{{object.subclass.client|default:''}}</a></td>
+    {% include "inventory/inventory_base.html" %}
+    <td id="id_transaction-{{object.pk}}-value" title="{% trans 'value of garantee' %}" value="{{object.value|floatformat:2}}" class="field money"> ${{object.subclass.value|floatformat:2}}</td>
+{% endblock %}
+{% block other_actions_show %}
+    <a class="show" id="id_transaction-{{object.pk}}-print" title="{% trans 'Print Receipt' %}" href="/inventory/sale/{{object.doc_number}}/garantee.pdf"><img src="{{MEDIA_URL}}/img/print.png"/></a>
+{% endblock %}

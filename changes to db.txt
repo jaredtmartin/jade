@@ -1,0 +1,24 @@
+:::::::Transaction table:::::::
+added document
+added value
+added credit
+added debit
+added delivered
+added quantity
+added item
+added active
+added serial
+changed _date to date
+transfer doc_numbers to documents
+remove doc_number
+change sites to be one2many
+++++++++ Added table Document ++++++++++
+++++++++ Added sale table
+Add a sale for each sale in transactions
+-------- inventory | entry -------- 
+ -------- inventory | transactiontipo -------- 
+ made contacts inherit from account
+made vendors inherit from contact
+made clients inherit from contact
+moved receipt_id to client
+removed tipo from account

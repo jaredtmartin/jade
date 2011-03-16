@@ -567,7 +567,7 @@ def delete_account(request, object_id):
     return http.HttpResponseRedirect(redirect)
 @login_required
 @permission_required('inventory.view_client', login_url="/blocked/")
-def client_list(request):
+def client_list(request, pdf=False):
     try: q=request.GET['q']
     except KeyError: q=''
     
@@ -575,21 +575,23 @@ def client_list(request):
     words=q.split()
     for word in words:
         query=query.filter(name__icontains=word)
-    return _r2r(request,'inventory/client_list.html', {'page':_paginate(request, query),'q':q})
+    if pdf: return print_account_list(request, query,_('clients'))#TODO: translate
+    else: return _r2r(request,'inventory/client_list.html', {'page':_paginate(request, query),'q':q})
 @login_required
 @permission_required('inventory.view_employee', login_url="/blocked/")
-def employee_list(request):
+def employee_list(request, pdf=False):
     try: q=request.GET['q']
     except KeyError: q=''
     query=Employee.objects.all()
     words=q.split()
     for word in words:
         query=query.filter(name__icontains=word)
+    if pdf: return print_account_list(request, query,_('employees'))#TODO: translate
     return _r2r(request,'inventory/employee_list.html', {'page':_paginate(request, query),'q':q})
 
 @login_required
 @permission_required('inventory.view_account', login_url="/blocked/")
-def account_list(request):
+def account_list(request, pdf=False):
     try: 
         q=request.GET['q']
         n=re.split(':', request.GET['q'])[0]
@@ -602,15 +604,27 @@ def account_list(request):
     if l: accounts=accounts.filter(number__regex="^[0987654321]{1,%s}$" % l)
     if not request.user.has_perm('inventory.view_client'):accounts=accounts.exclude(tipo='Client')
     if not request.user.has_perm('inventory.view_vendor'):accounts=accounts.exclude(tipo='Vendor')
-    return _r2r(request,'inventory/all_accounts_list.html', {'page':_paginate(request, accounts),'q':q})
-
-@login_required
-@permission_required('inventory.view_vendor', login_url="/blocked/")
-def vendor_list(request):
+    if pdf: return print_account_list(request, query,_('accounts'))
+    else:return _r2r(request,'inventory/all_accounts_list.html', {'page':_paginate(request, accounts),'q':q})
+    
+def print_account_list(request, accounts, account_type):
+    total=0
+    for obj in accounts: total+=obj.balance
+    try:report=Setting.get('Account list report')
+    except Report.DoesNotExist: 
+        request.GET=request.GET.copy()
+        errors={'Report':[unicode(_('Unable to find a report template with the name "%s"') % (Setting.get('Account list report').name,))]}
+    return render_string_to_pdf(request, Template(report.body), {'accounts':accounts, 'user':request.user,'account_type':account_type,'total':total})  
+def vendor_list(request, pdf=False):
     try: q=request.GET['q']
     except KeyError: q=''
-    return _r2r(request,'inventory/vendor_list.html', {'page':_paginate(request, Vendor.objects.filter(name__icontains=q)),'q':q})
-
+    
+    query=Vendor.objects.all()
+    words=q.split()
+    for word in words:
+        query=query.filter(name__icontains=word)
+    if pdf: return print_account_list(request, query,_('vendors'))#TODO: translate
+    else: return _r2r(request,'inventory/vendor_list.html', {'page':_paginate(request, query),'q':q})
 #@login_required
 #@permission_required('inventory.view_branch', login_url="/blocked/")
 #def branch_list(request):
@@ -712,7 +726,7 @@ def low_stock_report(request):
 def price_report(request):
     try: q=request.GET['q']
     except KeyError: q=''
-    items=Item.objects.find(q)
+    items=Item.objects.find(q).order_by('name')
     #print "items = " + str(items)
     try:report=Setting.get('Price report')
     except Report.DoesNotExist:
@@ -724,7 +738,7 @@ def price_report(request):
 def inventory_report(request):
     try: q=request.GET['q']
     except KeyError: q=''
-    items=Item.objects.find(q)
+    items=Item.objects.find(q).order_by('name')
     count=items.count()
     total_cost=0
     total_stock=0

@@ -10,8 +10,7 @@
 </ul>
 <table>
     {% for object in objects %}
-        ${{object.edit_mode}}$
-        {% include object.template %}
+        {% include object.doctemplate %}
     {% endfor %}
 </table>
 

@@ -1,0 +1,10 @@
+{% load i18n %}
+<tr id="sale-{{object.pk}}" class="sale">
+    {% include "inventory/inventory_show_base.html" %}
+    <td id="id_sale-{{object.pk}}-unit_value" class="field value" value="{{object.unit_value|floatformat:2}}">${{object.value|floatformat:2}}</td>
+    <td>
+        <a onclick="addObject({{ object.pk }},'salereturn','return'); return false;" href="#" title="{% trans 'Return' %}" id="id_{{object.tipo.lower}}-{{ object.pk }}-return" style=""><img src="{{MEDIA_URL}}/img/return.png"/></a>
+        <a onclick="addObject({{ object.pk }},'clientgarantee','garantee'); return false;" href="#" title="{% trans 'Garantee' %}" id="id_{{object.tipo.lower}}-{{ object.pk }}-garantee" style=""><img src="{{MEDIA_URL}}/img/garantee.png"/></a>
+        {% include "inventory/show_actions.html" %}
+    </td>
+</tr>

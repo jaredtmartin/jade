@@ -82,10 +82,12 @@ function saveTransaction(object_id, url) {
 
 function updateTransaction(data){
     update('transaction',data);
-    if ($('.error').length==0){
-        $('#transaction-'+object_id+' .show').show();
-        $('#transaction-'+object_id+' .edit').hide();
-    }
+// Enableing the following will cause the page to show edit buttons even though edit_mode is 
+// activated for the get_transaction view (BAD)
+//    if ($('.error').length==0){
+//        $('#transaction-'+object_id+' .show').show();
+//        $('#transaction-'+object_id+' .edit').hide();
+//    }
     $('.transaction:first').children().children('.field:visible').keydown(function(e){
         if (e.keyCode == 13) {
             $(this).parents('.transaction').children().children('.save').trigger('click');
@@ -198,7 +200,6 @@ function getGaranteePrice(object_id) {
         success: updateGaranteePrice,
     });
 }
-
 function updateTotal(x){
     results=$('.'+x);
     total=0
@@ -269,4 +270,3 @@ function postCount(object_id){
         success: updateTransaction
     });
 }
-

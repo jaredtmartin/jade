@@ -1,0 +1,22 @@
+{% load i18n %}
+<div id="tax-form" class="tax-form" title="{% trans 'Add Tax' %}">
+    <form>
+        <select id="id_tax_rate">
+            {% for rate in rates %}
+                <option {% if rate.name == default.name %}selected="selected" {% endif %} value="{{rate.value|floatformat:2}}" included="{{rate.price_includes_tax}}">{{rate.name}}</option>
+            {% endfor %}
+        </select>    
+    </form>
+</div>
+<script>
+    function addTax(object_id){
+        jQuery("#last_id").val(object_id);
+        jQuery("#section_id").val('taxes');
+        $.ajax({
+            url: '/inventory/document/'+object_id+ '/addtax/',
+            type:'POST',
+            data:{rate:jQuery('#id_tax_rate :selected:visible').text()},
+            success: updateAndSelect
+        });
+    }
+</script>

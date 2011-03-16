@@ -1,0 +1,10 @@
+<tr class="salediscount" id="salediscount-{{object.pk}}">
+    <td style="display: table-cell;"><input type="text" value="{{object.value}}" class="field value" id="id_salediscount-{{object.pk}}-value"></td><td value="{{object.value}}" class="field value" id="id_salediscount-{{object.pk}}-value" style="display: none;">${{object.value}}</td>
+    <td>        
+        <a onclick="editobject('salediscount',{{object.pk}}); return false;" title="Edit" href="#" id="id_salediscount-{{object.pk}}-edit" class="showmode" style="display: none;"><img src="/media//img/edit.png"></a>
+        <a onclick="saveTransaction('salediscount',{{object.pk}}, '/inventory/salediscount/{{object.pk}}/update/');$('#item.ac_input').select(); return false;" href="#" title="Guardar Cambios" id="id_salediscount-{{object.pk}}-save" style="display: inline;" class="editmode"><img src="/media//img/save.png"></a>
+        <a onclick="cancelTransaction('salediscount',{{object.pk}}); return false;" href="#" title="Cancelar Cambios" id="id_salediscount-{{object.pk}}-cancel" style="display: inline;" class="editmode"><img src="/media//img/cancel.png"></a>
+        <a onclick="markTransaction('salediscount',{{object.pk}},'deactivate'); return false;" href="#" title="Marcar como inactivo" id="id_salediscount-{{object.pk}}-deactivate" class="showmode" style="display: none;"><img src="/media//img/on.png"></a>
+        <a style="" id="id_salediscount-{{object.pk}}-delete" title="Borrar" href="#" onclick="deleteTransaction('salediscount', {{object.pk}}); return false;"><img src="/media//img/trash.png"></a>
+    </td>
+</tr>

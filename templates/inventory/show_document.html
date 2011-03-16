@@ -1,0 +1,209 @@
+{% extends "base.html" %}
+{% load i18n %}
+{% load tags %}
+{% block js %}
+    <script type="text/javascript" src="{{MEDIA_URL}}/js/jadedocs.js"></script> 
+{% endblock %}
+{% block actions %}
+    {% block moreactions%}{% endblock %}
+    <div class="slatetab" ><a onclick="selectDocument({{object.pk}});return false;" href="#">{% trans 'Select' %}</a></div>
+    {% if perms.inventory.view_purchase %}<div class="actiontab" ><a href="/inventory/purchases/?{% if q %}q={{q}}&{% endif %}{% if start %}start={{start}}&{% endif %}{% if end %}end={{end}}{% endif %}" class="action">{% trans 'Purchases' %}</a></div>{% endif %}
+    {% if perms.inventory.view_count %}<div class="actiontab" ><a href="/inventory/counts/?{% if q %}q={{q}}&{% endif %}{% if start %}start={{start}}&{% endif %}{% if end %}end={{end}}{% endif %}" class="action">{% trans 'Counts' %}</a></div>{% endif %}
+    {% if perms.inventory.view_transfer %}<div class="actiontab" ><a href="/inventory/transfers/?{% if q %}q={{q}}&{% endif %}{% if start %}start={{start}}&{% endif %}{% if end %}end={{end}}{% endif %}" class="action">{% trans 'Transfers' %}</a></div>{% endif %}
+    {% if perms.inventory.view_accounting %}<div class="actiontab" ><a href="/inventory/accounting/?{% if q %}q={{q}}&{% endif %}{% if start %}start={{start}}&{% endif %}{% if end %}end={{end}}{% endif %}" class="action">{% trans 'Accounting' %}</a></div>{% endif %}
+    <script>
+        function selectDocument(object_id){
+                $.ajax({
+                    url: '/inventory/document/'+object_id+'/select/' ,
+                    type:'POST',
+                    success: updateMessage
+                });
+        }
+        function getTaxForm(object_id){
+            jQuery("#last_id").val(object_id);
+            $.ajax({
+                url: '/inventory/document/'+object_id+'/get_tax_form/',
+                type: 'GET',
+                success: showTaxForm
+            });
+        }
+        function showTaxForm(data){
+            $('#ajax-data').replaceWith('<div id="ajax-data" style="display: none;"></div>');
+            $('#ajax-data').append(data);
+            $("#tax-form").dialog({
+		        height: 150,
+		        width: 250,
+		        position:['right','bottom'],
+		        buttons: {
+			        {% trans "Close" %}: function() {
+				        $(this).remove();
+			        },
+		            '{% trans "Add" %}': function() {
+		                addTax($('#last_id').val());
+				        $(this).remove();
+		            }
+		        },
+	        });
+            $('#tax-form #tax').autocomplete('/inventory/tax_list/', {matchSubset:0, autoFill:1,});
+        }
+    </script>
+{% endblock%}
+{% block top %}
+    <h1>{% block heading %}Unknown{% endblock %}</h1>
+    {% block search_label %}{% trans 'Document Number' %}{% endblock %}: <input id="search_field" type="text" value="{{q}}" >
+    <a onclick="$('#search_field').val('');$('#search_field').select();" href="#"> <img src="{{MEDIA_URL}}/img/clear.png"/></a>    
+    {% if search_by_date %} 
+        {% trans 'From' %}: <input id="start-search" type="text" value="{{start|default:''}}" > 
+        {% trans 'Until' %}: <input id="end-search" type="text" value="{{end|default:''}}" >
+    {% endif %}
+    <a onclick="window.location = '{% block search_url %}{% endblock %}?q='+$('#search_field').val()+'&start='+$('#start-search').val()+'&end='+$('#end-search').val(); return false;" href="#"> <img src="{{MEDIA_URL}}/img/find.png"/></a>
+    <a href="/manual/transactions/#searching"><img src="{{MEDIA_URL}}/img/help.png"/></a>
+{% endblock %}
+{% block main %}
+    <script type="text/javascript">
+        $(document).ready(function(){
+            $('#start-search').datepicker();
+            $('#end-search').datepicker();
+            jQuery('#search_field').keydown(function(e){
+                if (e.keyCode == 13) {
+                    window.location = '?q='+$('#search_field').val(); return false;
+                }
+            });
+        });
+    </script>
+    <span id="lines"></span>
+    <div id="content">
+      <h2>{% block pre-line-table %}{% trans 'Items' %}{% endblock %}</h2>
+        <table id="line-table">
+            <thead><tr>
+                {% block line_table_header %}
+                    <th>{% trans 'Item' %}</th>
+                    <th>{% trans 'Quantity' %}</th>
+                    <th>{% trans 'Serial' %}</th>
+                    <th>{% trans 'Value' %}</th>
+                    <th>{% trans 'Actions' %}</th>
+                {% endblock%}
+            </tr></thead>
+            <tbody id="lines">
+                {% for object in object.lines %}
+                    {% block line %}{% endblock%}
+                {% endfor %}
+            </tbody>
+            <tfoot><tr>{% block line_table_footer %}{% endblock%}</tr></tfoot>
+        </table>
+    </div>
+    <span id="garanteespot"></span>
+    <div class="divider garanteesection" {% if not object.garantees %}style="display: none;"{% endif %}></div>
+    <div id="content" class="garanteesection"{% if not object.garantees %}style="display: none;"{% endif %}>
+      <h2>{% block pre-garantee-table %}{% trans 'Garantees' %}{% endblock %}</h2>
+        <table id="garantee-table">
+            <thead><tr>
+                {% block garantee_table_header %}
+                    <th>{% trans 'Item' %}</th>
+                    <th>{% trans 'Quantity' %}</th>
+                    <th>{% trans 'Serial' %}</th>
+                    <th>{% trans 'Value' %}</th>
+                    <th>{% trans 'Actions' %}</th>  
+                {% endblock%}
+            </tr></thead>
+            <tbody id="garantees">
+                {% for object in object.garantees %}
+                    {% block garantee %}           
+                        {% include "inventory/showgarantee.html" %}
+                    {% endblock%}
+                {% endfor %}
+            </tbody>
+            <tfoot><tr>{% block garantee_table_footer %}{% endblock%}</tr></tfoot>
+        </table>
+    </div>    
+    <span id="discountspot"></span>
+    <div class="divider discountsection" {% if not object.discounts %}style="display: none;"{% endif %}></div>
+    <div id="content" class="discountsection" {% if not object.discounts %}style="display: none;"{% endif %}>
+      <h2>{% block pre-discount-table %}{% trans 'Discounts' %}{% endblock %}</h2>
+        <table id="discount-table">
+            <thead><tr>
+                {% block discount_table_header %}
+                    <th>{% trans 'Value' %}</th>
+                    <th>{% trans 'Actions' %}</th>  
+                {% endblock%}
+            </tr></thead>
+            <tbody id="discounts">
+                {% for object in object.discounts %}
+                    {% block discount %}    
+                        {% include "inventory/showdiscount.html"%}
+                    {% endblock%}
+                {% endfor %}
+            </tbody>
+            <tfoot><tr>{% block discount_table_footer %}{% endblock%}</tr></tfoot>
+        </table>
+    </div>    
+    <span id="taxespot"></span>
+    <div class="divider taxsection" {% if not object.taxes %}style="display: none;"{% endif %}></div>
+    <div id="content" class="taxsection" {% if not object.taxes %}style="display: none;"{% endif %}>
+      <h2>{% block pre-tax-table %}{% trans 'Taxes' %}{% endblock %}</h2>
+        <table id="tax-table">
+            <thead><tr>
+                {% block tax_table_header %}
+                    <th>{% trans 'Account' %}</th>
+                    <th>{% trans 'Value' %}</th>
+                    <th>{% trans 'Actions' %}</th>  
+                {% endblock%}
+            </tr></thead>
+            <tbody id="taxes">
+                {% for object in object.taxes %}
+                    {% block tax %}  
+                        {% include "inventory/showtax.html" %}  
+                    {% endblock%}
+                {% endfor %}
+            </tbody>
+            <tfoot><tr>{% block tax_table_footer %}{% endblock%}</tr></tfoot>
+        </table>
+    </div>    
+    <span id="paymentspot"></span>
+    <div class="divider paymentsection" {% if not object.payments %}style="display: none;"{% endif %} ></div>
+    <div id="content" class="paymentsection" {% if not object.payments %}style="display: none;"{% endif %}>
+        <h2>{% block pre-payment-table %}{% trans 'Payments' %}{% endblock %}</h2>
+        <table id="payment-table">
+            <thead><tr>
+                {% block payment_table_header %}
+                    <th>{% trans 'Date' %}</th>
+                    <th>{% trans 'Value' %}</th>
+                    <th>{% trans 'Actions' %}</th>
+                {% endblock%}
+            </tr></thead>
+            <tbody id="payments">
+                {% for object in object.payments %}
+                    {% block payment %}
+                        {% include "inventory/showpayment.html"%}
+                    {% endblock%}
+                {% endfor %}
+            </tbody>
+            <tfoot><tr>{% block payment_table_footer %}{% endblock%}</tr></tfoot>
+        </table>
+    </div>   
+    <span id="returnspot"></span>
+    <div class="divider returnsection" {% if not object.returns %}style="display: none;"{% endif %} ></div>
+    <div id="content" class="returnsection" {% if not object.returns %}style="display: none;"{% endif %}>
+        <h2>{% block pre-return-table %}{% trans 'Returns' %}{% endblock %}</h2>
+        <table id="return-table">
+            <thead><tr>
+                {% block return_table_header %}
+                    <th>{% trans 'Item' %}</th>
+                    <th>{% trans 'Quantity' %}</th>
+                    <th>{% trans 'Serial' %}</th>
+                    <th>{% trans 'Value' %}</th>
+                    <th>{% trans 'Actions' %}</th>
+                {% endblock%}
+            </tr></thead>
+            <tbody id="returns">
+                {% for object in object.returns %}
+                    {% block return %}
+                        {% include "inventory/showsalereturn.html"%}
+                    {% endblock%}
+                {% endfor %}
+            </tbody>
+            <tfoot><tr>{% block return_table_footer %}{% endblock%}</tr></tfoot>
+        </table>
+    </div>   
+{% endblock%}
+

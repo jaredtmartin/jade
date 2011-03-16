@@ -1,0 +1,8 @@
+{% load i18n %}
+<tr id="{{object.tipo.lower}}-{{object.pk}}" class="{{object.tipo.lower}}">
+    {% include "inventory/inventory_show_base.html" %}
+    <td id="id_{{object.tipo.lower}}-{{object.pk}}-value" class="field value" value="{{object.value|floatformat:2}}">${{object.value|floatformat:2}}</td>
+    <td>
+        {% include "inventory/show_actions.html" %}
+    </td>
+</tr>

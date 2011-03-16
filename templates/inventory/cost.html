@@ -1,0 +1,13 @@
+{% extends "inventory/transaction_base.html" %}
+{% load i18n %}
+{% block other_fields_edit %}
+    <td><a id="id_transaction-{{ object.pk }}-account" title="{% trans 'Name of Client' %}" value="{{object.subclass.account|default:''}}" class="field account lookup" href="{{object.account.url}}">{{object.account|default:''}}</a></td>
+    {% include "inventory/inventory_base.html" %}
+    <td><input id="id_transaction-{{ object.pk }}-value" title="{% trans 'Value' %}" class="field money" value="{{object.value|floatformat:2}}" type="text"></td>
+{% endblock %}
+{% block other_fields_show %}
+    <td><a id="id_transaction-{{ object.pk }}-account" title="{% trans 'Name of Client' %}" value="{{object.subclass.account|default:''}}" class="field account lookup" href="{{object.account.url}}">{{object.account|default:''}}</a></td>
+    {% include "inventory/inventory_base.html" %}
+    <td id="id_transaction-{{object.pk}}-value" title="{% trans 'Value' %}" value="{{object.value|floatformat:2}}"                  class="field money">    ${{object.subclass.value|floatformat:2}}</td>
+{% endblock %}
+
