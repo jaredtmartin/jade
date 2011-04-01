@@ -1004,7 +1004,8 @@ def add_tax(request, object_id):
     total=Entry.objects.filter(transaction__doc_number=obj.doc_number, active=True, account=obj.subclass.account).exclude(transaction__tipo='SaleTax').exclude(transaction__tipo='SaleTax.').aggregate(total=models.Sum('value'))['total'] or Decimal('0.00')
     total=total* obj.account.multiplier
     amount=Decimal(request.POST['amount'])
-    percentage=amount/total
+    if total>0: percentage=amount/total
+    else: percentage=0
     if obj.tipo=='Sale':
         tax=SaleTax(doc_number=obj.doc_number, date=obj.date, debit=obj.client, credit=rate.sales_account, value=amount)
     elif obj.tipo=='Purchase':
