@@ -604,7 +604,7 @@ def account_list(request, pdf=False):
     if l: accounts=accounts.filter(number__regex="^[0987654321]{1,%s}$" % l)
     if not request.user.has_perm('inventory.view_client'):accounts=accounts.exclude(tipo='Client')
     if not request.user.has_perm('inventory.view_vendor'):accounts=accounts.exclude(tipo='Vendor')
-    if pdf: return print_account_list(request, query,_('accounts'))
+    if pdf: return print_account_list(request, accounts,_('accounts'))
     else:return _r2r(request,'inventory/all_accounts_list.html', {'page':_paginate(request, accounts),'q':q})
     
 def print_account_list(request, accounts, account_type):
@@ -1322,13 +1322,14 @@ def deactivate_transaction(request, object_id):
 @permission_required('inventory.view_item', login_url="/blocked/")
 def movements_report(request):
     entries={}
+    transactions=[]
     for i in Item.objects.all() :
         entries[i]=i.entry_set.filter(account=Setting.get('Inventory account')).order_by('-_date')
-        try:transactions=transactions.filter(doc_number__icontains=request.GET['q'])
+        try:entries=entries.filter(doc_number__icontains=request.GET['q'])
         except: pass
-        try:transactions=transactions.filter(_date__gte=request.GET['start'])
+        try:entries=entries.filter(_date__gte=request.GET['start'])
         except: pass
-        try:transactions=transactions.filter(_date__lt=request.GET['end'])
+        try:entries=entries.filter(_date__lt=request.GET['end'])
         except: pass
     try:report=Setting.get('Movements report')
     except Report.DoesNotExist: 
@@ -1336,7 +1337,7 @@ def movements_report(request):
 #        request.GET['q']=doc_number
         errors={'Report':[unicode(_('Unable to find a report template with the name "%s"') % (Setting.get('Movements report').name,))]}
         return list_sales(request, errors=errors)
-    return render_string_to_pdf(request, Template(report.body), {'transactions':transactions, 'user':request.user})  
+    return render_string_to_pdf(request, Template(report.body), {'transactions':entries, 'user':request.user})  
 
 @login_required
 @permission_required('inventory.add_cash_closing', login_url="/blocked/")
