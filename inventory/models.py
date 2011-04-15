@@ -204,7 +204,7 @@ class Item(models.Model):
     total_cost=property(_get_total_cost)
     def price(self, client=None):
         if not client: 
-            try:client=DEFAULT_PRICE_GROUP
+            try:client=Setting.get('DEFAULT_PRICE_GROUP')
             except:pass
         # fetches the price for the given client
         if type(client)==PriceGroup: group=client

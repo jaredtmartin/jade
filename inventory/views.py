@@ -664,12 +664,14 @@ def account_statement(request, object_id): # GET ONLY
     entries=list(account.entry_set.all().order_by('date'))
     if not request.user.has_perm('inventory.view_client') and account.tipo=="Client": return http.HttpResponseRedirect("/blocked/")
     if not request.user.has_perm('inventory.view_vendor') and account.tipo=="Vendor": return http.HttpResponseRedirect("/blocked/")
-    entries=list(Entry.objects.raw("select inventory_entry.id, doc_number, inventory_transaction.tipo, value, sum(value), date from inventory_entry inner join inventory_transaction on transaction_id = inventory_transaction.id where account_id=%i group by inventory_transaction.tipo, date order by date" % account.pk))
+    entries=list(Entry.objects.raw("select inventory_entry.id, doc_number, inventory_transaction.tipo, sum(value) value, date from inventory_entry inner join inventory_transaction on transaction_id = inventory_transaction.id where account_id=%i group by inventory_transaction.tipo, inventory_transaction.doc_number, date order by date" % account.pk))
     total=0
     for entry in entries:
         total+=entry.value
         entry.total=total
-    return render_report(request, Setting.get('Account statement report').name, {'account':account,'entries':entries})
+    try: last=entry[-1].value
+    except: last=0
+    return render_report(request, Setting.get('Account statement report').name, {'account':account,'entries':entries,'last':last})
 @login_required
 @permission_required('inventory.change_client', login_url="/blocked/")
 def new_client(request):
