@@ -669,7 +669,7 @@ def account_statement(request, object_id): # GET ONLY
     for entry in entries:
         total+=entry.value
         entry.total=total
-    try: last=entry[-1].value
+    try: last=entries[-1].value
     except: last=0
     return render_report(request, Setting.get('Account statement report').name, {'account':account,'entries':entries,'last':last})
 @login_required
