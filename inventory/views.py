@@ -67,6 +67,11 @@ def edit_object(request, object_id, model, form, prefix, tipo=None, extra_contex
     obj = get_object_or_404(model, pk=object_id)
     if not request.user.has_perm('inventory.change_'+obj.tipo.lower()): return http.HttpResponseRedirect("/blocked/")
     f = form(request.POST, instance=obj)
+    
+    from django.utils import formats
+    print "formats.get_format('DATE_INPUT_FORMATS') = " + str(formats.get_format('DATE_INPUT_FORMATS'))
+    print "f.fields['date'].input_formats = " + str(f.fields['date'].input_formats)
+    
     if not tipo: tipo=obj.get_tipo_display()
     if f.is_valid():
         
@@ -474,21 +479,14 @@ def labels(request, doc_number):
         if type(t)==Count: 
             if t.count: quantity=t.count
             else: quantity=t.item.stock
-        else: 
-            print "t.quantity = " + str(t.quantity)
-            quantity=t.quantity
+        else: quantity=t.quantity
         filepath = os.path.join(settings.APP_LOCATION+'/'+settings.BARCODES_FOLDER, t.item.bar_code+'.png')
-        print "filepath = " + str(filepath)
         labels_per_line=Setting.get('Labels per line')
-        print "labels_per_line = " + str(labels_per_line)
-        labels_per_page=Setting.get('Lines per page')
-        print "labels_per_page = " + str(labels_per_page)
-        print "quantity = " + str(quantity)
+        labels_per_page=Setting.get('Labels per page')
         for label in range(quantity):
             if x>=labels_per_page:
                 p.showPage()
                 x-=labels_per_page
-            print "drawing at %i, %i" % (x%labels_per_line*150, p._pagesize[1]-(x/labels_per_line+1)*75)
             p.drawImage(filepath, x%labels_per_line*150, p._pagesize[1]-(x/labels_per_line+1)*75)
             x+=1
     p.showPage()
