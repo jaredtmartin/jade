@@ -9,7 +9,7 @@
                     <td>{% trans object.tipo %}</td>
                     <td>{% link object.account %}</td>
                     <td>{{object.value}}</td>
-                    <td>{{ object.date|date:date_format }}</td>
+                    <td>{{ object.date|date:"SHORT_DATE_FORMAT" }}</td>
                     <td>{% if object.item %}<a href="{{object.item.url}}">{{object.item}}</a>{% endif %}</td>
                     <td>{{object.quantity|floatformat:-2}}{% if object.cost_complete %}*{% endif %}</td>
                     <td>{% if object.serial %}<a href="/inventory/serial/{{object.serial}}/">{{object.serial}}</a>{% endif %}</td>

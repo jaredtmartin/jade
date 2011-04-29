@@ -27,6 +27,7 @@
             {% if object %}
                 <div class="actiontab" ><a href='/inventory/account/{{object.pk}}/delete/?redirect_url=/inventory/clients/'>{% trans 'Delete' %}</a></div>
                 <div class="actiontab" ><a href='/inventory/account/{{object.pk}}/statement.pdf'>{% trans 'Statement' %}</a></div>
+                <div class="actiontab" ><a href='/inventory/account/{{object.pk}}/account_details.pdf'>{% trans 'Print' %}</a></div>
             {% endif %}
         {% endif %}
     {% endif %}
@@ -36,6 +37,7 @@
             {% if object %}
                 <div class="actiontab" ><a href='/inventory/account/{{object.pk}}/delete/?redirect_url=/inventory/vendors/'>{% trans 'Delete' %}</a></div>
                 <div class="actiontab" ><a href='/inventory/account/{{object.pk}}/statement.pdf'>{% trans 'Statement' %}</a></div>
+                <div class="actiontab" ><a href='/inventory/account/{{object.pk}}/account_details.pdf'>{% trans 'Print' %}</a></div>
             {% endif %}
         {% endif %}
     {% endif %}

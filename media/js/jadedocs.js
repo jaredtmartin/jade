@@ -3,7 +3,7 @@ function editobject(tipo, object_id) {
         var input = '<td style="'+ $(this).attr('style') +'"><input id="'+ $(this).attr('id') +'" class="'+ $(this).attr('class') +'" value="'+$(this).attr('value')+'" name="'+ $(this).attr('name') +'" type="text"></td>'
         $(this).before(input).hide();
     });
-    $('.datelookup').datepicker();
+    $('.datelookup').datepicker($.datepicker.regional[ "{{LANGUAGE_CODE}}" ]);
     $('.itemlookup').autocomplete('/inventory/item_list/', {matchSubset:0, autoFill:1,});
     $('.clientlookup').autocomplete('/inventory/client_list/', {matchSubset:0, autoFill:1,});
     $('.vendorlookup').autocomplete('/inventory/vendor_list/', {matchSubset:0, autoFill:1,});

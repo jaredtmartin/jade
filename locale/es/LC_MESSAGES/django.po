@@ -14,7 +14,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2011-03-15 19:17-0600\n"
+"POT-Creation-Date: 2011-04-15 20:41-0600\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -23,7 +23,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 
-#: inventory/forms.py:111 inventory/views.py:935
+#: inventory/forms.py:111 inventory/views.py:937
 msgid "There is insufficient stock for this sale"
 msgstr "No hay suficiente inventario para entregar esta venta."
 
@@ -159,7 +159,7 @@ msgstr "código de barra automático"
 msgid "type"
 msgstr "tipo"
 
-#: inventory/models.py:288 inventory/views.py:1306 inventory/views.py:1307
+#: inventory/models.py:288 inventory/views.py:1309 inventory/views.py:1310
 msgid "quantity"
 msgstr "qantidad"
 
@@ -219,8 +219,8 @@ msgid "multiplier"
 msgstr "multiplicado"
 
 #: inventory/views.py:399 inventory/views.py:438 inventory/views.py:616
-#: inventory/views.py:720 inventory/views.py:733 inventory/views.py:751
-#: inventory/views.py:1336 inventory/views.py:1376 production/views.py:50
+#: inventory/views.py:722 inventory/views.py:735 inventory/views.py:753
+#: inventory/views.py:1340 inventory/views.py:1380 production/views.py:50
 #: production/views.py:65
 #, python-format
 msgid "Unable to find a report template with the name \"%s\""
@@ -266,7 +266,7 @@ msgstr "cuentas"
 msgid "vendors"
 msgstr "proveedores"
 
-#: inventory/views.py:939
+#: inventory/views.py:941
 msgid ""
 "There is insufficient stock for this sale, it has been marked as not "
 "delivered"
@@ -274,36 +274,36 @@ msgstr ""
 "No hay suficiente inventario para entregar esta venta. Ha sido marcado como "
 "no entregado"
 
-#: inventory/views.py:941
+#: inventory/views.py:943
 msgid "This item is not available in inventory"
 msgstr "No contamos con inventario de este producto."
 
-#: inventory/views.py:950
+#: inventory/views.py:952
 #, fuzzy
 msgid "Unable to find a client with the name specified."
 msgstr "No se pudo encontrar ventas con el numero de documento especificado"
 
-#: inventory/views.py:1296
+#: inventory/views.py:1299
 msgid "Cannot be marked delivered or active"
 msgstr "No se pudo marcar entregado o activo"
 
-#: inventory/views.py:1299
+#: inventory/views.py:1302
 msgid "You do not have sufficient rights to start production"
 msgstr "No tiene los derechos suficientes para iniciar la producción"
 
-#: inventory/views.py:1301
+#: inventory/views.py:1304
 msgid "You do not have sufficient rights to finish production"
 msgstr "No tiene los derechos suficientes para terminar la producción"
 
-#: inventory/views.py:1305
+#: inventory/views.py:1308
 msgid "There is not sufficient inventory to deliver this sale"
 msgstr "No hay suficiente inventario para entregar esta venta."
 
-#: inventory/views.py:1364
+#: inventory/views.py:1368
 msgid "CashClosing"
 msgstr "Corte de Caja"
 
-#: inventory/views.py:1364
+#: inventory/views.py:1368
 msgid "There can only be one cash_closing per day."
 msgstr "Solo puede haber un corte de caja por dia"
 
@@ -698,8 +698,8 @@ msgstr "Factura"
 msgid "Credit Period (days)"
 msgstr "Dias de Crédito"
 
-#: templates/inventory/account.html:34 templates/inventory/account_list.html:6
-#: templates/manual/accounts.html:30 templates/manual/accounts.html.py:67
+#: templates/inventory/account.html:34 templates/manual/accounts.html:30
+#: templates/manual/accounts.html.py:67
 msgid "Balance"
 msgstr "Saldo"
 

@@ -1476,6 +1476,7 @@ class Document():
         self._paid_on_spot = None
         self._unpaid_on_spot = None
         self.value=self.subtotal
+        for t in self.tax.query: print "t = " + str(t)
     
     def __repr__(self):
         return self.doc_number

@@ -22,6 +22,7 @@ from django.forms.models import ModelForm, modelform_factory, inlineformset_fact
 from django.forms.models import BaseModelFormSet, modelformset_factory, formset_factory
 from django.forms.formsets import BaseFormSet
 from datetime import datetime
+from django.utils import formats
 import settings
 
 def clean_lookup(form, name, model, by_pk=False, title=None):
@@ -86,18 +87,22 @@ class SaleForm(WarningForm):
             model.value=            model.value          * self.cleaned_data['quantity']
         if commit: model.save()
         return model
-    doc_number =        forms.CharField()
-    account =           forms.CharField(initial=Setting.get('Default client'))
-    item =              forms.CharField(required=False)
-    unit_value =        forms.DecimalField()
-    quantity =          forms.DecimalField()
-    date =              forms.DateField(initial=datetime.now()) #, input_formats=['%Y-%m-%d', '%d/%m/%Y',]) # Uncomment this for spanish dates
-    serial =            forms.CharField(required=False)
+        
+    doc_number = forms.CharField()
+    account =    forms.CharField(initial=Setting.get('Default client'))
+    item =       forms.CharField(required=False)
+    unit_value = forms.DecimalField(localize=True)
+    quantity =   forms.DecimalField(localize=True)
+    date =       forms.DateField(initial=datetime.now(), input_formats=formats.get_format('DATE_INPUT_FORMATS'))
+    serial =     forms.CharField(required=False)
+    
     def clean_account(self):
         return clean_lookup(self, 'account', Client)
+        
     def clean_item(self):
         x=clean_bar_code(self, 'item', Item)
         return x
+        
     def clean(self):
         cleaned_data = self.cleaned_data
         quantity = cleaned_data.get("quantity")
@@ -132,7 +137,7 @@ class SaleForm(WarningForm):
 #    doc_number =     forms.CharField()
 #    account =  forms.CharField(initial=settings.DEFAULT_ACCOUNTING_DEBIT_ACCOUNT_NAME)
 #    account2 = forms.CharField(initial=settings.DEFAULT_ACCOUNTING_CREDIT_ACCOUNT_NAME)
-#    value =          forms.DecimalField()
+#    value =          forms.DecimalField(localize=True)
 #    date =           forms.DateField(initial=datetime.now())
 #    def clean_account(self):
 #        print "asdafahhhhhhhhhhhhhhhhhhhhhhhhhhhhhh"
@@ -153,8 +158,8 @@ class ExpenseForm(WarningForm):
         if commit: model.save()
         return model
     doc_number =     forms.CharField()
-    value =          forms.DecimalField()
-    date =           forms.DateField(initial=datetime.now())
+    value =          forms.DecimalField(localize=True)
+    date =           forms.DateField(initial=datetime.now(), input_formats=formats.get_format('DATE_INPUT_FORMATS'))
     serial =         forms.CharField(required=False)
     
 class EmployeePayForm(WarningForm):
@@ -169,8 +174,8 @@ class EmployeePayForm(WarningForm):
         if commit: model.save()
         return model
     doc_number =     forms.CharField()
-    value =          forms.DecimalField()
-    date =           forms.DateField(initial=datetime.now())
+    value =          forms.DecimalField(localize=True)
+    date =           forms.DateField(initial=datetime.now(), input_formats=formats.get_format('DATE_INPUT_FORMATS'))
     account =        forms.CharField()
     def clean_account(self): return clean_lookup(self, 'account', Account)
 class WorkForm(WarningForm):
@@ -187,8 +192,8 @@ class WorkForm(WarningForm):
         if commit: model.save()
         return model
     doc_number =     forms.CharField()
-    value =          forms.DecimalField()
-    date =           forms.DateField(initial=datetime.now())
+    value =          forms.DecimalField(localize=True)
+    date =           forms.DateField(initial=datetime.now(), input_formats=formats.get_format('DATE_INPUT_FORMATS'))
     account =        forms.CharField()
     quantity =       forms.CharField(required=False)
     serial =         forms.CharField(required=False)
@@ -212,9 +217,9 @@ class ClientGaranteeForm(WarningForm):
     doc_number =        forms.CharField()
     account =           forms.CharField(initial=Setting.get('Default client').name)
     item =              forms.CharField(required=False)
-    value =             forms.DecimalField(required=False)
-    quantity =          forms.DecimalField()
-    date =              forms.DateField(initial=datetime.now()) #, input_formats=['%Y-%m-%d', '%d/%m/%Y',]) # Uncomment this for spanish dates
+    value =             forms.DecimalField(required=False, localize=True)
+    quantity =          forms.DecimalField(localize=True)
+    date =              forms.DateField(initial=datetime.now(), input_formats=formats.get_format('DATE_INPUT_FORMATS'))
     serial =            forms.CharField(required=False)
     def clean_account(self):
         return clean_lookup(self, 'account', Client)
@@ -240,9 +245,9 @@ class VendorGaranteeForm(WarningForm):
     doc_number =        forms.CharField()
     account =           forms.CharField(initial=Setting.get('Default vendor').name)
     item =              forms.CharField(required=False)
-    value =             forms.DecimalField()
-    quantity =          forms.DecimalField()
-    date =              forms.DateField(initial=datetime.now()) #, input_formats=['%Y-%m-%d', '%d/%m/%Y',]) # Uncomment this for spanish dates
+    value =             forms.DecimalField(localize=True)
+    quantity =          forms.DecimalField(localize=True)
+    date =              forms.DateField(initial=datetime.now(), input_formats=formats.get_format('DATE_INPUT_FORMATS'))
     serial =            forms.CharField(required=False)
     def clean_account(self):
         return clean_lookup(self, 'account', Vendor)
@@ -262,9 +267,9 @@ class ClientPaymentForm(WarningForm):
         if commit: model.save()
         return model
     doc_number =        forms.CharField()
-    value =             forms.DecimalField(required=False)
+    value =             forms.DecimalField(required=False, localize=True)
     account =           forms.CharField(initial=Setting.get('Default client').name)
-    date =              forms.DateField(initial=datetime.now()) #, input_formats=['%Y-%m-%d', '%d/%m/%Y',]) # Uncomment this for spanish dates
+    date =              forms.DateField(initial=datetime.now(), input_formats=formats.get_format('DATE_INPUT_FORMATS'))
     def clean_account(self):
         return clean_lookup(self, 'account', Client)
 
@@ -280,9 +285,9 @@ class VendorPaymentForm(WarningForm):
         if commit: model.save()
         return model
     doc_number =        forms.CharField()
-    value =             forms.DecimalField(required=False)
+    value =             forms.DecimalField(required=False, localize=True)
     account =           forms.CharField(initial=Setting.get('Default vendor').name)
-    date =              forms.DateField(initial=datetime.now()) #, input_formats=['%Y-%m-%d', '%d/%m/%Y',]) # Uncomment this for spanish dates
+    date =              forms.DateField(initial=datetime.now(), input_formats=formats.get_format('DATE_INPUT_FORMATS'))
     def clean_account(self):
         return clean_lookup(self, 'account', Vendor)
 class TaxForm(WarningForm):
@@ -297,9 +302,9 @@ class TaxForm(WarningForm):
         if commit: model.save()
         return model
     doc_number =        forms.CharField()
-    value =             forms.DecimalField(required=False)
+    value =             forms.DecimalField(required=False, localize=True)
     account =           forms.CharField(initial=Setting.get('Default client').name)
-    date =              forms.DateField(initial=datetime.now()) #, input_formats=['%Y-%m-%d', '%d/%m/%Y',]) # Uncomment this for spanish dates
+    date =              forms.DateField(initial=datetime.now(), input_formats=formats.get_format('DATE_INPUT_FORMATS'))
 
 class SaleTaxForm(TaxForm):
     class Meta:
@@ -356,9 +361,9 @@ class PurchaseForm(WarningForm):
     doc_number =        forms.CharField()
     account =           forms.CharField(initial=Setting.get('Default vendor').name)
     item =              forms.CharField(required=False)
-    quantity =          forms.DecimalField()
-    value =              forms.DecimalField()
-    date =              forms.DateField(initial=datetime.now()) #, input_formats=['%Y-%m-%d', '%d/%m/%Y',]) # Uncomment this for spanish dates
+    quantity =          forms.DecimalField(localize=True)
+    value =              forms.DecimalField(localize=True)
+    date =              forms.DateField(initial=datetime.now(), input_formats=formats.get_format('DATE_INPUT_FORMATS'))
     serial =            forms.CharField(required=False)
     def clean_account(self):
         return clean_lookup(self, 'account', Vendor)
@@ -383,9 +388,9 @@ class TransferForm(WarningForm):
     doc_number =        forms.CharField()
     account =           forms.CharField()
     item =              forms.CharField(required=False)
-    quantity =          forms.DecimalField()
-    value =              forms.DecimalField()
-    date =              forms.DateField(initial=datetime.now()) #, input_formats=['%Y-%m-%d', '%d/%m/%Y',]) # Uncomment this for spanish dates
+    quantity =          forms.DecimalField(localize=True)
+    value =              forms.DecimalField(localize=True)
+    date =              forms.DateField(initial=datetime.now(), input_formats=formats.get_format('DATE_INPUT_FORMATS'))
     serial =            forms.CharField(required=False)
     def clean_account(self):
         return clean_lookup(self, 'account', Site)
@@ -408,9 +413,9 @@ class CountForm(WarningForm):
         return model
     doc_number =        forms.CharField()
     item =              forms.CharField(required=False)
-    quantity =          forms.DecimalField(required=False)
-    value =              forms.DecimalField()
-    date =              forms.DateField(initial=datetime.now()) #, input_formats=['%Y-%m-%d', '%d/%m/%Y',]) # Uncomment this for spanish dates
+    quantity =          forms.DecimalField(required=False, localize=True)
+    value =              forms.DecimalField(localize=True)
+    date =              forms.DateField(initial=datetime.now(), input_formats=formats.get_format('DATE_INPUT_FORMATS'))
     serial =            forms.CharField(required=False)
     def clean_item(self):
         x=clean_bar_code(self, 'item', Item)

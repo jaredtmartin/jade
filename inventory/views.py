@@ -474,13 +474,22 @@ def labels(request, doc_number):
         if type(t)==Count: 
             if t.count: quantity=t.count
             else: quantity=t.item.stock
-        else: quantity=t.quantity
+        else: 
+            print "t.quantity = " + str(t.quantity)
+            quantity=t.quantity
         filepath = os.path.join(settings.APP_LOCATION+'/'+settings.BARCODES_FOLDER, t.item.bar_code+'.png')
+        print "filepath = " + str(filepath)
+        labels_per_line=Setting.get('Labels per line')
+        print "labels_per_line = " + str(labels_per_line)
+        labels_per_page=Setting.get('Lines per page')
+        print "labels_per_page = " + str(labels_per_page)
+        print "quantity = " + str(quantity)
         for label in range(quantity):
-            if x>=Setting.get('Lines per page'):
+            if x>=labels_per_page:
                 p.showPage()
-                x-=Setting.get('Lines per page')
-            p.drawImage(filepath, x%Setting.get('Labels per line')*150, p._pagesize[1]-(x/Setting.get('Labels per line')+1)*75)
+                x-=labels_per_page
+            print "drawing at %i, %i" % (x%labels_per_line*150, p._pagesize[1]-(x/labels_per_line+1)*75)
+            p.drawImage(filepath, x%labels_per_line*150, p._pagesize[1]-(x/labels_per_line+1)*75)
             x+=1
     p.showPage()
     p.save()
@@ -672,6 +681,15 @@ def account_statement(request, object_id): # GET ONLY
     try: last=entries[-1].total
     except: last=0
     return render_report(request, Setting.get('Account statement report').name, {'account':account,'entries':entries,'last':last})
+    
+@login_required
+@permission_required('inventory.view_client', login_url="/blocked/")
+def account_details_report(request, object_id): # GET ONLY
+    account = get_object_or_404(Account, pk=object_id)
+    if not request.user.has_perm('inventory.view_client') and account.tipo=="Client": return http.HttpResponseRedirect("/blocked/")
+    if not request.user.has_perm('inventory.view_vendor') and account.tipo=="Vendor": return http.HttpResponseRedirect("/blocked/")
+    return render_report(request, Setting.get('Account details report').name, {'account':account})
+    
 @login_required
 @permission_required('inventory.change_client', login_url="/blocked/")
 def new_client(request):

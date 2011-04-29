@@ -19,7 +19,7 @@ function editTransaction(object_id) {
         var input = '<td style="'+ $(this).attr('style') +'"><input id="'+ $(this).attr('id') +'" class="'+ $(this).attr('class') +'" value="'+$(this).attr('value')+'" name="'+ $(this).attr('name') +'" type="text"></td>'
         $(this).before(input).removeClass('Inventory').hide();
     });
-    $('#id_transaction-'+object_id+'-date').datepicker();
+    $('#id_transaction-'+object_id+'-date').datepicker($.datepicker.regional[ $("#lang-code").val()]);
     $('#id_transaction-'+object_id+'-item').autocomplete('/inventory/item_list/', {matchSubset:0, autoFill:1,});
     $('#id_transaction-'+object_id+'-account.client').autocomplete('/inventory/client_list/', {matchSubset:0, autoFill:1,});
     $('#id_transaction-'+object_id+'-account.vendor').autocomplete('/inventory/vendor_list/', {matchSubset:0, autoFill:1,});
@@ -231,14 +231,14 @@ function update(prefix, data){
     results.each(function(i){
         if ($('#'+this.id+":visible").length>0){
             $('#'+this.id+":visible:first").replaceWith(this);
-            $('#id_transaction-'+object_id+'-date').datepicker();
+            $('#id_transaction-'+object_id+'-date').datepicker($.datepicker.regional[ $("#lang-code").val()]);
             $('#id_transaction-'+object_id+'-item').autocomplete('/inventory/item_list/', {matchSubset:0, autoFill:1,});
             $('#id_transaction-'+object_id+'-account.client').autocomplete('/inventory/client_list/', {matchSubset:0, autoFill:1,});
             $('#id_transaction-'+object_id+'-account.vendor').autocomplete('/inventory/vendor_list/', {matchSubset:0, autoFill:1,});
             $('#id_transaction-'+object_id+'-account.employee').autocomplete('/inventory/employee_list/', {matchSubset:0, autoFill:1,});
         } else {
             $('#'+prefix+'s').prepend(this);
-            $('.date:first').datepicker();
+            $('.date:first').datepicker($.datepicker.regional[ $("#lang-code").val() ]);
             $('.item:first').autocomplete('/inventory/item_list/', {matchSubset:0, autoFill:1,});
             $('.account:first.client').autocomplete('/inventory/client_list/', {matchSubset:0, autoFill:1,});
             $('.account:first.vendor').autocomplete('/inventory/vendor_list/', {matchSubset:0, autoFill:1,});

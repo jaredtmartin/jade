@@ -32,6 +32,7 @@
         <script type="text/javascript" src="{{MEDIA_URL}}js/jade-base.js"></script>
         <script type="text/javascript" src="{{MEDIA_URL}}js/jquery.hotkeys.min.js"></script>
         <script type="text/javascript" src="{{MEDIA_URL}}js/jquery.autocomplete.js"></script> 
+        <script type="text/javascript" src="{{MEDIA_URL}}js/jquery-ui-i18n.js"></script> 
         {% block js %}{% endblock %}
         {% block css %}{% endblock %}
     </head>
@@ -57,7 +58,7 @@
             {% endblock %}
         </div>
         <div id="content">{% block content %}{% endblock %}</div>
-        
+        <input id="lang-code" type="hidden" value="{{LANGUAGE_CODE}}">
         <div id="ajax-data" style="display: none;"></div>
 <div class="clear-contentunit"></div>
         <div id="bottom">

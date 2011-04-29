@@ -14,7 +14,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2011-03-15 19:17-0600\n"
+"POT-Creation-Date: 2011-04-15 20:41-0600\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -24,7 +24,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=n>1;\n"
 
-#: inventory/forms.py:111 inventory/views.py:935
+#: inventory/forms.py:111 inventory/views.py:937
 msgid "There is insufficient stock for this sale"
 msgstr ""
 
@@ -158,7 +158,7 @@ msgstr ""
 msgid "type"
 msgstr ""
 
-#: inventory/models.py:288 inventory/views.py:1306 inventory/views.py:1307
+#: inventory/models.py:288 inventory/views.py:1309 inventory/views.py:1310
 msgid "quantity"
 msgstr ""
 
@@ -218,8 +218,8 @@ msgid "multiplier"
 msgstr ""
 
 #: inventory/views.py:399 inventory/views.py:438 inventory/views.py:616
-#: inventory/views.py:720 inventory/views.py:733 inventory/views.py:751
-#: inventory/views.py:1336 inventory/views.py:1376 production/views.py:50
+#: inventory/views.py:722 inventory/views.py:735 inventory/views.py:753
+#: inventory/views.py:1340 inventory/views.py:1380 production/views.py:50
 #: production/views.py:65
 #, python-format
 msgid "Unable to find a report template with the name \"%s\""
@@ -263,41 +263,41 @@ msgstr ""
 msgid "vendors"
 msgstr ""
 
-#: inventory/views.py:939
+#: inventory/views.py:941
 msgid ""
 "There is insufficient stock for this sale, it has been marked as not "
 "delivered"
 msgstr ""
 
-#: inventory/views.py:941
+#: inventory/views.py:943
 msgid "This item is not available in inventory"
 msgstr ""
 
-#: inventory/views.py:950
+#: inventory/views.py:952
 msgid "Unable to find a client with the name specified."
 msgstr ""
 
-#: inventory/views.py:1296
+#: inventory/views.py:1299
 msgid "Cannot be marked delivered or active"
 msgstr ""
 
-#: inventory/views.py:1299
+#: inventory/views.py:1302
 msgid "You do not have sufficient rights to start production"
 msgstr ""
 
-#: inventory/views.py:1301
+#: inventory/views.py:1304
 msgid "You do not have sufficient rights to finish production"
 msgstr ""
 
-#: inventory/views.py:1305
+#: inventory/views.py:1308
 msgid "There is not sufficient inventory to deliver this sale"
 msgstr ""
 
-#: inventory/views.py:1364
+#: inventory/views.py:1368
 msgid "CashClosing"
 msgstr ""
 
-#: inventory/views.py:1364
+#: inventory/views.py:1368
 msgid "There can only be one cash_closing per day."
 msgstr ""
 
@@ -690,8 +690,8 @@ msgstr ""
 msgid "Credit Period (days)"
 msgstr ""
 
-#: templates/inventory/account.html:34 templates/inventory/account_list.html:6
-#: templates/manual/accounts.html:30 templates/manual/accounts.html.py:67
+#: templates/inventory/account.html:34 templates/manual/accounts.html:30
+#: templates/manual/accounts.html.py:67
 msgid "Balance"
 msgstr ""
 

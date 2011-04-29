@@ -18,8 +18,9 @@
 {% block content %}
     <script type="text/javascript">
         $(document).ready(function(){
-            $('#start-search').datepicker();
-            $('#end-search').datepicker();
+            $.datepicker.setDefaults( $.datepicker.regional[ "" ] );
+            $('#start-search').datepicker($.datepicker.regional[ "{{LANGUAGE_CODE}}" ]);
+            $('#end-search').datepicker($.datepicker.regional[ "{{LANGUAGE_CODE}}" ]);
             jQuery('#search_field').keydown(function(e){
                 if (e.keyCode == 13) {
                     window.location = '?q='+$('#search_field').val(); return false;

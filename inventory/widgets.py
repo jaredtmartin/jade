@@ -56,7 +56,7 @@ class CalanderInput(forms.TextInput):
     def render(self, name, value,  attrs=None):
         output = super(CalanderInput, self).render(name, value, attrs)
         return output + mark_safe(u'''<script type="text/javascript">
-	        jQuery("#id_%s").datepicker();
+	        jQuery("#id_%s").datepicker($.datepicker.regional[ "{{LANGUAGE_CODE}}" ]);
             </script>''' % (name))
 #class LiveInput(forms.TextInput):
 #    class Media:

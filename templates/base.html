@@ -33,7 +33,7 @@
     </ul>
 {% endblock %}
 {% block user-corner %}
-    {% trans 'User' %}: {{ user.username }}  <br>
+    {% trans 'User' %}: {{ user.username }}  ({{LANGUAGE_CODE}})<br>
     {% trans 'Price Group' %}: {{user.get_profile.price_group}}<br>
     <a href="/logout/">{% trans 'Logout' %}</a><br>
 {% endblock %}

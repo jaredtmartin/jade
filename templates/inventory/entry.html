@@ -1,7 +1,7 @@
 {% load i18n %}
 {% load tags %}
 <tr>
-    <td>{{ object.date|date:date_format }}</td>
+    <td>{{ object.date|date:"SHORT_DATE_FORMAT" }}</td>
     <td>{% link object.transaction %}</td>
     <td>{{ object.transaction.tipo }}</td>
     <td>{% link object.account %}</td>
