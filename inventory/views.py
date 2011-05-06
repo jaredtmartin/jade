@@ -475,7 +475,6 @@ def labels(request, doc_number):
     
     for trans in doc:
         t=trans.subclass
-        print "t = " + str(t)
         if type(t)==Count: 
             if t.count: quantity=t.count
             else: quantity=t.item.stock
@@ -487,7 +486,8 @@ def labels(request, doc_number):
             if x>=labels_per_page:
                 p.showPage()
                 x-=labels_per_page
-            p.drawImage(filepath, x%labels_per_line*150, p._pagesize[1]-(x/labels_per_line+1)*75)
+            p.drawImage(filepath, x%labels_per_line*150, p._pagesize[1]-(x/labels_per_line+1)*81)
+            p.drawString(x%labels_per_line*150, (p._pagesize[1]-(x/labels_per_line+1)*75)-16, t.item.name)
             x+=1
     p.showPage()
     p.save()
