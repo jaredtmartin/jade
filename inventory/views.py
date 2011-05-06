@@ -465,6 +465,7 @@ def count_sheet(request, doc_number):
 @permission_required('inventory.view_receipt', login_url="/blocked/")
 def labels(request, doc_number):    
     from reportlab.pdfgen import canvas
+    from jade.inventory.templatetags.tags import trunc
     doc=Transaction.objects.filter(doc_number=doc_number).filter(Q(tipo='Count')|Q(tipo='Purchase'))
     if doc.count()==0: return fallback_to_transactions(request, doc_number, _('Unable to find counts or purchases with the specified document number.'))
     labels={}
@@ -472,7 +473,10 @@ def labels(request, doc_number):
     response = http.HttpResponse(mimetype='application/pdf')
     response['Content-Disposition'] = 'attachment; filename=%s.pdf' % doc_number
     p = canvas.Canvas(response)
-    
+    TOP=45
+    LINE_SPACING=72
+    RIGHT=10
+    WIDTH_SPACING=155
     for trans in doc:
         t=trans.subclass
         if type(t)==Count: 
@@ -486,8 +490,10 @@ def labels(request, doc_number):
             if x>=labels_per_page:
                 p.showPage()
                 x-=labels_per_page
-            p.drawImage(filepath, x%labels_per_line*150, p._pagesize[1]-(x/labels_per_line+1)*81)
-            p.drawString(x%labels_per_line*150, (p._pagesize[1]-(x/labels_per_line+1)*75)-16, t.item.name)
+            pagex=(x%labels_per_line*WIDTH_SPACING)+RIGHT
+            pagey=(p._pagesize[1]-(x/labels_per_line+1)*LINE_SPACING)-TOP
+            p.drawImage(filepath, pagex, pagey)
+            p.drawString(pagex, pagey-10, trunc(t.item.name))
             x+=1
     p.showPage()
     p.save()
