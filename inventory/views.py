@@ -69,8 +69,6 @@ def edit_object(request, object_id, model, form, prefix, tipo=None, extra_contex
     f = form(request.POST, instance=obj)
     
     from django.utils import formats
-    print "formats.get_format('DATE_INPUT_FORMATS') = " + str(formats.get_format('DATE_INPUT_FORMATS'))
-    print "f.fields['date'].input_formats = " + str(f.fields['date'].input_formats)
     try: f.fields['date'].input_formats=formats.get_format('DATE_INPUT_FORMATS')
     except:pass
     
